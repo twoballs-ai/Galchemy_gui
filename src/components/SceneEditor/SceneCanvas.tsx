@@ -1,39 +1,34 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { GraphicalContext, WebGLRenderer, SceneManager, ResourceManager } from '../../../../TETTE_CORE/core/core_logic';
+import React, { useRef, useEffect } from 'react';
 
-const SceneCanvas: React.FC = () => {
+interface SceneCanvasProps {
+  scene: string; // Имя активной сцены, передаваемой в компонент
+}
+
+const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [sceneManager, setSceneManager] = useState<SceneManager | null>(null);
-  const [renderer, setRenderer] = useState<WebGLRenderer | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Initialize the rendering context
-    const graphicalContext = new GraphicalContext(canvasRef.current);
-    const rendererInstance = new WebGLRenderer(graphicalContext);
-    setRenderer(rendererInstance);
+    // Инициализация canvas для GUI
+    const context = canvasRef.current.getContext('2d');
+    if (context) {
+      context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      context.fillStyle = 'lightgray'; // Фоновый цвет для визуального представления
+      context.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
 
-    // Set up scene manager
-    const sceneManagerInstance = new SceneManager();
-    sceneManagerInstance.setRenderer(rendererInstance);
-    setSceneManager(sceneManagerInstance);
+    console.log(`Canvas готов для отображения сцены: ${scene}`);
+  }, [scene]);
 
-    // Render loop
-    const renderLoop = () => {
-      rendererInstance.render(sceneManagerInstance.getCurrentScene());
-      requestAnimationFrame(renderLoop);
-    };
-    renderLoop();
-
-    // Cleanup on unmount
-    return () => {
-      rendererInstance.cleanup();
-      graphicalContext.cleanup();
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} width={800} height={600} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      // width={800}
+      // height={600}
+      style={{ border: '1px solid #ccc', width: '100%', height: '100%' }}
+    />
+  );
 };
 
 export default SceneCanvas;

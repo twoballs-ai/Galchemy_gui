@@ -1,5 +1,3 @@
-// SceneEditor.tsx
-
 import React, { useState, useEffect } from 'react';
 import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
 import SceneCanvas from './SceneCanvas';
@@ -35,7 +33,11 @@ const initialLayouts: Layouts = {
   ],
 };
 
-const SceneEditor: React.FC = () => {
+interface SceneEditorProps {
+  activeScene: string;
+}
+
+const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
   const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
   const [panels, setPanels] = useState({
     objectsPanel: true,
@@ -43,22 +45,22 @@ const SceneEditor: React.FC = () => {
   });
 
   useEffect(() => {
-    // Load layouts from localStorage
-    const savedLayouts = localStorage.getItem('sceneEditorLayouts');
-    if (savedLayouts) {
-      setLayouts(JSON.parse(savedLayouts));
+    // Загрузка данных активной сцены при изменении activeScene
+    if (activeScene) {
+      console.log(`Загрузка данных для активной сцены: ${activeScene}`);
+      // Здесь можно добавить логику для загрузки данных активной сцены
     }
-  }, []);
+  }, [activeScene]);
 
   const onLayoutChange = (currentLayout: Layout[], allLayouts: Layouts) => {
     setLayouts(allLayouts);
-    // Save layouts to localStorage
+    // Сохраняем макет в localStorage
     localStorage.setItem('sceneEditorLayouts', JSON.stringify(allLayouts));
   };
 
   const handleClosePanel = (panelKey: string) => {
     setPanels((prev) => ({ ...prev, [panelKey]: false }));
-    // Remove panel from all layouts
+    // Удаляем панель из всех макетов
     const newLayouts = { ...layouts };
     Object.keys(newLayouts).forEach((breakpoint) => {
       newLayouts[breakpoint] = newLayouts[breakpoint].filter((item) => item.i !== panelKey);
@@ -68,17 +70,16 @@ const SceneEditor: React.FC = () => {
 
   const handleOpenPanel = (panelKey: string) => {
     setPanels((prev) => ({ ...prev, [panelKey]: true }));
-    // Add panel to all layouts
+    // Добавляем панель с новой позицией для каждого макета
     const newLayouts = { ...layouts };
     Object.keys(newLayouts).forEach((breakpoint) => {
-      // Add panel with default position for each breakpoint
       newLayouts[breakpoint] = [
         ...newLayouts[breakpoint],
         {
           i: panelKey,
           x: 0,
           y: Infinity,
-          w: cols[breakpoint] / 3, // Adjust width according to breakpoint
+          w: cols[breakpoint] / 3,
           h: 10,
         },
       ];
@@ -88,6 +89,7 @@ const SceneEditor: React.FC = () => {
 
   return (
     <div className="scene-editor">
+      <h2>Active Scene: {activeScene}</h2> {/* Показ активной сцены */}
       <ResponsiveGridLayout
         className="layout"
         layouts={layouts}
@@ -103,7 +105,7 @@ const SceneEditor: React.FC = () => {
           </div>
         )}
         <div key="sceneCanvas" className="panel">
-          <SceneCanvas />
+          <SceneCanvas scene={activeScene} /> {/* Передаем активную сцену в SceneCanvas */}
         </div>
         {panels.propertiesPanel && (
           <div key="propertiesPanel" className="panel">
@@ -111,7 +113,7 @@ const SceneEditor: React.FC = () => {
           </div>
         )}
       </ResponsiveGridLayout>
-      {/* Button to reopen closed panels */}
+      {/* Кнопки для повторного открытия панелей */}
       <div className="panel-controls">
         {!panels.objectsPanel && (
           <button onClick={() => handleOpenPanel('objectsPanel')}>Open Objects Panel</button>
