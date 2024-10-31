@@ -1,0 +1,58 @@
+/* SceneEditor.scss */
+
+.scene-editor {
+    height: 100%;
+    position: relative;
+  }
+  
+  .layout {
+    background: #2e2e2e;
+  }
+  
+  .panel {
+    background: #1c1c1c;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .panel-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .panel-header {
+    background: #1f1f1f;
+    padding: 8px;
+    color: white;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .panel-header button {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .panel-body {
+    padding: 8px;
+    color: white;
+    overflow: auto;
+    flex-grow: 1;
+  }
+  
+  .panel-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .panel-controls button {
+    margin-left: 8px;
+  }
+  
