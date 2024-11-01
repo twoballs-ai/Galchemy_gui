@@ -1,22 +1,46 @@
-import React from 'react';
+// components/panels/SceneObjectsPanel.tsx
 
-interface Props {
+import React, { useState } from 'react';
+import AddObjectModal from './AddObjectModal';
+
+interface SceneObjectsPanelProps {
+  objects: any[];
+  onAddObject: (object: any) => void;
+  onRemoveObject: (objectId: string) => void;
   onClose: () => void;
 }
 
-const SceneObjectsPanel: React.FC<Props> = ({ onClose }) => {
+const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
+  objects,
+  onAddObject,
+  onRemoveObject,
+  onClose,
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddObject = (newObject: any) => {
+    onAddObject(newObject);
+    setIsModalOpen(false);
+  };
+
   return (
-    <div className="panel-content">
+    <div className="scene-objects-panel">
       <div className="panel-header">
-        <span>Scene Objects</span>
-        <button onClick={onClose}>X</button>
+        <h3>Объекты на сцене</h3>
+        <button onClick={onClose}>Закрыть</button>
       </div>
-      <div className="panel-body">
-        {/* List of scene objects */}
-        <p>Object 1</p>
-        <p>Object 2</p>
-        <p>Object 3</p>
+      <div className="panel-content">
+        <ul>
+          {objects.map((object) => (
+            <li key={object.id}>
+              {object.name}
+              <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
+            </li>
+          ))}
+        </ul>
+        <button onClick={() => setIsModalOpen(true)}>Добавить объект</button>
       </div>
+      <AddObjectModal open={isModalOpen} onAdd={handleAddObject} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

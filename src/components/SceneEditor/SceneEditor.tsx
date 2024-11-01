@@ -4,6 +4,7 @@ import SceneCanvas from './SceneCanvas';
 import SceneObjectsPanel from './panels/SceneObjectsPanel';
 import PropertiesPanel from './panels/PropertiesPanel';
 import './SceneEditor.scss';
+import useSceneData from '../../hooks/useSceneData';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -43,7 +44,19 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
     objectsPanel: true,
     propertiesPanel: true,
   });
-
+  const [sceneData, setSceneData] = useSceneData(activeScene);
+  const addObjectToScene = (newObject: any) => {
+    setSceneData((prevData) => ({
+      ...prevData,
+      objects: [...prevData.objects, newObject],
+    }));
+  };
+  const removeObjectFromScene = (objectId: string) => {
+    setSceneData((prevData) => ({
+      ...prevData,
+      objects: prevData.objects.filter((obj) => obj.id !== objectId),
+    }));
+  };
   useEffect(() => {
     // Загрузка данных активной сцены при изменении activeScene
     if (activeScene) {
@@ -101,7 +114,12 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
       >
         {panels.objectsPanel && (
           <div key="objectsPanel" className="panel">
-            <SceneObjectsPanel onClose={() => handleClosePanel('objectsPanel')} />
+              <SceneObjectsPanel
+              objects={sceneData.objects}
+              onAddObject={addObjectToScene}
+              onRemoveObject={removeObjectFromScene}
+              onClose={() => handleClosePanel('objectsPanel')}
+            />
           </div>
         )}
         <div key="sceneCanvas" className="panel">
