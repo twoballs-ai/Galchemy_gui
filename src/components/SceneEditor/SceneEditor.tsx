@@ -57,6 +57,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
       objects: prevData.objects.filter((obj) => obj.id !== objectId),
     }));
   };
+  const [selectedObject, setSelectedObject] = useState<any | null>(null);
+
   useEffect(() => {
     // Загрузка данных активной сцены при изменении activeScene
     if (activeScene) {
@@ -99,7 +101,19 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
     });
     setLayouts(newLayouts);
   };
-
+  const handleSelectObject = (object: any) => {
+    setSelectedObject(object);
+  };
+  
+  const handleUpdateObject = (updatedObject: any) => {
+    setSceneData((prevData) => ({
+      ...prevData,
+      objects: prevData.objects.map((obj) =>
+        obj.id === updatedObject.id ? updatedObject : obj
+      ),
+    }));
+  };
+  
   return (
     <div className="scene-editor">
       <h2>Active Scene: {activeScene}</h2> {/* Показ активной сцены */}
@@ -114,22 +128,28 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
       >
         {panels.objectsPanel && (
           <div key="objectsPanel" className="panel">
-              <SceneObjectsPanel
-              objects={sceneData.objects}
-              onAddObject={addObjectToScene}
-              onRemoveObject={removeObjectFromScene}
-              onClose={() => handleClosePanel('objectsPanel')}
-            />
+<SceneObjectsPanel
+  objects={sceneData.objects}
+  onAddObject={addObjectToScene}
+  onRemoveObject={removeObjectFromScene}
+  onSelectObject={handleSelectObject} // Передаем обработчик
+  onClose={() => handleClosePanel('objectsPanel')}
+/>
           </div>
         )}
         <div key="sceneCanvas" className="panel">
-          <SceneCanvas scene={activeScene} /> {/* Передаем активную сцену в SceneCanvas */}
-        </div>
-        {panels.propertiesPanel && (
-          <div key="propertiesPanel" className="panel">
-            <PropertiesPanel onClose={() => handleClosePanel('propertiesPanel')} />
-          </div>
-        )}
+        <SceneCanvas scene={activeScene} sceneData={sceneData} />
+                </div>
+
+                {panels.propertiesPanel && selectedObject && (
+  <div key="propertiesPanel" className="panel">
+    <PropertiesPanel
+      object={selectedObject}
+      onUpdate={handleUpdateObject}
+      onClose={() => setSelectedObject(null)}
+    />
+  </div>
+)}
       </ResponsiveGridLayout>
       {/* Кнопки для повторного открытия панелей */}
       <div className="panel-controls">

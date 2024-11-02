@@ -7,6 +7,7 @@ interface SceneObjectsPanelProps {
   objects: any[];
   onAddObject: (object: any) => void;
   onRemoveObject: (objectId: string) => void;
+  onSelectObject: (object: any) => void; // Добавлено
   onClose: () => void;
 }
 
@@ -32,10 +33,10 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
       <div className="panel-content">
         <ul>
           {objects.map((object) => (
-            <li key={object.id}>
-              {object.name}
-              <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
-            </li>
+            <li key={object.id} onClick={() => onSelectObject(object)}>
+  {object.name}
+  <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
+</li>
           ))}
         </ul>
         <button onClick={() => setIsModalOpen(true)}>Добавить объект</button>

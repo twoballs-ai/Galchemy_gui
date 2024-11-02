@@ -1,24 +1,26 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Core, SceneManager } from 'tette-core'; // Импорты из вашего пакета
+import { Core, SceneManager, getShape2d } from 'tette-core'; // Импортируем getShape2d
 
 interface SceneCanvasProps {
-  scene: string; // Имя активной сцены, передаваемой в компонент
+  scene: string; // Имя активной сцены
+  sceneData: any; // Данные сцены, включая объекты
 }
 
-const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene }) => {
+const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene, sceneData }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [coreInstance, setCoreInstance] = useState<Core | null>(null);
+  const [shape2d, setShape2d] = useState<any>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Создаем экземпляр SceneManager и Core
+    // Создаем экземпляры SceneManager и Core
     const sceneManager = new SceneManager();
     sceneManager.createScene(scene); // Инициализация сцены
 
     const core = new Core({
       canvasId: canvasRef.current.id,
-      renderType: 'webgl',
+      renderType: '2d', // или '2d' по необходимости
       backgroundColor: '#D3D3D3',
       sceneManager: sceneManager,
       width: canvasRef.current.clientWidth,
@@ -28,10 +30,46 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene }) => {
     core.enableGuiMode(); // Активируем режим GUI
     setCoreInstance(core);
 
+    // Инициализируем shape2d
+    console.log(core)
+    const shape2dInstance = getShape2d(core.renderType);
+    setShape2d(shape2dInstance);
+
     return () => {
-      // Очистка при размонтировании, если необходимо
+      // Очистка при размонтировании
+      core.stop();
     };
   }, [scene]);
+
+  // Обновляем сцену при изменении объектов
+  useEffect(() => {
+    if (coreInstance && shape2d) {
+      const sceneManager = coreInstance.getSceneManager();
+      sceneManager.clearScene(scene); // Очищаем текущую сцену
+
+      sceneData.objects.forEach((obj: any) => {
+        let gameObject;
+
+        if (obj.type === 'rectangle') {
+          gameObject = shape2d.rectangle({
+            x: obj.x,
+            y: obj.y,
+            width: obj.width,
+            height: obj.height,
+            color: obj.color,
+          });
+        }
+        // Обработка других типов объектов аналогично
+
+        if (gameObject) {
+          sceneManager.addGameObjectToScene(scene, gameObject);
+        }
+      });
+
+      sceneManager.changeScene(scene); // Устанавливаем активную сцену
+      coreInstance.render(); // Перерисовываем сцену
+    }
+  }, [sceneData.objects, coreInstance, shape2d]);
 
   // Функция для запуска предпросмотра
   const handleStartPreview = () => {
@@ -41,10 +79,10 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene }) => {
     }
   };
 
-  // Функция для возврата в режим GUI
+  // Функция для остановки предпросмотра
   const handleStopPreview = () => {
     if (coreInstance) {
-      coreInstance.enableGuiMode(); // Активируем режим GUI
+      coreInstance.enableGuiMode(); // Включаем режим GUI
     }
   };
 
