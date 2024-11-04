@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Core, SceneManager, getShape2d } from 'tette-core'; // Импортируйте правильно
+import { Core, SceneManager, getShape2d } from 'tette-core';
 
 interface SceneCanvasProps {
-  scene: string; // Имя активной сцены
-  sceneData: any; // Данные сцены, включая объекты
+  scene: string;
+  sceneData: any;
 }
 
 const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene, sceneData }) => {
@@ -45,54 +45,55 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene, sceneData }) => {
     };
   }, [scene]);
 
-  // Функция создания объекта в зависимости от типа
   const createGameObject = (obj: any) => {
     if (!shape2d) return null;
   
-    const { x, y, color, ...params } = obj;
+    // Достаем параметры из объекта
+    const {
+    x = 50,
+    y = 50,
+    color = 'blue',
+    borderColor = 'black',
+    borderWidth = 1,
+    radius = 50,
+    ...params
+  } = obj;
 
+  
+    // Создание объекта в зависимости от типа
     switch (obj.type) {
       case 'square':
-        return shape2d.square({ x, y, color, size: obj.size });
+        return shape2d.square({ x, y, color, size: obj.size, ...params });
       case 'rectangle':
-        return shape2d.rectangle({ x, y, color, ...params });
+        return shape2d.rectangle({ x, y, color, width: obj.width, height: obj.height, ...params });
       case 'circle':
-        console.log({ x, y, color, radius: obj.radius, borderColor: obj.borderColor, borderWidth: obj.borderWidth })
-        return shape2d.circle({ x, y, color, radius: obj.radius, borderColor: obj.borderColor, borderWidth: obj.borderWidth });
-
+        // Убедитесь, что все необходимые параметры передаются
+        return shape2d.circle({ x, y, color, radius, borderColor, borderWidth, ...params });
       case 'line':
-        return shape2d.line({ x1: obj.x1, y1: obj.y1, x2: obj.x2, y2: obj.y2, color, lineWidth: obj.lineWidth });
+        return shape2d.line({ x1: obj.x1, y1: obj.y1, x2: obj.x2, y2: obj.y2, color, lineWidth: obj.lineWidth, ...params });
       case 'polygon':
-        return shape2d.polygon({ x, y, color, vertices: obj.vertices });
+        return shape2d.polygon({ x, y, color, vertices: obj.vertices, ...params });
       case 'text':
-        return shape2d.text({ x, y, color, text: obj.text, fontSize: obj.fontSize, fontFamily: obj.fontFamily });
+        return shape2d.text({ x, y, color, text: obj.text, fontSize: obj.fontSize, fontFamily: obj.fontFamily, ...params });
       case 'ellipse':
-        return shape2d.ellipse({ x, y, color, radiusX: obj.radiusX, radiusY: obj.radiusY, rotation: obj.rotation });
+        return shape2d.ellipse({ x, y, color, radiusX: obj.radiusX, radiusY: obj.radiusY, rotation: obj.rotation, ...params });
       case 'arc':
         return shape2d.arc({
-          x, y, color,
-          radius: obj.radius,
-          startAngle: obj.startAngle,
-          endAngle: obj.endAngle,
-          borderColor: obj.borderColor,
-          borderWidth: obj.borderWidth,
+          x, y, color, radius: obj.radius, startAngle: obj.startAngle, endAngle: obj.endAngle,
+          borderColor, borderWidth, ...params,
         });
       case 'bezierCurve':
         return shape2d.bezierCurve({
           x, y, color,
-          startX: obj.startX,
-          startY: obj.startY,
-          controlX1: obj.controlX1,
-          controlY1: obj.controlY1,
-          controlX2: obj.controlX2,
-          controlY2: obj.controlY2,
-          endX: obj.endX,
-          endY: obj.endY,
+          startX: obj.startX, startY: obj.startY,
+          controlX1: obj.controlX1, controlY1: obj.controlY1,
+          controlX2: obj.controlX2, controlY2: obj.controlY2,
+          endX: obj.endX, endY: obj.endY, ...params,
         });
       case 'star':
-        return shape2d.star({ x, y, color, radius: obj.radius, points: obj.points });
+        return shape2d.star({ x, y, color, radius: obj.radius, points: obj.points, ...params });
       case 'point':
-        return shape2d.point({ x, y, color, size: obj.size });
+        return shape2d.point({ x, y, color, size: obj.size, ...params });
       default:
         console.warn('Неизвестный тип объекта:', obj.type);
         return null;
@@ -106,8 +107,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ scene, sceneData }) => {
 
       sceneData.objects.forEach((obj: any) => {
         const gameObject = createGameObject(obj);
-        console.log(obj)
-        console.log(gameObject)
+        console.log(obj);
+        console.log(gameObject);
         if (gameObject) {
           sceneManager.addGameObjectToScene(scene, gameObject);
           console.log('Объект добавлен в сцену:', gameObject);

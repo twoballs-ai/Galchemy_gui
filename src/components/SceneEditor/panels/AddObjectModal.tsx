@@ -124,26 +124,26 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
   };
 
   // Хендлер для добавления объекта
-const handleAdd = () => {
-  const selectedObject = availableObjects
-    .flatMap((category) => category.objects)
-    .find((obj) => obj.type === selectedObjectType);
-
-  if (selectedObject) {
-    const newObject = {
-      ...baseParams,
-      ...selectedObject.params, // Параметры объекта из availableObjects, включая radius
-      type: selectedObject.type,
-      name: selectedObject.name,
-    };
-
-    console.log("New object parameters:", newObject); // Отладка
-
-    onAdd(newObject);
-    setSelectedObjectType(null);
-    onClose();
-  }
-};
+  const handleAdd = () => {
+    const selectedObject = availableObjects
+      .flatMap((category) => category.objects)
+      .find((obj) => obj.type === selectedObjectType);
+  
+    if (selectedObject) {
+      const newObject = {
+        ...baseParams,
+        ...selectedObject.params,
+        type: selectedObject.type,
+        name: selectedObject.name,
+      };
+  
+      console.log("New object parameters:", newObject); // Отладка
+  
+      onAdd(newObject);
+      setSelectedObjectType(null);
+      onClose();
+    }
+  };
 
 
   return (
