@@ -1,15 +1,19 @@
 /* AddObjectModal.scss */
 
 .add-object-modal {
+    display: flex;
+    flex-direction: column;
     .category {
       margin-bottom: 20px;
-  
+      display: flex;
+      flex-direction: column;
       h4 {
         margin-bottom: 10px;
       }
   
       .object-list {
         display: flex;
+        flex-direction: row;
         flex-wrap: wrap;
   
         .object-item {
@@ -33,9 +37,9 @@
           }
   
           .object-icon {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 5px;
+            width: auto;  // Укажите желаемый размер
+            height: 32px; // Укажите желаемый размер
+            margin-right: 10px; // Отступ между иконкой и текстом
           }
   
           .object-name {

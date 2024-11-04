@@ -1,0 +1,66 @@
+/* Custom стили для модального окна */
+
+.custom-modal-container {
+    width: 90vw;              /* Занимает 90% ширины экрана */
+    height: 90vh;             /* Занимает 90% высоты экрана */
+    max-width: none;          /* Убираем ограничение на ширину */
+    max-height: none;         /* Убираем ограничение на высоту */
+    padding: 40px;
+    background-color: #333;   /* Темный фон */
+    color: #eee;              /* Светлый текст */
+    border-radius: 12px;
+
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .custom-modal-title {
+    margin-bottom: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+  }
+  
+  .custom-modal-content {
+    flex: 1;                  /* Занимает оставшееся пространство */
+    font-size: 18px;
+    color: #ddd;
+    overflow-y: auto;         /* Добавляем прокрутку, если контент выходит за пределы */
+    text-align: left;
+    padding-right: 15px;      /* Отступ для визуальной границы при прокрутке */
+  }
+  
+  .custom-modal-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  /* Переопределение стандартных стилей react-responsive-modal */
+//   .react-responsive-modal-modal {
+//     background: #333 !important;
+//     box-shadow: none !important;
+//     border: none !important;
+//     outline: none !important;
+//     // width: 100%;              /* Занимает всю ширину контейнера */
+//     // height: 100%;             /* Занимает всю высоту контейнера */
+//     padding: 0 !important;    /* Убираем внутренние отступы */
+//   }
+  
+//   .react-responsive-modal-overlay {
+//     background: rgba(0, 0, 0, 0.8) !important; /* Темный overlay */
+//   }
+  
+/* Переопределение стандартных стилей react-responsive-modal */
+.react-responsive-modal-modal {
+  background: #333 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  border: none !important;
+  max-width: 100vw;
+}
+  .react-responsive-modal-overlay {
+    background: rgba(0, 0, 0, 0.8) !important; /* Темный overlay */
+  }

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
-import SceneCanvas from './SceneCanvas';
-import SceneObjectsPanel from './panels/SceneObjectsPanel';
-import PropertiesPanel from './panels/PropertiesPanel';
-import './SceneEditor.scss';
-import useSceneData from '../../hooks/useSceneData';
+import React, { useState, useEffect } from "react";
+import { Responsive, WidthProvider, Layouts, Layout } from "react-grid-layout";
+import SceneCanvas from "./SceneCanvas";
+import SceneObjectsPanel from "./panels/SceneObjectsPanel";
+import PropertiesPanel from "./panels/PropertiesPanel";
+import "./SceneEditor.scss";
+import useSceneData from "../../hooks/useSceneData";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -13,24 +13,24 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4 };
 
 const initialLayouts: Layouts = {
   lg: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 10 },
-    { i: 'sceneCanvas', x: 3, y: 0, w: 6, h: 10 },
-    { i: 'propertiesPanel', x: 9, y: 0, w: 3, h: 10 },
+    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 10 },
+    { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 10 },
+    { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 10 },
   ],
   md: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 2, h: 10 },
-    { i: 'sceneCanvas', x: 2, y: 0, w: 6, h: 10 },
-    { i: 'propertiesPanel', x: 8, y: 0, w: 2, h: 10 },
+    { i: "objectsPanel", x: 0, y: 0, w: 2, h: 10 },
+    { i: "sceneCanvas", x: 2, y: 0, w: 6, h: 10 },
+    { i: "propertiesPanel", x: 8, y: 0, w: 2, h: 10 },
   ],
   sm: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 5 },
-    { i: 'sceneCanvas', x: 0, y: 5, w: 6, h: 10 },
-    { i: 'propertiesPanel', x: 0, y: 15, w: 2, h: 5 },
+    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 5 },
+    { i: "sceneCanvas", x: 0, y: 5, w: 6, h: 10 },
+    { i: "propertiesPanel", x: 0, y: 15, w: 2, h: 5 },
   ],
   xs: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 4, h: 5 },
-    { i: 'sceneCanvas', x: 0, y: 5, w: 4, h: 10 },
-    { i: 'propertiesPanel', x: 0, y: 15, w: 4, h: 5 },
+    { i: "objectsPanel", x: 0, y: 0, w: 4, h: 5 },
+    { i: "sceneCanvas", x: 0, y: 5, w: 4, h: 10 },
+    { i: "propertiesPanel", x: 0, y: 15, w: 4, h: 5 },
   ],
 };
 
@@ -70,7 +70,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
   const onLayoutChange = (currentLayout: Layout[], allLayouts: Layouts) => {
     setLayouts(allLayouts);
     // Сохраняем макет в localStorage
-    localStorage.setItem('sceneEditorLayouts', JSON.stringify(allLayouts));
+    localStorage.setItem("sceneEditorLayouts", JSON.stringify(allLayouts));
   };
 
   const handleClosePanel = (panelKey: string) => {
@@ -78,7 +78,9 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
     // Удаляем панель из всех макетов
     const newLayouts = { ...layouts };
     Object.keys(newLayouts).forEach((breakpoint) => {
-      newLayouts[breakpoint] = newLayouts[breakpoint].filter((item) => item.i !== panelKey);
+      newLayouts[breakpoint] = newLayouts[breakpoint].filter(
+        (item) => item.i !== panelKey
+      );
     });
     setLayouts(newLayouts);
   };
@@ -104,7 +106,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
   const handleSelectObject = (object: any) => {
     setSelectedObject(object);
   };
-  
+
   const handleUpdateObject = (updatedObject: any) => {
     setSceneData((prevData) => ({
       ...prevData,
@@ -113,10 +115,9 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
       ),
     }));
   };
-  
+
   return (
     <div className="scene-editor">
-      <h2>Active Scene: {activeScene}</h2> {/* Показ активной сцены */}
       <ResponsiveGridLayout
         className="layout"
         layouts={layouts}
@@ -128,36 +129,40 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
       >
         {panels.objectsPanel && (
           <div key="objectsPanel" className="panel">
-<SceneObjectsPanel
-  objects={sceneData.objects}
-  onAddObject={addObjectToScene}
-  onRemoveObject={removeObjectFromScene}
-  onSelectObject={handleSelectObject} // Передаем обработчик
-  onClose={() => handleClosePanel('objectsPanel')}
-/>
+            <SceneObjectsPanel
+              objects={sceneData.objects}
+              onAddObject={addObjectToScene}
+              onRemoveObject={removeObjectFromScene}
+              onSelectObject={handleSelectObject} // Передаем обработчик
+              onClose={() => handleClosePanel("objectsPanel")}
+            />
           </div>
         )}
         <div key="sceneCanvas" className="panel">
-        <SceneCanvas scene={activeScene} sceneData={sceneData} />
-                </div>
+          <SceneCanvas scene={activeScene} sceneData={sceneData} />
+        </div>
 
-                {panels.propertiesPanel && selectedObject && (
-  <div key="propertiesPanel" className="panel">
-    <PropertiesPanel
-      object={selectedObject}
-      onUpdate={handleUpdateObject}
-      onClose={() => setSelectedObject(null)}
-    />
-  </div>
-)}
+        {panels.propertiesPanel && selectedObject && (
+          <div key="propertiesPanel" className="panel">
+            <PropertiesPanel
+              object={selectedObject}
+              onUpdate={handleUpdateObject}
+              onClose={() => setSelectedObject(null)}
+            />
+          </div>
+        )}
       </ResponsiveGridLayout>
       {/* Кнопки для повторного открытия панелей */}
       <div className="panel-controls">
         {!panels.objectsPanel && (
-          <button onClick={() => handleOpenPanel('objectsPanel')}>Open Objects Panel</button>
+          <button onClick={() => handleOpenPanel("objectsPanel")}>
+            Open Objects Panel
+          </button>
         )}
         {!panels.propertiesPanel && (
-          <button onClick={() => handleOpenPanel('propertiesPanel')}>Open Properties Panel</button>
+          <button onClick={() => handleOpenPanel("propertiesPanel")}>
+            Open Properties Panel
+          </button>
         )}
       </div>
     </div>

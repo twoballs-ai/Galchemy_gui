@@ -225,6 +225,7 @@ const App: React.FC = () => {
             >
               Редактор логики
             </Button>
+            <h2 style={{ color:"white" }}>Active Scene: {activeScene}</h2> {/* Показ активной сцены */}
           </div>
           {editorTabs[activeScene] === 'levelEditor' ? (
              <SceneEditor activeScene={activeScene} />

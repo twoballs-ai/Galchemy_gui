@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import AddObjectModal from './AddObjectModal';
+import './SceneObjectsPanel.scss'; // Импортируем SCSS
 
 interface SceneObjectsPanelProps {
   objects: any[];
@@ -15,6 +16,7 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
   objects,
   onAddObject,
   onRemoveObject,
+  onSelectObject,
   onClose,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,12 +36,13 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
         <ul>
           {objects.map((object) => (
             <li key={object.id} onClick={() => onSelectObject(object)}>
-  {object.name}
-  <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
-</li>
+              {object.name}
+              <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
+            </li>
           ))}
         </ul>
-        <button onClick={() => setIsModalOpen(true)}>Добавить объект</button>
+        {/* Кнопка "Добавить объект" перемещена вниз */}
+        <button className="add-object" onClick={() => setIsModalOpen(true)}>Добавить объект</button>
       </div>
       <AddObjectModal open={isModalOpen} onAdd={handleAddObject} onClose={() => setIsModalOpen(false)} />
     </div>

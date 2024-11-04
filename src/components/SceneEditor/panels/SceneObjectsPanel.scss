@@ -1,0 +1,88 @@
+.scene-objects-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(80, 80, 80);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    height: 100%;
+    // max-width: 300px;
+  
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  
+      h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+  
+      button {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 5px 10px;
+  
+        &:hover {
+          background-color: #c0392b;
+        }
+      }
+    }
+  
+    .panel-content {
+      flex-grow: 1;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column; // Добавляем flex-direction
+  
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex-grow: 1; // Добавляем для растягивания
+  
+        li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 5px 0;
+          border-bottom: 1px solid #ccc;
+  
+          &:last-child {
+            border-bottom: none;
+          }
+  
+          button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 3px 8px;
+  
+            &:hover {
+              background-color: #c0392b;
+            }
+          }
+        }
+      }
+  
+      button.add-object {
+        margin-top: auto; // Прижимаем кнопку к низу
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 8px;
+  
+        &:hover {
+          background-color: #2980b9;
+        }
+      }
+    }
+  }
+  
