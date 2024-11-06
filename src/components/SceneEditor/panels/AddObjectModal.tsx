@@ -22,65 +22,154 @@ const availableObjects = [
         name: 'Квадрат',
         type: 'square',
         icon: SquareIcon,
-        params: { size: 100 },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          size: 100,
+          color: 'blue',
+          borderColor: 'black',
+          borderWidth: 1,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Прямоугольник',
         type: 'rectangle',
         icon: RectangleIcon,
-        params: { width: 120, height: 50 },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          width: 120,
+          height: 50,
+          color: 'green',
+          borderColor: 'black',
+          borderWidth: 1,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Круг',
         type: 'circle',
         icon: CircleIcon,
         params: {
-          radius: 50,
+          id: uuidv4(),
           x: 50,
           y: 50,
-          color: 'blue',             // Цвет заливки
-          borderColor: 'black',       // Цвет границы
-          borderWidth: 1,             // Ширина границы
-          enablePhysics: false,       // Поддержка физики (по умолчанию false)
-          isStatic: false,            // Статичность объекта
-          layer: 0                    // Слой
+          radius: 50,
+          color: 'red',            // Цвет заливки
+          borderColor: 'black',    // Цвет границы
+          borderWidth: 1,          // Ширина границы
+          enablePhysics: false,    // Поддержка физики (по умолчанию false)
+          isStatic: false,         // Статичность объекта
+          layer: 0,                // Слой
         },
       },
       {
         name: 'Дуга',
         type: 'arc',
         icon: CircleIcon,
-        params: { radius: 50, startAngle: 0, endAngle: Math.PI / 2 },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          radius: 50,
+          startAngle: 0,
+          endAngle: Math.PI / 2,
+          color: 'purple',
+          borderColor: 'black',
+          borderWidth: 1,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Эллипс',
         type: 'ellipse',
         icon: CircleIcon,
-        params: { radiusX: 60, radiusY: 40, rotation: 0 },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          rX: 60,
+          rY: 40,
+          rot: 0,
+          start: 0,
+          end: 2 * Math.PI,
+          color: 'orange',
+          borderColor: 'black',
+          borderWidth: 1,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Текст',
         type: 'text',
         icon: CircleIcon,
-        params: { text: 'Hello World', fontSize: 16, fontFamily: 'Arial' },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          text: 'Hello World',
+          fontsize: 16,
+          fontFamily: 'Arial',
+          color: 'black',
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Линия',
         type: 'line',
         icon: CircleIcon,
-        params: { x1: 10, y1: 10, x2: 100, y2: 100, lineWidth: 2 },
+        params: {
+          id: uuidv4(),
+          x1: 10,
+          y1: 10,
+          x2: 100,
+          y2: 100,
+          color: 'black',
+          widthline: 2,
+          lineRounded: 'butt',
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Многоугольник',
         type: 'polygon',
         icon: CircleIcon,
-        params: { vertices: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 50, y: 50 }] },
+        params: {
+          id: uuidv4(),
+          vertices: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+            { x: 50, y: 50 },
+          ],
+          color: 'yellow',
+          borderColor: 'black',
+          borderWidth: 1,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Кривая Безье',
         type: 'bezierCurve',
         icon: CircleIcon,
         params: {
+          id: uuidv4(),
           startX: 10,
           startY: 10,
           controlX1: 30,
@@ -89,19 +178,45 @@ const availableObjects = [
           controlY2: 100,
           endX: 100,
           endY: 10,
+          color: 'cyan',
+          widthline: 2,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
         },
       },
       {
         name: 'Звезда',
         type: 'star',
         icon: CircleIcon,
-        params: { radius: 50, points: 5 },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          radius: 50,
+          points: 5,
+          color: 'pink',
+          borderColor: 'black',
+          borderWidth: 1,
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
       {
         name: 'Точка',
         type: 'point',
         icon: CircleIcon,
-        params: { size: 5 },
+        params: {
+          id: uuidv4(),
+          x: 50,
+          y: 50,
+          size: 5,
+          color: 'black',
+          enablePhysics: false,
+          isStatic: false,
+          layer: 0,
+        },
       },
     ],
   },
@@ -110,41 +225,26 @@ const availableObjects = [
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
   const [selectedObjectType, setSelectedObjectType] = useState<string | null>(null);
 
-  // Параметры по умолчанию
-  const baseParams = {
-    id: uuidv4(),
-    x: 50,
-    y: 50,
-    color: 'blue',
-    borderColor: 'black',
-    borderWidth: 1,
-    enablePhysics: false,
-    isStatic: false,
-    layer: 0,
-  };
-
   // Хендлер для добавления объекта
   const handleAdd = () => {
     const selectedObject = availableObjects
       .flatMap((category) => category.objects)
       .find((obj) => obj.type === selectedObjectType);
-  
+
     if (selectedObject) {
       const newObject = {
-        ...baseParams,
         ...selectedObject.params,
         type: selectedObject.type,
         name: selectedObject.name,
       };
-  
-      console.log("New object parameters:", newObject); // Отладка
-  
+
+      console.log('New object parameters:', newObject); // Отладка
+
       onAdd(newObject);
       setSelectedObjectType(null);
       onClose();
     }
   };
-
 
   return (
     <CustomModal
