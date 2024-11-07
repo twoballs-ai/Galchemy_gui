@@ -1,249 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Button, Dropdown, Space, Drawer } from 'antd';
-import {
-  DownOutlined,
-  PlusOutlined,
-  SaveOutlined,
-  PlayCircleOutlined,
-  MenuOutlined,
-} from '@ant-design/icons';
-import LogicEditorContent from './components/LogicEditor/LogicEditorContent';
-import SceneEditor from './components/SceneEditor/SceneEditor';
-import Tabs from './components/Tabs/Tabs';
-import {
-  saveProjectData,
-  loadProjectData,
-  saveSceneData,
-  loadSceneData,
-  updateOpenedScenes,
-  loadOpenedScenes,
-} from './utils/storageUtils';
+// App.tsx
 
-const { Header, Content } = Layout;
+import React, { useState, useEffect } from 'react';
+import GameTypeSelector from './GameTypeSelector';
+import GameEditor from './GameEditor';
+import { Button, List, Modal, Space, Typography } from 'antd';
+import './App.scss';
+import { Project, saveProjectsData, loadProjectsData } from './utils/storageUtils';
 
 const App: React.FC = () => {
-  const [sceneTabs, setSceneTabs] = useState<string[]>([]);
-  const [activeScene, setActiveScene] = useState<string>('');
-  const [editorTabs, setEditorTabs] = useState<{ [key: string]: string }>({});
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [drawerPlacement, setDrawerPlacement] = useState<'left' | 'right' | 'top' | 'bottom'>('left');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isGameTypeModalVisible, setIsGameTypeModalVisible] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
+  // Загружаем проекты из localStorage при загрузке
   useEffect(() => {
-    const projectData = loadProjectData();
-    const openScenes = loadOpenedScenes();
-
-    if (projectData && projectData.scenes.length > 0) {
-      setSceneTabs(projectData.scenes);
-    }
-
-    if (openScenes.length > 0) {
-      setActiveScene(openScenes[0]?.key || '');
-      const editorStates: { [key: string]: string } = {};
-      openScenes.forEach((scene) => {
-        editorStates[scene.key] = scene.state;
-      });
-      setEditorTabs(editorStates);
-    } else if (projectData && projectData.scenes.length > 0) {
-      setActiveScene(projectData.scenes[0]);
-      updateOpenedScenes([
-        {
-          title: projectData.scenes[0],
-          key: projectData.scenes[0],
-          state: 'levelEditor',
-        },
-      ]);
-    } else {
-      handleNewScene();
+    const storedProjects = loadProjectsData();
+    if (storedProjects.length > 0) {
+      setProjects(storedProjects);
     }
   }, []);
 
-  const toggleDrawer = () => setDrawerVisible(!drawerVisible);
+  // Сохраняем проекты в localStorage при каждом изменении
+  useEffect(() => {
+    saveProjectsData(projects);
+  }, [projects]);
 
-  const handleNewScene = () => {
-    const newScene = `Scene ${sceneTabs.length + 1}`;
-    const newSceneData = { sceneName: newScene, objects: [], settings: {} };
-
-    const updatedSceneTabs = [...sceneTabs, newScene];
-    setSceneTabs(updatedSceneTabs);
-    setActiveScene(newScene);
-    setEditorTabs((prevTabs) => ({ ...prevTabs, [newScene]: 'levelEditor' }));
-
-    saveSceneData(newScene, newSceneData);
-    const projectData = loadProjectData() || { scenes: [] };
-    projectData.scenes = updatedSceneTabs;
-    saveProjectData(projectData);
-
-    const openedScenes = loadOpenedScenes();
-    const updatedOpenScenes = [
-      ...openedScenes,
-      {
-        title: newScene,
-        key: newScene,
-        state: 'levelEditor',
-      },
-    ];
-    updateOpenedScenes(updatedOpenScenes);
+  const handleCreateProject = () => {
+    setIsGameTypeModalVisible(true);
   };
 
-  const handleRemoveScene = (tab: string) => {
-    const updatedOpenScenes = loadOpenedScenes().filter((scene) => scene.key !== tab);
-    updateOpenedScenes(updatedOpenScenes);
-
-    if (activeScene === tab && updatedOpenScenes.length > 0) {
-      setActiveScene(updatedOpenScenes[0].key);
-    } else if (updatedOpenScenes.length === 0) {
-      setActiveScene('');
-    } else {
-      setActiveScene(activeScene);
-    }
-
-    setEditorTabs((prevTabs) => {
-      const newTabs = { ...prevTabs };
-      delete newTabs[tab];
-      return newTabs;
-    });
+  const handleSelectGameType = (gameType: string) => {
+    setIsGameTypeModalVisible(false);
+    const newProject: Project = {
+      name: `Project ${projects.length + 1}`,
+      renderType: gameType,
+      scenes: [],
+    };
+    const updatedProjects = [...projects, newProject];
+    setProjects(updatedProjects);
   };
 
-  const handleSceneChange = (tab: string) => {
-    setActiveScene(tab);
-    const openedScenes = loadOpenedScenes();
-    if (!openedScenes.find((scene) => scene.key === tab)) {
-      const updatedOpenScenes = [
-        ...openedScenes,
-        {
-          title: tab,
-          key: tab,
-          state: editorTabs[tab] || 'levelEditor',
-        },
-      ];
-      updateOpenedScenes(updatedOpenScenes);
-    }
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setIsEditorOpen(true);
   };
 
-  const handleEditorTabChange = (key: string) => {
-    setEditorTabs((prevTabs) => ({ ...prevTabs, [activeScene]: key }));
-    const openedScenes = loadOpenedScenes().map((scene) =>
-      scene.key === activeScene ? { ...scene, state: key } : scene
-    );
-    updateOpenedScenes(openedScenes);
+  const handleCloseEditor = () => {
+    setIsEditorOpen(false);
+    setSelectedProject(null);
   };
-
-  const handleSaveProject = () => {
-    const projectData = loadProjectData() || { scenes: [] };
-    projectData.scenes = sceneTabs;
-    saveProjectData(projectData);
-  };
-
-  const projectMenuItems = [
-    { label: 'Создать сцену', key: 'newScene', onClick: handleNewScene },
-    { label: 'Сохранить проект', key: 'save', onClick: handleSaveProject },
-  ];
-
-  const editMenuItems = [
-    { label: 'Отменить', key: 'undo' },
-    { label: 'Повторить', key: 'redo' },
-  ];
-
-  const aboutMenuItems = [
-    { label: 'Версия', key: 'version' },
-    { label: 'Контакты', key: 'contact' },
-  ];
 
   return (
-    <Layout style={{ height: '100vh', background: '#1c1c1c' }}>
-      <Header style={{ background: '#1f1f1f', padding: '0 16px', display: 'flex', height: '60px' }}>
-        <Dropdown menu={{ items: projectMenuItems }} trigger={['click']}>
-          <Space>
-            <Button type="text" style={{ color: 'white' }}>
-              Проект
-            </Button>
-            <DownOutlined />
+    <div className="app-container">
+      {!isEditorOpen ? (
+        <div className="main-page">
+          <Typography.Title level={2} className="main-title">Мои проекты</Typography.Title>
+          <Space style={{ marginBottom: '20px' }}>
+            <Button type="primary" onClick={handleCreateProject}>Создать новый проект</Button>
           </Space>
-        </Dropdown>
-        <Dropdown menu={{ items: editMenuItems }} trigger={['click']}>
-          <Space>
-            <Button type="text" style={{ color: 'white', marginLeft: '16px' }}>
-              Правка
-            </Button>
-            <DownOutlined />
-          </Space>
-        </Dropdown>
-        <Dropdown menu={{ items: aboutMenuItems }} trigger={['click']}>
-          <Space>
-            <Button type="text" style={{ color: 'white', marginLeft: '16px' }}>
-              О программе
-            </Button>
-            <DownOutlined />
-          </Space>
-        </Dropdown>
-        <Tabs
-          tabs={sceneTabs}
-          activeTab={activeScene}
-          onTabClick={handleSceneChange}
-          onAddTab={handleNewScene}
-          onRemoveTab={handleRemoveScene}
-        />
-      </Header>
+          <List
+            bordered
+            dataSource={projects}
+            renderItem={(project) => (
+              <List.Item actions={[
+                <Button type="link" onClick={() => handleEditProject(project)}>
+                  Редактировать
+                </Button>,
+              ]}>
+                {project.name} – {project.renderType}
+              </List.Item>
+            )}
+          />
+        </div>
+      ) : (
+        selectedProject && (
+          <GameEditor
+            project={selectedProject}
+            onUpdateProject={(updatedProject) => {
+              const updatedProjects = projects.map((proj) =>
+                proj.name === updatedProject.name ? updatedProject : proj
+              );
+              setProjects(updatedProjects);
+            }}
+            onCloseProject={handleCloseEditor}
+          />
+        )
+      )}
 
-      <Header
-        style={{
-          background: '#1f1f1f',
-          padding: '0 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '48px',
-        }}
+      <Modal
+        title="Выберите тип рендеринга"
+        visible={isGameTypeModalVisible}
+        onCancel={() => setIsGameTypeModalVisible(false)}
+        footer={null}
       >
-        <Button type="text" icon={<MenuOutlined />} onClick={toggleDrawer} style={{ color: 'white' }} />
-        <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleNewScene} style={{ marginRight: '16px' }}>
-            New Scene
-          </Button>
-          <Button type="default" icon={<SaveOutlined />} onClick={handleSaveProject} style={{ marginRight: '16px' }}>
-            Save
-          </Button>
-          <Button type="primary" icon={<PlayCircleOutlined />}>
-            Run Game
-          </Button>
-        </Space>
-        <div style={{ width: '48px' }} />
-      </Header>
-
-      <Layout>
-        <Content style={{ padding: '16px', background: '#2e2e2e' }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <Button
-              type={editorTabs[activeScene] === 'levelEditor' ? 'primary' : 'default'}
-              onClick={() => handleEditorTabChange('levelEditor')}
-            >
-              Редактор уровня
-            </Button>
-            <Button
-              type={editorTabs[activeScene] === 'logicEditor' ? 'primary' : 'default'}
-              onClick={() => handleEditorTabChange('logicEditor')}
-            >
-              Редактор логики
-            </Button>
-            <h2 style={{ color:"white" }}>Active Scene: {activeScene}</h2> {/* Показ активной сцены */}
-          </div>
-          {editorTabs[activeScene] === 'levelEditor' ? (
-             <SceneEditor activeScene={activeScene} />
-          ) : (
-            <LogicEditorContent scene={activeScene} />
-          )}
-        </Content>
-      </Layout>
-
-      <Drawer
-        title="Параметры проекта"
-        placement={drawerPlacement}
-        onClose={toggleDrawer}
-        open={drawerVisible}
-      >
-        <p>Здесь можно редактировать параметры проекта.</p>
-      </Drawer>
-    </Layout>
+        <GameTypeSelector onSelect={handleSelectGameType} />
+      </Modal>
+    </div>
   );
 };
 

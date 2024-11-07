@@ -1,11 +1,9 @@
-// hooks/useSceneData.ts
-
 import { useState, useEffect } from 'react';
 import { saveSceneData, loadSceneData } from '../utils/storageUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 interface SceneData {
-  objects: any[]; // Массив объектов на сцене
-  // Добавьте другие свойства сцены, если нужно
+  objects: any[];
 }
 
 const useSceneData = (sceneName: string) => {
@@ -15,6 +13,9 @@ const useSceneData = (sceneName: string) => {
     const storedData = loadSceneData(sceneName);
     if (storedData) {
       setSceneData(storedData);
+    } else {
+      // Если данных нет, создаём пустую сцену
+      setSceneData({ objects: [] });
     }
   }, [sceneName]);
 
@@ -22,7 +23,19 @@ const useSceneData = (sceneName: string) => {
     saveSceneData(sceneName, sceneData);
   }, [sceneName, sceneData]);
 
-  return [sceneData, setSceneData] as [SceneData, React.Dispatch<React.SetStateAction<SceneData>>];
+  const addObjectToScene = (newObject: any) => {
+    const objectWithId = { ...newObject, id: uuidv4() };
+    setSceneData((prevData) => ({
+      ...prevData,
+      objects: [...prevData.objects, objectWithId],
+    }));
+  };
+
+  return [sceneData, setSceneData, addObjectToScene] as [
+    SceneData,
+    React.Dispatch<React.SetStateAction<SceneData>>,
+    (newObject: any) => void
+  ];
 };
 
 export default useSceneData;

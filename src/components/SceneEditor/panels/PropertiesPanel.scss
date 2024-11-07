@@ -1,0 +1,47 @@
+.properties-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(80, 80, 80);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    height: 100%;
+  
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  
+      span {
+        margin: 0;
+        font-size: 18px;
+        color: white;
+      }
+    }
+  
+    .panel-body {
+      flex-grow: 1;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+  
+      label {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+        color: white;
+  
+        input {
+          margin-top: 5px;
+          padding: 5px;
+          border: 1px solid #ccc;
+          border-radius: 3px;
+        }
+      }
+  
+      p {
+        color: white;
+      }
+    }
+  }
+  

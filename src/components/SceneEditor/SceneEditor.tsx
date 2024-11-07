@@ -1,3 +1,4 @@
+// Импорт необходимых модулей
 import React, { useState, useEffect } from "react";
 import { Responsive, WidthProvider, Layouts, Layout } from "react-grid-layout";
 import SceneCanvas from "./SceneCanvas";
@@ -44,26 +45,24 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
     objectsPanel: true,
     propertiesPanel: true,
   });
-  const [sceneData, setSceneData] = useSceneData(activeScene);
-  const addObjectToScene = (newObject: any) => {
-    setSceneData((prevData) => ({
-      ...prevData,
-      objects: [...prevData.objects, newObject],
-    }));
-  };
+
+  // Получаем все три возвращаемых значения из хука
+  const [sceneData, setSceneData, addObjectToScene] = useSceneData(activeScene);
+
   const removeObjectFromScene = (objectId: string) => {
     setSceneData((prevData) => ({
       ...prevData,
       objects: prevData.objects.filter((obj) => obj.id !== objectId),
     }));
   };
+
   const [selectedObject, setSelectedObject] = useState<any | null>(null);
 
   useEffect(() => {
     // Загрузка данных активной сцены при изменении activeScene
     if (activeScene) {
       console.log(`Загрузка данных для активной сцены: ${activeScene}`);
-      // Здесь можно добавить логику для загрузки данных активной сцены
+      // Здесь можно добавить дополнительную логику, если нужно
     }
   }, [activeScene]);
 
@@ -103,17 +102,20 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
     });
     setLayouts(newLayouts);
   };
+
   const handleSelectObject = (object: any) => {
     setSelectedObject(object);
   };
 
   const handleUpdateObject = (updatedObject: any) => {
+    if (!updatedObject || !updatedObject.id) return;
     setSceneData((prevData) => ({
       ...prevData,
       objects: prevData.objects.map((obj) =>
         obj.id === updatedObject.id ? updatedObject : obj
       ),
     }));
+    setSelectedObject(updatedObject);
   };
 
   return (
@@ -131,23 +133,28 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
           <div key="objectsPanel" className="panel">
             <SceneObjectsPanel
               objects={sceneData.objects}
-              onAddObject={addObjectToScene}
+              onAddObject={addObjectToScene} // Используем функцию из хука
               onRemoveObject={removeObjectFromScene}
-              onSelectObject={handleSelectObject} // Передаем обработчик
+              onSelectObject={handleSelectObject}
               onClose={() => handleClosePanel("objectsPanel")}
             />
           </div>
         )}
         <div key="sceneCanvas" className="panel">
-          <SceneCanvas scene={activeScene} sceneData={sceneData} />
+          <SceneCanvas
+            scene={activeScene}
+            sceneData={sceneData}
+            selectedObject={selectedObject}
+            onSelectObject={handleSelectObject}
+            onUpdateObject={handleUpdateObject}
+          />
         </div>
 
-        {panels.propertiesPanel && selectedObject && (
+        {panels.propertiesPanel && (
           <div key="propertiesPanel" className="panel">
             <PropertiesPanel
               object={selectedObject}
               onUpdate={handleUpdateObject}
-              onClose={() => setSelectedObject(null)}
             />
           </div>
         )}
