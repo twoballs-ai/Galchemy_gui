@@ -1,11 +1,12 @@
-// Импорт необходимых модулей
-import React, { useState, useEffect } from "react";
-import { Responsive, WidthProvider, Layouts, Layout } from "react-grid-layout";
-import SceneCanvas from "./SceneCanvas";
-import SceneObjectsPanel from "./panels/SceneObjectsPanel";
-import PropertiesPanel from "./panels/PropertiesPanel";
-import "./SceneEditor.scss";
-import useSceneData from "../../hooks/useSceneData";
+// SceneEditor.tsx
+
+import React, { useState, useEffect } from 'react';
+import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
+import SceneCanvas from './SceneCanvas';
+import SceneObjectsPanel from './panels/SceneObjectsPanel';
+import PropertiesPanel from './panels/PropertiesPanel';
+import './SceneEditor.scss';
+import { loadSceneData, saveSceneData } from '../../utils/storageUtils';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -14,62 +15,63 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4 };
 
 const initialLayouts: Layouts = {
   lg: [
-    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 10 },
-    { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 10 },
-    { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 10 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 10 },
+    { i: 'sceneCanvas', x: 3, y: 0, w: 6, h: 10 },
+    { i: 'propertiesPanel', x: 9, y: 0, w: 3, h: 10 },
   ],
   md: [
-    { i: "objectsPanel", x: 0, y: 0, w: 2, h: 10 },
-    { i: "sceneCanvas", x: 2, y: 0, w: 6, h: 10 },
-    { i: "propertiesPanel", x: 8, y: 0, w: 2, h: 10 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 2, h: 10 },
+    { i: 'sceneCanvas', x: 2, y: 0, w: 6, h: 10 },
+    { i: 'propertiesPanel', x: 8, y: 0, w: 2, h: 10 },
   ],
   sm: [
-    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 5 },
-    { i: "sceneCanvas", x: 0, y: 5, w: 6, h: 10 },
-    { i: "propertiesPanel", x: 0, y: 15, w: 2, h: 5 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 5 },
+    { i: 'sceneCanvas', x: 0, y: 5, w: 6, h: 10 },
+    { i: 'propertiesPanel', x: 0, y: 15, w: 2, h: 5 },
   ],
   xs: [
-    { i: "objectsPanel", x: 0, y: 0, w: 4, h: 5 },
-    { i: "sceneCanvas", x: 0, y: 5, w: 4, h: 10 },
-    { i: "propertiesPanel", x: 0, y: 15, w: 4, h: 5 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 4, h: 5 },
+    { i: 'sceneCanvas', x: 0, y: 5, w: 4, h: 10 },
+    { i: 'propertiesPanel', x: 0, y: 15, w: 4, h: 5 },
   ],
 };
 
 interface SceneEditorProps {
-  activeScene: string;
+  projectName: string;
+  sceneName: string;
+  renderType: string;
 }
 
-const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
+const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, renderType }) => {
   const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
+  const [sceneData, setSceneData] = useState<any>({
+    sceneName: sceneName,
+    objects: [],
+    settings: {},
+  });
+
+  const [selectedObject, setSelectedObject] = useState<any | null>(null);
   const [panels, setPanels] = useState({
     objectsPanel: true,
     propertiesPanel: true,
   });
 
-  // Получаем все три возвращаемых значения из хука
-  const [sceneData, setSceneData, addObjectToScene] = useSceneData(activeScene);
-
-  const removeObjectFromScene = (objectId: string) => {
-    setSceneData((prevData) => ({
-      ...prevData,
-      objects: prevData.objects.filter((obj) => obj.id !== objectId),
-    }));
-  };
-
-  const [selectedObject, setSelectedObject] = useState<any | null>(null);
+  useEffect(() => {
+    // Загружаем данные сцены при монтировании компонента
+    const loadedSceneData = loadSceneData(projectName, sceneName);
+    if (loadedSceneData) {
+      setSceneData(loadedSceneData);
+    }
+  }, [projectName, sceneName]);
 
   useEffect(() => {
-    // Загрузка данных активной сцены при изменении activeScene
-    if (activeScene) {
-      console.log(`Загрузка данных для активной сцены: ${activeScene}`);
-      // Здесь можно добавить дополнительную логику, если нужно
-    }
-  }, [activeScene]);
+    // Сохраняем данные сцены при их изменении
+    saveSceneData(projectName, sceneName, sceneData);
+  }, [sceneData, projectName, sceneName]);
 
   const onLayoutChange = (currentLayout: Layout[], allLayouts: Layouts) => {
     setLayouts(allLayouts);
-    // Сохраняем макет в localStorage
-    localStorage.setItem("sceneEditorLayouts", JSON.stringify(allLayouts));
+    // Можно сохранить макеты в localStorage, если необходимо
   };
 
   const handleClosePanel = (panelKey: string) => {
@@ -109,13 +111,27 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
 
   const handleUpdateObject = (updatedObject: any) => {
     if (!updatedObject || !updatedObject.id) return;
-    setSceneData((prevData) => ({
+    setSceneData((prevData: any) => ({
       ...prevData,
-      objects: prevData.objects.map((obj) =>
+      objects: prevData.objects.map((obj: any) =>
         obj.id === updatedObject.id ? updatedObject : obj
       ),
     }));
     setSelectedObject(updatedObject);
+  };
+
+  const addObjectToScene = (newObject: any) => {
+    setSceneData((prevData: any) => ({
+      ...prevData,
+      objects: [...prevData.objects, newObject],
+    }));
+  };
+
+  const removeObjectFromScene = (objectId: string) => {
+    setSceneData((prevData: any) => ({
+      ...prevData,
+      objects: prevData.objects.filter((obj: any) => obj.id !== objectId),
+    }));
   };
 
   return (
@@ -133,16 +149,17 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
           <div key="objectsPanel" className="panel">
             <SceneObjectsPanel
               objects={sceneData.objects}
-              onAddObject={addObjectToScene} // Используем функцию из хука
+              onAddObject={addObjectToScene}
               onRemoveObject={removeObjectFromScene}
               onSelectObject={handleSelectObject}
-              onClose={() => handleClosePanel("objectsPanel")}
+              onClose={() => handleClosePanel('objectsPanel')}
             />
           </div>
         )}
         <div key="sceneCanvas" className="panel">
           <SceneCanvas
-            scene={activeScene}
+            sceneName={sceneName}
+            renderType={renderType}
             sceneData={sceneData}
             selectedObject={selectedObject}
             onSelectObject={handleSelectObject}
@@ -155,6 +172,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
             <PropertiesPanel
               object={selectedObject}
               onUpdate={handleUpdateObject}
+              onClose={() => handleClosePanel('propertiesPanel')}
             />
           </div>
         )}
@@ -162,12 +180,12 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene }) => {
       {/* Кнопки для повторного открытия панелей */}
       <div className="panel-controls">
         {!panels.objectsPanel && (
-          <button onClick={() => handleOpenPanel("objectsPanel")}>
+          <button onClick={() => handleOpenPanel('objectsPanel')}>
             Open Objects Panel
           </button>
         )}
         {!panels.propertiesPanel && (
-          <button onClick={() => handleOpenPanel("propertiesPanel")}>
+          <button onClick={() => handleOpenPanel('propertiesPanel')}>
             Open Properties Panel
           </button>
         )}

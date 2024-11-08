@@ -1,66 +1,124 @@
-const PROJECT_KEY = 'projectData';
-const SCENE_PREFIX = 'scene_';
+const ALL_PROJECTS_KEY = 'allProjects';
 
-// Сохранение данных проекта в Local Storage
-export const saveProjectData = (data: object) => {
+// Интерфейсы
+export interface ProjectSummary {
+  name: string;
+  renderType: string;
+  scenes: string[];
+}
+
+export interface SceneData {
+  sceneName: string;
+  objects: any[];
+  settings: object;
+}
+
+export interface ProjectData {
+  scenes: SceneData[];
+  openedScenes: { title: string; key: string; state: string }[];
+  activeScene: string;
+}
+
+// Сохранение списка всех проектов
+export const saveAllProjects = (projects: ProjectSummary[]) => {
   try {
-    localStorage.setItem(PROJECT_KEY, JSON.stringify(data));
+    localStorage.setItem(ALL_PROJECTS_KEY, JSON.stringify(projects));
   } catch (error) {
-    console.error('Ошибка при сохранении данных проекта в localStorage:', error);
+    console.error('Ошибка при сохранении allProjects:', error);
   }
 };
 
-// Загрузка данных проекта из Local Storage
-export const loadProjectData = () => {
+// Загрузка списка всех проектов
+export const loadAllProjects = (): ProjectSummary[] => {
   try {
-    const data = localStorage.getItem(PROJECT_KEY);
+    const data = localStorage.getItem(ALL_PROJECTS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Ошибка при загрузке allProjects:', error);
+    return [];
+  }
+};
+
+// Сохранение данных конкретного проекта
+export const saveProjectData = (projectName: string, data: ProjectData) => {
+  try {
+    const key = `ProjectData:${projectName}`;
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Ошибка при сохранении данных проекта ${projectName}:`, error);
+  }
+};
+
+// Загрузка данных конкретного проекта
+export const loadProjectData = (projectName: string): ProjectData | null => {
+  try {
+    const key = `ProjectData:${projectName}`;
+    const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error('Ошибка при загрузке данных проекта из localStorage:', error);
+    console.error(`Ошибка при загрузке данных проекта ${projectName}:`, error);
     return null;
   }
 };
 
-// Сохранение данных сцены в Local Storage
-export const saveSceneData = (sceneName: string, data: object) => {
+// Удаление данных проекта
+export const deleteProjectData = (projectName: string) => {
   try {
-    localStorage.setItem(`${SCENE_PREFIX}${sceneName}`, JSON.stringify(data));
+    const key = `ProjectData:${projectName}`;
+    localStorage.removeItem(key);
+    const projects = loadAllProjects().filter((project) => project.name !== projectName);
+    saveAllProjects(projects);
   } catch (error) {
-    console.error('Ошибка при сохранении данных сцены в localStorage:', error);
+    console.error(`Ошибка при удалении данных проекта ${projectName}:`, error);
   }
 };
 
-// Загрузка данных сцены из Local Storage
-export const loadSceneData = (sceneName: string) => {
-  try {
-    const data = localStorage.getItem(`${SCENE_PREFIX}${sceneName}`);
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    console.error('Ошибка при загрузке данных сцены из localStorage:', error);
-    return null;
+// Сохранение данных сцены в проекте
+export const saveSceneData = (projectName: string, sceneData: SceneData) => {
+  const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [] };
+  const sceneIndex = projectData.scenes.findIndex((s) => s.sceneName === sceneData.sceneName);
+
+  if (sceneIndex > -1) {
+    projectData.scenes[sceneIndex] = sceneData;
+  } else {
+    projectData.scenes.push(sceneData);
+  }
+
+  saveProjectData(projectName, projectData);
+};
+
+// Загрузка данных сцены из проекта
+export const loadSceneData = (projectName: string, sceneName: string): SceneData | null => {
+  const projectData = loadProjectData(projectName);
+  return projectData?.scenes.find((scene) => scene.sceneName === sceneName) || null;
+};
+
+// Удаление данных сцены из проекта
+export const deleteSceneData = (projectName: string, sceneName: string) => {
+  const projectData = loadProjectData(projectName);
+  if (projectData) {
+    projectData.scenes = projectData.scenes.filter((scene) => scene.sceneName !== sceneName);
+    saveProjectData(projectName, projectData);
   }
 };
 
-// Удаление данных сцены из Local Storage
-export const deleteSceneData = (sceneName: string) => {
-  try {
-    localStorage.removeItem(`${SCENE_PREFIX}${sceneName}`);
-  } catch (error) {
-    console.error('Ошибка при удалении данных сцены из localStorage:', error);
-  }
-};
-
-// Сохранение открытых сцен в projectData
+// Сохранение открытых сцен в проекте
 export const updateOpenedScenes = (
-  openedScenes: { title: string; key: string; state: string }[]
+  projectName: string,
+  openedScenes: { title: string; key: string; state: string }[],
+  activeScene: string
 ) => {
-  const projectData = loadProjectData() || {};
+  const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
   projectData.openedScenes = openedScenes;
-  saveProjectData(projectData);
+  projectData.activeScene = activeScene;
+  saveProjectData(projectName, projectData);
 };
 
-// Загрузка открытых сцен из projectData
-export const loadOpenedScenes = () => {
-  const projectData = loadProjectData();
-  return projectData?.openedScenes || [];
+// Загрузка открытых сцен из проекта
+export const loadOpenedScenes = (projectName: string) => {
+  const projectData = loadProjectData(projectName);
+  return {
+    openedScenes: projectData?.openedScenes || [],
+    activeScene: projectData?.activeScene || '',
+  };
 };

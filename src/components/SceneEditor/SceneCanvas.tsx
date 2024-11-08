@@ -2,7 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Core, SceneManager, getShape2d } from 'tette-core';
 
 interface SceneCanvasProps {
-  scene: string;
+  sceneName: string;
+  renderType: string;
   sceneData: any;
   selectedObject: any;
   onSelectObject: (object: any) => void;
@@ -10,7 +11,8 @@ interface SceneCanvasProps {
 }
 
 const SceneCanvas: React.FC<SceneCanvasProps> = ({
-  scene,
+  sceneName,
+  renderType,
   sceneData,
   selectedObject,
   onSelectObject,
@@ -52,11 +54,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     }
 
     const sceneManager = new SceneManager();
-    sceneManager.createScene(scene);
+    sceneManager.createScene(sceneName);
 
     const core = new Core({
       canvasId: canvasRef.current.id,
-      renderType: '2d',
+      renderType: renderType,
       backgroundColor: '#D3D3D3',
       sceneManager: sceneManager,
       width: canvasRef.current.clientWidth,
@@ -72,12 +74,10 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     console.log('Core и shape2d инициализированы:', core, shape2dInstance);
 
     return () => {
-      if (core) {
-        core.stop();
-        console.log('Core остановлен.');
-      }
+      core.stop();
+      console.log('Core остановлен.');
     };
-  }, [scene]);
+  }, [sceneName, renderType]);
 
   // Создание игровых объектов
   const createGameObject = (obj: any) => {
@@ -126,18 +126,13 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     const handleMouseMove = (event: MouseEvent) => {
       if (!isDragging || !selectedObject) return;
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
       const rect = canvas.getBoundingClientRect();
       const x = (event.clientX - rect.left) * (canvas.width / canvas.clientWidth);
       const y = (event.clientY - rect.top) * (canvas.height / canvas.clientHeight);
 
       const updatedObject = { ...selectedObject };
 
-      // Логика перемещения в зависимости от типа объекта
-      // Здесь можно использовать методы из gameObject, если необходимо
-
+      // Логика перемещения объекта
       updatedObject.x = x - dragOffsetX;
       updatedObject.y = y - dragOffsetY;
 
@@ -149,13 +144,13 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, selectedObject, dragOffsetX, dragOffsetY, gameObjectsMap]);
 
@@ -166,7 +161,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     // Перебираем объекты в обратном порядке (от верхнего к нижнему)
     for (let i = objects.length - 1; i >= 0; i--) {
       const gameObject = objects[i];
-      if (gameObject.containsPoint(x, y)) {
+      if (gameObject.containsPoint && gameObject.containsPoint(x, y)) {
         return sceneData.objects.find((obj: any) => obj.id === gameObject.id);
       }
     }
@@ -177,14 +172,14 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
   useEffect(() => {
     if (coreInstance && shape2d && sceneData.objects) {
       const sceneManager = coreInstance.getSceneManager();
-      sceneManager.clearScene(scene);
+      sceneManager.clearScene(sceneName);
 
       const newGameObjectsMap = new Map<string, any>();
 
       sceneData.objects.forEach((obj: any) => {
         const gameObject = createGameObject(obj);
         if (gameObject) {
-          sceneManager.addGameObjectToScene(scene, gameObject);
+          sceneManager.addGameObjectToScene(sceneName, gameObject);
           newGameObjectsMap.set(obj.id, gameObject);
         }
       });
@@ -204,15 +199,15 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
             borderWidth: 1,
             isFilled: false,
           });
-          sceneManager.addGameObjectToScene(scene, highlightRect);
+          sceneManager.addGameObjectToScene(sceneName, highlightRect);
         }
       }
 
       setGameObjectsMap(newGameObjectsMap);
-      sceneManager.changeScene(scene);
+      sceneManager.changeScene(sceneName);
       coreInstance.render();
     }
-  }, [sceneData.objects, coreInstance, shape2d, selectedObject]);
+  }, [sceneData.objects, coreInstance, shape2d, selectedObject, sceneName]);
 
   // Обработчики для предпросмотра
   const handleStartPreview = () => {
@@ -226,12 +221,13 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
   const handleStopPreview = () => {
     if (coreInstance) {
       coreInstance.enableGuiMode();
+      coreInstance.stop();
       console.log('Остановка предпросмотра.');
     }
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas
         ref={canvasRef}
         id="canvas"
@@ -245,7 +241,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       </button>
       <button
         onClick={handleStopPreview}
-        style={{ position: 'absolute', top: 10, left: 100 }}
+        style={{ position: 'absolute', top: 10, left: 120 }}
       >
         Stop Preview
       </button>
