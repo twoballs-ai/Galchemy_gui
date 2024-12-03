@@ -3,7 +3,7 @@ import GameTypeSelector from './GameTypeSelector';
 import GameEditor from './GameEditor';
 import { Button, List, Modal, Space, Typography, Layout } from 'antd';
 import './App.scss';
-import { ProjectSummary, saveAllProjects, loadAllProjects } from './utils/storageUtils';
+import { ProjectSummary, deleteProjectData, saveAllProjects, loadAllProjects } from './utils/storageUtils';
 
 const { Header, Content } = Layout;
 
@@ -59,6 +59,10 @@ const App: React.FC = () => {
   };
 
   const handleDeleteProject = (projectName: string) => {
+    // Удаляем данные конкретного проекта из localStorage
+    deleteProjectData(projectName);
+  
+    // Удаляем проект из списка всех проектов
     const updatedProjects = projects.filter((project) => project.name !== projectName);
     setProjects(updatedProjects);
   };

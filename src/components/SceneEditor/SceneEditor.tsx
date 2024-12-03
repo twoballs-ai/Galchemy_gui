@@ -109,30 +109,42 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
     setSelectedObject(object);
   };
 
-  const handleUpdateObject = (updatedObject: any) => {
-    if (!updatedObject || !updatedObject.id) return;
-    setSceneData((prevData: any) => ({
+  const addObjectToScene = (newObject: any) => {
+  setSceneData((prevData: any) => {
+    const updatedData = {
+      ...prevData,
+      objects: [...prevData.objects, newObject],
+    };
+    saveSceneData(projectName, updatedData);
+    return updatedData;
+  });
+};
+
+const handleUpdateObject = (updatedObject: any) => {
+  if (!updatedObject || !updatedObject.id) return;
+  setSceneData((prevData: any) => {
+    const updatedData = {
       ...prevData,
       objects: prevData.objects.map((obj: any) =>
         obj.id === updatedObject.id ? updatedObject : obj
       ),
-    }));
-    setSelectedObject(updatedObject);
-  };
+    };
+    saveSceneData(projectName, updatedData);
+    return updatedData;
+  });
+  setSelectedObject(updatedObject);
+};
 
-  const addObjectToScene = (newObject: any) => {
-    setSceneData((prevData: any) => ({
-      ...prevData,
-      objects: [...prevData.objects, newObject],
-    }));
-  };
-
-  const removeObjectFromScene = (objectId: string) => {
-    setSceneData((prevData: any) => ({
+const removeObjectFromScene = (objectId: string) => {
+  setSceneData((prevData: any) => {
+    const updatedData = {
       ...prevData,
       objects: prevData.objects.filter((obj: any) => obj.id !== objectId),
-    }));
-  };
+    };
+    saveSceneData(projectName, updatedData);
+    return updatedData;
+  });
+};
 
   return (
     <div className="scene-editor">

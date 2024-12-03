@@ -37,15 +37,24 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
   const handleUpdateObject = (updatedObject: any) => {
     onUpdateObject(updatedObject);
-
-    // Обновляем свойства игрового объекта в gameObjectsMap
+  
     const gameObject = gameObjectsMap.get(updatedObject.id);
     if (gameObject) {
       Object.assign(gameObject, updatedObject);
-      coreInstance?.render();
+  
+      // Если изменилось изображение, загружаем новое
+      if (updatedObject.image && (updatedObject.type === 'sprite' || updatedObject.type === 'spriteGrid')) {
+        const image = new Image();
+        image.src = updatedObject.image;
+        image.onload = () => {
+          gameObject.image = image;
+          coreInstance?.render();
+        };
+      } else {
+        coreInstance?.render();
+      }
     }
   };
-
   // Инициализация Core и Shape2D
   useEffect(() => {
     if (!canvasRef.current) {
@@ -83,17 +92,29 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
   const createGameObject = (obj: any) => {
     if (!shape2d) return null;
 
-    console.log('Передача объекта в функцию shape2d:', obj);
-
     const shapeFunction = shape2d[obj.type];
     if (!shapeFunction) {
       console.warn('Неизвестный тип объекта:', obj.type);
       return null;
     }
 
+    // Handle sprites and spriteGrids
+    if (obj.type === 'sprite' || obj.type === 'spriteGrid') {
+      const image = new Image();
+      image.src = obj.image;
+      obj.image = image; // Assign the image object
+
+      image.onload = () => {
+        coreInstance?.render();
+      };
+
+      image.onerror = () => {
+        console.error('Ошибка загрузки изображения для объекта:', obj.name);
+      };
+    }
+
     const gameObject = shapeFunction(obj);
-    gameObject.id = obj.id; // Присваиваем ID объекту
-    console.log('Созданный игровой объект:', gameObject);
+    gameObject.id = obj.id; // Assign ID to game object
     return gameObject;
   };
 

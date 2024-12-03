@@ -45,27 +45,26 @@ const GameEditor: React.FC<GameEditorProps> = ({
   >("left");
 
   useEffect(() => {
-    // Инициализация сцен проекта
     setSceneTabs(project.scenes);
-
-    const openScenes = loadOpenedScenes(project.name);
-
-    if (openScenes.length > 0) {
-      setActiveScene(openScenes[0]?.key || "");
+  
+    const { openedScenes, activeScene } = loadOpenedScenes(project.name);
+  
+    if (openedScenes.length > 0) {
+      setActiveScene(activeScene || openedScenes[0]?.key || "");
       const editorStates: { [key: string]: string } = {};
-      openScenes.forEach((scene) => {
+      openedScenes.forEach((scene) => {
         editorStates[scene.key] = scene.state;
       });
       setEditorTabs(editorStates);
     } else if (project.scenes.length > 0) {
-      setActiveScene(project.scenes[0]);
-      updateOpenedScenes(project.name, [
-        {
-          title: project.scenes[0],
-          key: project.scenes[0],
-          state: "levelEditor",
-        },
-      ]);
+      const firstScene = project.scenes[0];
+      setActiveScene(firstScene);
+      setSceneTabs([firstScene]); // Добавляем первую сцену в sceneTabs
+      updateOpenedScenes(
+        project.name,
+        [{ title: firstScene, key: firstScene, state: "levelEditor" }],
+        firstScene
+      );
     } else {
       handleNewScene();
     }
@@ -74,62 +73,54 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
 
   const handleNewScene = () => {
+    const { openedScenes } = loadOpenedScenes(project.name);
+  
     const newScene = `Scene ${sceneTabs.length + 1}`;
     const newSceneData = { sceneName: newScene, objects: [], settings: {} };
-
+  
     const updatedSceneTabs = [...sceneTabs, newScene];
     setSceneTabs(updatedSceneTabs);
     setActiveScene(newScene);
     setEditorTabs((prevTabs) => ({ ...prevTabs, [newScene]: "levelEditor" }));
-
-    // Сохраняем данные новой сцены
+  
     saveSceneData(project.name, newSceneData);
-
-    // Обновляем данные проекта
+  
     const updatedProject = { ...project, scenes: updatedSceneTabs };
     onUpdateProject(updatedProject);
-
-    // Исправленный вызов saveProjectData
     saveProjectData(project.name, updatedProject);
-
-    // Обновляем открытые сцены
-    const openedScenes = loadOpenedScenes(project.name);
+  
     const updatedOpenScenes = [
       ...openedScenes,
-      {
-        title: newScene,
-        key: newScene,
-        state: "levelEditor",
-      },
+      { title: newScene, key: newScene, state: "levelEditor" },
     ];
-    updateOpenedScenes(project.name, updatedOpenScenes);
+    updateOpenedScenes(project.name, updatedOpenScenes, newScene);
+  
+    // Обновляем вкладки, чтобы отобразилась новая сцена
+    setSceneTabs((prevTabs) => [...prevTabs, newScene]);
   };
 
   const handleRemoveScene = (tab: string) => {
     const { openedScenes, activeScene } = loadOpenedScenes(project.name);
-    if (openedScenes.length <= 1) return; // Запрещаем закрывать последнюю сцену
-  
+    if (openedScenes.length <= 1) return;
+
     const updatedOpenScenes = openedScenes.filter((scene) => scene.key !== tab);
     const newActiveScene = activeScene === tab && updatedOpenScenes.length > 0 ? updatedOpenScenes[0].key : activeScene;
-  
+
     setActiveScene(newActiveScene);
     setEditorTabs((prevTabs) => {
       const newTabs = { ...prevTabs };
       delete newTabs[tab];
       return newTabs;
     });
-  
+
     updateOpenedScenes(project.name, updatedOpenScenes, newActiveScene);
   };
-  
+
   const handleSceneChange = (tab: string) => {
     setActiveScene(tab);
     const { openedScenes } = loadOpenedScenes(project.name);
     if (!openedScenes.find((scene) => scene.key === tab)) {
-      const updatedOpenScenes = [
-        ...openedScenes,
-        { title: tab, key: tab, state: editorTabs[tab] || 'levelEditor' },
-      ];
+      const updatedOpenScenes = [...openedScenes, { title: tab, key: tab, state: editorTabs[tab] || "levelEditor" }];
       updateOpenedScenes(project.name, updatedOpenScenes, tab);
     } else {
       updateOpenedScenes(project.name, openedScenes, tab);

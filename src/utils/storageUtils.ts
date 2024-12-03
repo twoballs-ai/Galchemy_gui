@@ -68,14 +68,14 @@ export const deleteProjectData = (projectName: string) => {
     localStorage.removeItem(key);
     const projects = loadAllProjects().filter((project) => project.name !== projectName);
     saveAllProjects(projects);
+    console.log(`Данные проекта "${projectName}" успешно удалены из localStorage.`);
   } catch (error) {
     console.error(`Ошибка при удалении данных проекта ${projectName}:`, error);
   }
 };
-
 // Сохранение данных сцены в проекте
 export const saveSceneData = (projectName: string, sceneData: SceneData) => {
-  const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [] };
+  const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
   const sceneIndex = projectData.scenes.findIndex((s) => s.sceneName === sceneData.sceneName);
 
   if (sceneIndex > -1) {

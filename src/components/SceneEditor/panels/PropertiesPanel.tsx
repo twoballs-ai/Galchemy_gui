@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import './PropertiesPanel.scss';
+import React, { useState, useEffect } from "react";
+import "./PropertiesPanel.scss";
 
 interface PropertiesPanelProps {
   object: any;
@@ -8,147 +8,177 @@ interface PropertiesPanelProps {
 
 const objectPropertiesConfig = {
   square: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'size', label: 'Size', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "size", label: "Size", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   rectangle: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'width', label: 'Width', type: 'number' },
-    { key: 'height', label: 'Height', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "width", label: "Width", type: "number" },
+    { key: "height", label: "Height", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   circle: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'radius', label: 'Radius', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "radius", label: "Radius", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   arc: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'radius', label: 'Radius', type: 'number' },
-    { key: 'startAngle', label: 'Start Angle', type: 'number' },
-    { key: 'endAngle', label: 'End Angle', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "radius", label: "Radius", type: "number" },
+    { key: "startAngle", label: "Start Angle", type: "number" },
+    { key: "endAngle", label: "End Angle", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   ellipse: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'rX', label: 'Radius X', type: 'number' },
-    { key: 'rY', label: 'Radius Y', type: 'number' },
-    { key: 'rotation', label: 'Rotation', type: 'number' },
-    { key: 'startAngle', label: 'Start Angle', type: 'number' },
-    { key: 'endAngle', label: 'End Angle', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "rX", label: "Radius X", type: "number" },
+    { key: "rY", label: "Radius Y", type: "number" },
+    { key: "rotation", label: "Rotation", type: "number" },
+    { key: "startAngle", label: "Start Angle", type: "number" },
+    { key: "endAngle", label: "End Angle", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   text: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'text', label: 'Text', type: 'text' },
-    { key: 'fontsize', label: 'Font Size', type: 'number' },
-    { key: 'fontFamily', label: 'Font Family', type: 'text' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "text", label: "Text", type: "text" },
+    { key: "fontsize", label: "Font Size", type: "number" },
+    { key: "fontFamily", label: "Font Family", type: "text" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   line: [
-    { key: 'x1', label: 'X1', type: 'number' },
-    { key: 'y1', label: 'Y1', type: 'number' },
-    { key: 'x2', label: 'X2', type: 'number' },
-    { key: 'y2', label: 'Y2', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'widthline', label: 'Line Width', type: 'number' },
+    { key: "x1", label: "X1", type: "number" },
+    { key: "y1", label: "Y1", type: "number" },
+    { key: "x2", label: "X2", type: "number" },
+    { key: "y2", label: "Y2", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "widthline", label: "Line Width", type: "number" },
     {
-      key: 'lineRounded',
-      label: 'Line Cap',
-      type: 'select',
-      options: ['butt', 'round', 'square'],
+      key: "lineRounded",
+      label: "Line Cap",
+      type: "select",
+      options: ["butt", "round", "square"],
     },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   polygon: [
     {
-      key: 'vertices',
-      label: 'Vertices',
-      type: 'textarea',
+      key: "vertices",
+      label: "Vertices",
+      type: "textarea",
     },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   bezierCurve: [
-    { key: 'startX', label: 'Start X', type: 'number' },
-    { key: 'startY', label: 'Start Y', type: 'number' },
-    { key: 'controlX1', label: 'Control X1', type: 'number' },
-    { key: 'controlY1', label: 'Control Y1', type: 'number' },
-    { key: 'controlX2', label: 'Control X2', type: 'number' },
-    { key: 'controlY2', label: 'Control Y2', type: 'number' },
-    { key: 'endX', label: 'End X', type: 'number' },
-    { key: 'endY', label: 'End Y', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'widthline', label: 'Line Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "startX", label: "Start X", type: "number" },
+    { key: "startY", label: "Start Y", type: "number" },
+    { key: "controlX1", label: "Control X1", type: "number" },
+    { key: "controlY1", label: "Control Y1", type: "number" },
+    { key: "controlX2", label: "Control X2", type: "number" },
+    { key: "controlY2", label: "Control Y2", type: "number" },
+    { key: "endX", label: "End X", type: "number" },
+    { key: "endY", label: "End Y", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "widthline", label: "Line Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   star: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'radius', label: 'Radius', type: 'number' },
-    { key: 'points', label: 'Points', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'borderColor', label: 'Border Color', type: 'color' },
-    { key: 'borderWidth', label: 'Border Width', type: 'number' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "radius", label: "Radius", type: "number" },
+    { key: "points", label: "Points", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "borderColor", label: "Border Color", type: "color" },
+    { key: "borderWidth", label: "Border Width", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
   point: [
-    { key: 'x', label: 'X', type: 'number' },
-    { key: 'y', label: 'Y', type: 'number' },
-    { key: 'size', label: 'Size', type: 'number' },
-    { key: 'color', label: 'Color', type: 'color' },
-    { key: 'enablePhysics', label: 'Enable Physics', type: 'checkbox' },
-    { key: 'isStatic', label: 'Is Static', type: 'checkbox' },
-    { key: 'layer', label: 'Layer', type: 'number' },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "size", label: "Size", type: "number" },
+    { key: "color", label: "Color", type: "color" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
+  ],
+  sprite: [
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "width", label: "Width", type: "number" },
+    { key: "height", label: "Height", type: "number" },
+    { key: "image", label: "Image", type: "file" },
+    {
+      key: "preserveAspectRatio",
+      label: "Preserve Aspect Ratio",
+      type: "checkbox",
+    },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
+  ],
+  spriteGrid: [
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "width", label: "Width", type: "number" },
+    { key: "height", label: "Height", type: "number" },
+    { key: "image", label: "Image", type: "file" },
+    { key: "repeatX", label: "Repeat X", type: "number" },
+    { key: "spacingX", label: "Spacing X", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "isStatic", label: "Is Static", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
   ],
 };
 
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) => {
+const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
+  object,
+  onUpdate,
+}) => {
   const [properties, setProperties] = useState<any>({});
 
   useEffect(() => {
@@ -171,7 +201,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
   return (
     <div className="properties-panel">
       <div className="panel-header">
-        <span>Свойства {object ? `- ${object.name}` : ''}</span>
+        <span>Свойства {object ? `- ${object.name}` : ""}</span>
       </div>
       <div className="panel-body">
         {object ? (
@@ -179,16 +209,18 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
             propertiesConfig.map((prop) => {
               let inputElement = null;
               switch (prop.type) {
-                case 'number':
+                case "number":
                   inputElement = (
                     <input
                       type="number"
                       value={properties[prop.key]}
-                      onChange={(e) => handleChange(prop.key, parseFloat(e.target.value))}
+                      onChange={(e) =>
+                        handleChange(prop.key, parseFloat(e.target.value))
+                      }
                     />
                   );
                   break;
-                case 'color':
+                case "color":
                   inputElement = (
                     <input
                       type="color"
@@ -197,7 +229,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
                     />
                   );
                   break;
-                case 'text':
+                case "text":
                   inputElement = (
                     <input
                       type="text"
@@ -206,7 +238,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
                     />
                   );
                   break;
-                case 'checkbox':
+                case "checkbox":
                   inputElement = (
                     <input
                       type="checkbox"
@@ -215,7 +247,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
                     />
                   );
                   break;
-                case 'select':
+                case "select":
                   inputElement = (
                     <select
                       value={properties[prop.key]}
@@ -229,7 +261,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
                     </select>
                   );
                   break;
-                case 'textarea':
+                case "textarea":
                   inputElement = (
                     <textarea
                       value={JSON.stringify(properties[prop.key], null, 2)}
@@ -244,6 +276,25 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
                     />
                   );
                   break;
+                  case "file":
+                    inputElement = (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const imageUrl = reader.result as string;
+                              handleChange(prop.key, imageUrl);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    );
+                    break;
                 default:
                   inputElement = (
                     <input
@@ -255,8 +306,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ object, onUpdate }) =
               }
               return (
                 <label key={prop.key}>
-                  {prop.label}:
-                  {inputElement}
+                  {prop.label}:{inputElement}
                 </label>
               );
             })
