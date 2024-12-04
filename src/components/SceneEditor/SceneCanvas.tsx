@@ -22,40 +22,62 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
   const [coreInstance, setCoreInstance] = useState<Core | null>(null);
   const [shape2d, setShape2d] = useState<any>(null);
 
-  // Состояния для перетаскивания
+  // States for dragging
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [highlightFrame, setHighlightFrame] = useState<any>(null);
 
-  // Хранение игровых объектов по их ID
+  // Store game objects by their ID
   const [gameObjectsMap, setGameObjectsMap] = useState<Map<string, any>>(new Map());
 
-  // Объявление функций handleSelectObject и handleUpdateObject
+  let animationFrameId: number | null = null;
+
+  const requestRenderIfNotRequested = () => {
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(() => {
+        coreInstance?.render();
+        animationFrameId = null;
+      });
+    }
+  };
+
+  // Declare handleSelectObject and handleUpdateObject functions
   const handleSelectObject = (object: any) => {
     onSelectObject(object);
   };
 
   const handleUpdateObject = (updatedObject: any) => {
-    onUpdateObject(updatedObject);
-  
+    // Avoid updating sceneData.objects during dragging to prevent re-rendering the scene
+    // onUpdateObject(updatedObject); // Comment this out during dragging
+
     const gameObject = gameObjectsMap.get(updatedObject.id);
     if (gameObject) {
-      Object.assign(gameObject, updatedObject);
-  
-      // Если изменилось изображение, загружаем новое
-      if (updatedObject.image && (updatedObject.type === 'sprite' || updatedObject.type === 'spriteGrid')) {
+      // Update only necessary properties
+      gameObject.x = updatedObject.x;
+      gameObject.y = updatedObject.y;
+      // Update other properties if necessary
+
+      // If the image has changed, update it
+      if (
+        updatedObject.image &&
+        (updatedObject.type === 'sprite' || updatedObject.type === 'spriteGrid') &&
+        updatedObject.image !== gameObject.image.src // Check if image has changed
+      ) {
         const image = new Image();
         image.src = updatedObject.image;
         image.onload = () => {
           gameObject.image = image;
-          coreInstance?.render();
+          requestRenderIfNotRequested();
         };
       } else {
-        coreInstance?.render();
+        // Only render if necessary
+        requestRenderIfNotRequested();
       }
     }
   };
-  // Инициализация Core и Shape2D
+
+  // Initialize Core and Shape2D
   useEffect(() => {
     if (!canvasRef.current) {
       console.error('Canvas не найден.');
@@ -88,7 +110,32 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     };
   }, [sceneName, renderType]);
 
-  // Создание игровых объектов
+  // Create the highlight frame
+  useEffect(() => {
+    if (shape2d) {
+      const frame = shape2d.frame({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderColor: 'blue',
+        borderWidth: 2,
+      });
+      frame.visible = false; // Initially, the frame is not visible
+      setHighlightFrame(frame);
+    }
+  }, [shape2d]);
+
+  // Add the highlight frame to the scene
+  useEffect(() => {
+    if (coreInstance && highlightFrame) {
+      const sceneManager = coreInstance.getSceneManager();
+      sceneManager.addGameObjectToScene(sceneName, highlightFrame);
+      requestRenderIfNotRequested();
+    }
+  }, [coreInstance, highlightFrame]);
+
+  // Create game objects
   const createGameObject = (obj: any) => {
     if (!shape2d) return null;
 
@@ -98,14 +145,16 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       return null;
     }
 
+    const gameObjectParams = { ...obj }; // Create a copy
+
     // Handle sprites and spriteGrids
     if (obj.type === 'sprite' || obj.type === 'spriteGrid') {
       const image = new Image();
       image.src = obj.image;
-      obj.image = image; // Assign the image object
+      gameObjectParams.image = image; // Assign the image object
 
       image.onload = () => {
-        coreInstance?.render();
+        requestRenderIfNotRequested();
       };
 
       image.onerror = () => {
@@ -113,12 +162,56 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       };
     }
 
-    const gameObject = shapeFunction(obj);
+    const gameObject = shapeFunction(gameObjectParams);
     gameObject.id = obj.id; // Assign ID to game object
     return gameObject;
   };
 
-  // Обработчики событий мыши
+  // Update highlight frame when selectedObject changes
+  useEffect(() => {
+    if (highlightFrame && selectedObject && gameObjectsMap.has(selectedObject.id)) {
+      const gameObject = gameObjectsMap.get(selectedObject.id);
+      const boundingBox = gameObject.getBoundingBox();
+
+      highlightFrame.x = boundingBox.x;
+      highlightFrame.y = boundingBox.y;
+      highlightFrame.width = boundingBox.width;
+      highlightFrame.height = boundingBox.height;
+      highlightFrame.visible = true;
+    } else if (highlightFrame) {
+      highlightFrame.visible = false;
+    }
+    requestRenderIfNotRequested();
+  }, [selectedObject, highlightFrame, gameObjectsMap]);
+
+  // Render the scene (only when sceneData.objects changes)
+  useEffect(() => {
+    if (coreInstance && shape2d && sceneData.objects) {
+      const sceneManager = coreInstance.getSceneManager();
+      sceneManager.clearScene(sceneName);
+
+      const newGameObjectsMap = new Map<string, any>();
+
+      sceneData.objects.forEach((obj: any) => {
+        const gameObject = createGameObject(obj);
+        if (gameObject) {
+          sceneManager.addGameObjectToScene(sceneName, gameObject);
+          newGameObjectsMap.set(obj.id, gameObject);
+        }
+      });
+
+      // Add the highlight frame to the scene
+      if (highlightFrame) {
+        sceneManager.addGameObjectToScene(sceneName, highlightFrame);
+      }
+
+      setGameObjectsMap(newGameObjectsMap);
+      sceneManager.changeScene(sceneName);
+      requestRenderIfNotRequested();
+    }
+  }, [sceneData.objects, coreInstance, shape2d, sceneName, highlightFrame]);
+
+  // Mouse event handlers
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -153,7 +246,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
       const updatedObject = { ...selectedObject };
 
-      // Логика перемещения объекта
+      // Logic for moving the object
       updatedObject.x = x - dragOffsetX;
       updatedObject.y = y - dragOffsetY;
 
@@ -162,6 +255,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
     const handleMouseUp = () => {
       setIsDragging(false);
+
+      // Update the sceneData.objects only when dragging ends
+      if (selectedObject) {
+        onUpdateObject(selectedObject);
+      }
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);
@@ -175,11 +273,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     };
   }, [isDragging, selectedObject, dragOffsetX, dragOffsetY, gameObjectsMap]);
 
-  // Функция для определения объекта под курсором
+  // Function to get object under cursor
   const getObjectAtPosition = (x: number, y: number): any => {
     const objects = Array.from(gameObjectsMap.values());
 
-    // Перебираем объекты в обратном порядке (от верхнего к нижнему)
+    // Iterate objects in reverse order (from top to bottom)
     for (let i = objects.length - 1; i >= 0; i--) {
       const gameObject = objects[i];
       if (gameObject.containsPoint && gameObject.containsPoint(x, y)) {
@@ -189,48 +287,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     return null;
   };
 
-  // Рендеринг сцены и отображение bounding box для выбранного объекта
-  useEffect(() => {
-    if (coreInstance && shape2d && sceneData.objects) {
-      const sceneManager = coreInstance.getSceneManager();
-      sceneManager.clearScene(sceneName);
-
-      const newGameObjectsMap = new Map<string, any>();
-
-      sceneData.objects.forEach((obj: any) => {
-        const gameObject = createGameObject(obj);
-        if (gameObject) {
-          sceneManager.addGameObjectToScene(sceneName, gameObject);
-          newGameObjectsMap.set(obj.id, gameObject);
-        }
-      });
-
-      // Добавляем отображение bounding box для выбранного объекта
-      if (selectedObject) {
-        const gameObject = newGameObjectsMap.get(selectedObject.id);
-        if (gameObject) {
-          const boundingBox = gameObject.getBoundingBox();
-          const highlightRect = shape2d.rectangle({
-            x: boundingBox.x,
-            y: boundingBox.y,
-            width: boundingBox.width,
-            height: boundingBox.height,
-            color: 'rgba(0, 0, 255, 0.1)', // Полупрозрачный синий
-            borderColor: 'blue',
-            borderWidth: 1,
-            isFilled: false,
-          });
-          sceneManager.addGameObjectToScene(sceneName, highlightRect);
-        }
-      }
-
-      setGameObjectsMap(newGameObjectsMap);
-      sceneManager.changeScene(sceneName);
-      coreInstance.render();
-    }
-  }, [sceneData.objects, coreInstance, shape2d, selectedObject, sceneName]);
-
-  // Обработчики для предпросмотра
+  // Handlers for preview
   const handleStartPreview = () => {
     if (coreInstance) {
       coreInstance.disableGuiMode();
