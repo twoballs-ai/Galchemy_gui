@@ -7,6 +7,7 @@ import SceneObjectsPanel from './panels/SceneObjectsPanel';
 import PropertiesPanel from './panels/PropertiesPanel';
 import './SceneEditor.scss';
 import { loadSceneData, saveSceneData } from '../../utils/storageUtils';
+import { v4 as uuidv4 } from 'uuid'; // Для генерации уникальных идентификаторов
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -15,24 +16,24 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4 };
 
 const initialLayouts: Layouts = {
   lg: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 10 },
-    { i: 'sceneCanvas', x: 3, y: 0, w: 6, h: 10 },
-    { i: 'propertiesPanel', x: 9, y: 0, w: 3, h: 10 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 10, minH: 10 },
+    { i: 'sceneCanvas', x: 3, y: 0, w: 6, h: 20, minH: 15 },
+    { i: 'propertiesPanel', x: 9, y: 0, w: 3, h: 10, minH: 10 },
   ],
   md: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 2, h: 10 },
-    { i: 'sceneCanvas', x: 2, y: 0, w: 6, h: 10 },
-    { i: 'propertiesPanel', x: 8, y: 0, w: 2, h: 10 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 2, h: 10, minH: 10 },
+    { i: 'sceneCanvas', x: 2, y: 0, w: 6, h: 20, minH: 15 },
+    { i: 'propertiesPanel', x: 8, y: 0, w: 2, h: 10, minH: 10 },
   ],
   sm: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 5 },
-    { i: 'sceneCanvas', x: 0, y: 5, w: 6, h: 10 },
-    { i: 'propertiesPanel', x: 0, y: 15, w: 2, h: 5 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 3, h: 5, minH: 5 },
+    { i: 'sceneCanvas', x: 0, y: 5, w: 6, h: 20, minH: 15 },
+    { i: 'propertiesPanel', x: 0, y: 25, w: 2, h: 5, minH: 5 },
   ],
   xs: [
-    { i: 'objectsPanel', x: 0, y: 0, w: 4, h: 5 },
-    { i: 'sceneCanvas', x: 0, y: 5, w: 4, h: 10 },
-    { i: 'propertiesPanel', x: 0, y: 15, w: 4, h: 5 },
+    { i: 'objectsPanel', x: 0, y: 0, w: 4, h: 5, minH: 5 },
+    { i: 'sceneCanvas', x: 0, y: 5, w: 4, h: 20, minH: 15 },
+    { i: 'propertiesPanel', x: 0, y: 25, w: 4, h: 5, minH: 5 },
   ],
 };
 
@@ -42,15 +43,40 @@ interface SceneEditorProps {
   renderType: string;
 }
 
+interface SceneData {
+  sceneName: string;
+  objects: GameObject[];
+  settings: object;
+}
+
+interface GameObject {
+  id: string;
+  type: string;
+  name: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  radius?: number;
+  color?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  enablePhysics?: boolean;
+  isStatic?: boolean;
+  layer?: number;
+  image?: string;
+  // Добавьте другие свойства по необходимости
+}
+
 const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, renderType }) => {
   const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
-  const [sceneData, setSceneData] = useState<any>({
+  const [sceneData, setSceneData] = useState<SceneData>({
     sceneName: sceneName,
     objects: [],
     settings: {},
   });
 
-  const [selectedObject, setSelectedObject] = useState<any | null>(null);
+  const [selectedObject, setSelectedObject] = useState<GameObject | null>(null);
   const [panels, setPanels] = useState({
     objectsPanel: true,
     propertiesPanel: true,
@@ -66,8 +92,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
 
   useEffect(() => {
     // Сохраняем данные сцены при их изменении
-    saveSceneData(projectName, sceneName, sceneData);
-  }, [sceneData, projectName, sceneName]);
+    saveSceneData(projectName, sceneData);
+  }, [sceneData, projectName]);
 
   const onLayoutChange = (currentLayout: Layout[], allLayouts: Layouts) => {
     setLayouts(allLayouts);
@@ -97,54 +123,77 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
           i: panelKey,
           x: 0,
           y: Infinity,
-          w: cols[breakpoint] / 3,
+          w: Math.floor(cols[breakpoint] / 3), // Обеспечиваем целочисленное значение
           h: 10,
+          minH: 5,
         },
       ];
     });
     setLayouts(newLayouts);
   };
 
-  const handleSelectObject = (object: any) => {
+  const handleSelectObject = (object: GameObject | null) => {
     setSelectedObject(object);
   };
 
-  const addObjectToScene = (newObject: any) => {
-  setSceneData((prevData: any) => {
-    const updatedData = {
-      ...prevData,
-      objects: [...prevData.objects, newObject],
+  const addObjectToScene = (newObject: Partial<GameObject>) => {
+    const completeObject: GameObject = {
+      id: uuidv4(),
+      type: newObject.type || 'rectangle',
+      name: newObject.name || 'New Object',
+      x: newObject.x || 0,
+      y: newObject.y || 0,
+      width: newObject.width || 50,
+      height: newObject.height || 50,
+      radius: newObject.radius || null,
+      color: newObject.color || '#FF0000',
+      borderColor: newObject.borderColor || '#000000',
+      borderWidth: newObject.borderWidth || 1,
+      enablePhysics: newObject.enablePhysics || false,
+      isStatic: newObject.isStatic || false,
+      layer: newObject.layer || 0,
+      image: newObject.image || '',
+      // Добавьте другие свойства по необходимости
     };
-    saveSceneData(projectName, updatedData);
-    return updatedData;
-  });
-};
 
-const handleUpdateObject = (updatedObject: any) => {
-  if (!updatedObject || !updatedObject.id) return;
-  setSceneData((prevData: any) => {
-    const updatedData = {
-      ...prevData,
-      objects: prevData.objects.map((obj: any) =>
-        obj.id === updatedObject.id ? updatedObject : obj
-      ),
-    };
-    saveSceneData(projectName, updatedData);
-    return updatedData;
-  });
-  setSelectedObject(updatedObject);
-};
+    setSceneData((prevData: SceneData) => {
+      const updatedData = {
+        ...prevData,
+        objects: [...prevData.objects, completeObject],
+      };
+      return updatedData;
+    });
 
-const removeObjectFromScene = (objectId: string) => {
-  setSceneData((prevData: any) => {
-    const updatedData = {
-      ...prevData,
-      objects: prevData.objects.filter((obj: any) => obj.id !== objectId),
-    };
-    saveSceneData(projectName, updatedData);
-    return updatedData;
-  });
-};
+    setSelectedObject(completeObject);
+  };
+
+  const handleUpdateObject = (updatedObject: GameObject) => {
+    if (!updatedObject || !updatedObject.id) return;
+    setSceneData((prevData: SceneData) => {
+      const updatedData = {
+        ...prevData,
+        objects: prevData.objects.map((obj: GameObject) =>
+          obj.id === updatedObject.id ? updatedObject : obj
+        ),
+      };
+      return updatedData;
+    });
+    setSelectedObject(updatedObject);
+  };
+
+  const removeObjectFromScene = (objectId: string) => {
+    setSceneData((prevData: SceneData) => {
+      const updatedData = {
+        ...prevData,
+        objects: prevData.objects.filter((obj: GameObject) => obj.id !== objectId),
+      };
+      // Если удаляемый объект был выбранным, сбрасываем selection
+      if (selectedObject && selectedObject.id === objectId) {
+        setSelectedObject(null);
+      }
+      return updatedData;
+    });
+  };
 
   return (
     <div className="scene-editor">
@@ -156,6 +205,7 @@ const removeObjectFromScene = (objectId: string) => {
         rowHeight={30}
         onLayoutChange={onLayoutChange}
         draggableHandle=".panel-header"
+        isResizable={true} // Включение возможности изменения размеров панелей
       >
         {panels.objectsPanel && (
           <div key="objectsPanel" className="panel">

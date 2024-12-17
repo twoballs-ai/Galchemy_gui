@@ -25,7 +25,7 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
     onAddObject(newObject);
     setIsModalOpen(false);
   };
-
+console.log(objects)
   return (
     <div className="scene-objects-panel">
       <div className="panel-header">
@@ -33,14 +33,14 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
         <button onClick={onClose}>Закрыть</button>
       </div>
       <div className="panel-content">
-        <ul>
-          {objects.map((object) => (
-            <li key={object.id} onClick={() => onSelectObject(object)}>
-              {object.name}
-              <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
-            </li>
-          ))}
-        </ul>
+<ul>
+  {objects.map((object) => (
+    <li key={object.id} onClick={() => onSelectObject(object)}>
+      {object.name || 'Без имени'} {/* Показываем имя объекта или "Без имени" */}
+      <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
+    </li>
+  ))}
+</ul>
         {/* Кнопка "Добавить объект" перемещена вниз */}
         <button className="add-object" onClick={() => setIsModalOpen(true)}>Добавить объект</button>
       </div>

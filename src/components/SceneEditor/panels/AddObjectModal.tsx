@@ -86,16 +86,16 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     const selectedObject = availableObjects
       .flatMap((category) => category.objects)
       .find((obj) => obj.type === type);
-
+  
     if (selectedObject) {
       const newObject = {
         ...selectedObject.params,
         id: uuidv4(), // Ensure unique ID
         type: selectedObject.type,
-        name: selectedObject.name,
+        name: selectedObject.name,  // Обратите внимание, что это значение установлено
         image: imageUrl,
       };
-
+  
       onAdd(newObject);
       onClose();
     }
@@ -106,7 +106,7 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     if (type === 'sprite' || type === 'spriteGrid') {
       openFileDialog(type);
     } else {
-      handleAddObject(type);
+      handleAddObject(type); // Добавление объекта с его названием
     }
   };
 
