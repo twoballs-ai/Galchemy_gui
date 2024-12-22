@@ -45,59 +45,81 @@ const GameEditor: React.FC<GameEditorProps> = ({
   >("left");
 
   useEffect(() => {
-    setSceneTabs(project.scenes);
-  
-    const { openedScenes, activeScene } = loadOpenedScenes(project.name);
+    const { openedScenes, activeScene: savedActiveScene } = loadOpenedScenes(project.name);
+    let projectData = loadProjectData(project.name);
+    const sceneNames = projectData ? projectData.scenes.map(s => s.sceneName) : [];
   
     if (openedScenes.length > 0) {
-      setActiveScene(activeScene || openedScenes[0]?.key || "");
+      setSceneTabs(openedScenes.map((s) => s.key));
+      setActiveScene(savedActiveScene || openedScenes[0].key);
       const editorStates: { [key: string]: string } = {};
       openedScenes.forEach((scene) => {
         editorStates[scene.key] = scene.state;
       });
       setEditorTabs(editorStates);
-    } else if (project.scenes.length > 0) {
-      const firstScene = project.scenes[0];
+    } else if (sceneNames.length > 0) {
+      // Открываем первую
+      const firstScene = sceneNames[0];
       setActiveScene(firstScene);
-      setSceneTabs([firstScene]); // Добавляем первую сцену в sceneTabs
+      setSceneTabs([firstScene]);
       updateOpenedScenes(
         project.name,
         [{ title: firstScene, key: firstScene, state: "levelEditor" }],
         firstScene
       );
     } else {
+      // Нет сцен вообще
       handleNewScene();
     }
   }, [project]);
+  
 
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
 
   const handleNewScene = () => {
+    // 1) Загружаем полный ProjectData (объектный массив сцен)
+    let projectData = loadProjectData(project.name);
+    if (!projectData) {
+      projectData = {
+        scenes: [],
+        openedScenes: [],
+        activeScene: "",
+      };
+    }
+  
+    // 2) Формируем название по количеству сцен в projectData
+    const newSceneIndex = projectData.scenes.length + 1;
+    const newSceneName = `Scene ${newSceneIndex}`;
+  
+    // 3) Создаём объект SceneData
+    const newSceneData = {
+      sceneName: newSceneName,
+      objects: [],
+      settings: {},
+    };
+  
+    // 4) Добавляем в projectData.scenes
+    projectData.scenes.push(newSceneData);
+  
+    // 5) Сохраняем полный объект
+    saveProjectData(project.name, projectData);
+  
+    setSceneTabs((prevTabs) => [...prevTabs, newSceneName]);
+    setActiveScene(newSceneName);
+    setEditorTabs((prevTabs) => ({
+      ...prevTabs,
+      [newSceneName]: "levelEditor",
+    }));
+  
+    // 8) Обновляем openedScenes
     const { openedScenes } = loadOpenedScenes(project.name);
-  
-    const newScene = `Scene ${sceneTabs.length + 1}`;
-    const newSceneData = { sceneName: newScene, objects: [], settings: {} };
-  
-    const updatedSceneTabs = [...sceneTabs, newScene];
-    setSceneTabs(updatedSceneTabs);
-    setActiveScene(newScene);
-    setEditorTabs((prevTabs) => ({ ...prevTabs, [newScene]: "levelEditor" }));
-  
-    saveSceneData(project.name, newSceneData);
-  
-    const updatedProject = { ...project, scenes: updatedSceneTabs };
-    onUpdateProject(updatedProject);
-    saveProjectData(project.name, updatedProject);
-  
     const updatedOpenScenes = [
       ...openedScenes,
-      { title: newScene, key: newScene, state: "levelEditor" },
+      { title: newSceneName, key: newSceneName, state: "levelEditor" },
     ];
-    updateOpenedScenes(project.name, updatedOpenScenes, newScene);
-  
-    // Обновляем вкладки, чтобы отобразилась новая сцена
-    setSceneTabs((prevTabs) => [...prevTabs, newScene]);
+    updateOpenedScenes(project.name, updatedOpenScenes, newSceneName);
   };
+  
 
   const handleRemoveScene = (tab: string) => {
     const { openedScenes, activeScene } = loadOpenedScenes(project.name);
@@ -135,15 +157,10 @@ const GameEditor: React.FC<GameEditorProps> = ({
     updateOpenedScenes(project.name, openedScenes);
   };
 
-  const handleSaveProject = () => {
-    const updatedProject = { ...project, scenes: sceneTabs };
-    onUpdateProject(updatedProject);
-    // Исправленный вызов saveProjectData
-    saveProjectData(project.name, updatedProject);
-  };
+
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: handleNewScene },
-    { label: "Сохранить проект", key: "save", onClick: handleSaveProject },
+    // { label: "Сохранить проект", key: "save", onClick: handleSaveProject },
     { label: "Закрыть проект", key: "close", onClick: onCloseProject },
   ];
 
@@ -233,14 +250,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
             style={{ marginRight: "16px" }}
           >
             New Scene
-          </Button>
-          <Button
-            type="default"
-            icon={<SaveOutlined />}
-            onClick={handleSaveProject}
-            style={{ marginRight: "16px" }}
-          >
-            Save
           </Button>
           <Button type="primary" icon={<PlayCircleOutlined />}>
             Run Game

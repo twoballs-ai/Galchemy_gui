@@ -6,7 +6,6 @@ const ALL_PROJECTS_KEY = 'allProjects';
 export interface ProjectSummary {
   name: string;
   renderType: string;
-  scenes: string[];
 }
 
 export interface SceneData {

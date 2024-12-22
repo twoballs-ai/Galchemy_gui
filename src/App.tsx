@@ -46,7 +46,6 @@ const App: React.FC = () => {
     const newProject: ProjectSummary = {
       name: `Project ${projects.length + 1}`,
       renderType: gameType,
-      scenes: [],
     };
     const updatedProjects = [...projects, newProject];
     setProjects(updatedProjects);
