@@ -22,6 +22,7 @@ import {
   deleteSceneData,
   ProjectSummary,
 } from "./utils/storageUtils";
+import { globalLogicManager } from "./logicManager";
 
 const { Header, Content } = Layout;
 
@@ -123,18 +124,31 @@ const GameEditor: React.FC<GameEditorProps> = ({
 
   const handleRemoveScene = (tab: string) => {
     const { openedScenes, activeScene } = loadOpenedScenes(project.name);
+  
+    // Если осталась только одна сцена, ничего не делаем
     if (openedScenes.length <= 1) return;
-
+  
+    // Удаляем вкладку из списка открытых сцен
     const updatedOpenScenes = openedScenes.filter((scene) => scene.key !== tab);
-    const newActiveScene = activeScene === tab && updatedOpenScenes.length > 0 ? updatedOpenScenes[0].key : activeScene;
-
+  
+    // Определяем новую активную сцену
+    const newActiveScene =
+      activeScene === tab && updatedOpenScenes.length > 0
+        ? updatedOpenScenes[0].key
+        : activeScene;
+  
+    // Обновляем состояние локальных вкладок и активной сцены
+    setSceneTabs((prevTabs) => prevTabs.filter((t) => t !== tab));
     setActiveScene(newActiveScene);
+  
+    // Удаляем из editorTabs
     setEditorTabs((prevTabs) => {
       const newTabs = { ...prevTabs };
       delete newTabs[tab];
       return newTabs;
     });
-
+  
+    // Сохраняем изменения в localStorage
     updateOpenedScenes(project.name, updatedOpenScenes, newActiveScene);
   };
 
@@ -156,7 +170,12 @@ const GameEditor: React.FC<GameEditorProps> = ({
     );
     updateOpenedScenes(project.name, openedScenes);
   };
-
+  const handleRunGame = () => {
+    // Получаем экземпляр core (или sceneCanvas) — если он у вас создаётся выше.
+    // Возможно, вы храните coreInstance в состоянии, или в ref, или где-то глобально.
+    // Допустим, мы пока покажем общий случай (псевдо-код).
+    const coreInstance = globalLogicManager.runLogicForScene(activeScene, coreInstance);
+  };
 
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: handleNewScene },
@@ -251,7 +270,11 @@ const GameEditor: React.FC<GameEditorProps> = ({
           >
             New Scene
           </Button>
-          <Button type="primary" icon={<PlayCircleOutlined />}>
+          <Button
+            type="primary"
+            icon={<PlayCircleOutlined />}
+            onClick={handleRunGame} // <--- Вызов вашей функции
+          >
             Run Game
           </Button>
         </Space>

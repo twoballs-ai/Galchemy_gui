@@ -2,11 +2,13 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Core, SceneManager, getShape2d } from 'tette-core';
+import { globalLogicManager } from '../../logicManager';
 
 interface SceneData {
   sceneName: string;
   objects: GameObject[];
   settings: object;
+  logicGraph?: any; 
 }
 
 interface GameObject {
@@ -284,13 +286,14 @@ useEffect(() => {
   };
 
   // Обработчики предпросмотра
-  const handleStartPreview = () => {
-    if (coreInstance) {
-      coreInstance.disableGuiMode();
-      coreInstance.start();
-      console.log('Запуск предпросмотра.');
-    }
-  };
+const handleStartPreview = () => {
+  if (coreInstance) {
+    coreInstance.disableGuiMode();
+    coreInstance.start();
+    // Запуск логики для текущей сцены
+    globalLogicManager.runLogicForScene(sceneName, coreInstance);
+  }
+};
 
   const handleStopPreview = () => {
     if (coreInstance) {
