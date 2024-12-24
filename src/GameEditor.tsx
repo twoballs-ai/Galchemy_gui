@@ -314,9 +314,9 @@ const GameEditor: React.FC<GameEditorProps> = ({
             />
           ) : (
             <LogicEditorContent
-              projectName={project.name}
-              sceneName={activeScene}
-            />
+            projectName={project.name}
+            sceneName={activeScene}
+          />
           )}
         </Content>
       </Layout>
