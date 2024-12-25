@@ -1,9 +1,9 @@
-// src/components/AddObjectModal.tsx
 import React, { useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import CircleIcon from '../../../icons/circle.png';
-import RectangleIcon from '../../../icons/rectangle.png';
-import SquareIcon from '../../../icons/square.png';
+import TilesMap from '../../../icons/tilesmap.png';
+import CharacterIcon from '../../../icons/character.png';
+import EnemyIcon from '../../../icons/enemy.png';
 import CustomModal from '../../Modal/CustomModal';
 import './AddObjectModal.scss';
 
@@ -13,9 +13,7 @@ interface AddObjectModalProps {
   onClose: () => void;
 }
 
-// Your existing object definitions remain the same
 const availableObjects = [
-
   {
     category: 'Спрайты',
     objects: [
@@ -39,7 +37,7 @@ const availableObjects = [
       {
         name: 'Sprite Grid',
         type: 'spriteGrid',
-        icon: CircleIcon,
+        icon: TilesMap,
         params: {
           id: uuidv4(),
           image: '',
@@ -56,19 +54,72 @@ const availableObjects = [
       },
     ],
   },
+  {
+    category: 'Персонажи',
+    objects: [
+      {
+        name: 'Персонаж',
+        type: 'character',
+        icon: CharacterIcon,
+        params: {
+          id: uuidv4(),
+          x: 200,
+          y: 200,
+          width: 50,
+          height: 100,
+          color: 'blue',
+          sprite: '',
+          animations: {
+            idle: [],
+            run: [],
+            jump: [],
+            attack: [],
+          },
+          health: 100,
+          speed: 30,
+          enablePhysics: true,
+          layer: 3,
+        },
+      },
+      {
+        name: 'Враг',
+        type: 'enemy',
+        icon: EnemyIcon,
+        params: {
+          id: uuidv4(),
+          x: 300,
+          y: 200,
+          width: 50,
+          height: 100,
+          color: 'red',
+          sprite: '',
+          animations: {
+            idle: [],
+            run: [],
+            jump: [],
+            attack: [],
+          },
+          health: 50,
+          speed: 20,
+          enablePhysics: true,
+          layer: 3,
+          leftBoundary: 100,
+          rightBoundary: 500,
+        },
+      },
+    ],
+  },
 ];
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedObjectType, setSelectedObjectType] = useState<string | null>(null);
 
-  // Open file dialog
   const openFileDialog = (type: string) => {
     setSelectedObjectType(type);
     fileInputRef.current?.click();
   };
 
-  // Handle image upload
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedObjectType) return;
@@ -81,7 +132,6 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     reader.readAsDataURL(file);
   };
 
-  // Add object with image
   const handleAddObject = (type: string, imageUrl: string = '') => {
     const selectedObject = availableObjects
       .flatMap((category) => category.objects)
@@ -90,9 +140,9 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     if (selectedObject) {
       const newObject = {
         ...selectedObject.params,
-        id: uuidv4(), // Ensure unique ID
+        id: uuidv4(),
         type: selectedObject.type,
-        name: selectedObject.name,  // Обратите внимание, что это значение установлено
+        name: selectedObject.name,
         image: imageUrl,
       };
   
@@ -101,12 +151,11 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     }
   };
 
-  // Handle object selection
   const handleSelectObject = (type: string) => {
-    if (type === 'sprite' || type === 'spriteGrid') {
+    if (['sprite', 'spriteGrid', 'character', 'enemy'].includes(type)) {
       openFileDialog(type);
     } else {
-      handleAddObject(type); // Добавление объекта с его названием
+      handleAddObject(type);
     }
   };
 

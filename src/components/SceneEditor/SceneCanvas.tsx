@@ -1,7 +1,7 @@
 // SceneCanvas.tsx
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Core, SceneManager, getShape2d } from 'tette-core';
+import { Core, SceneManager, getShape2d, EditorMode, PreviewMode } from 'tette-core';
 import { globalLogicManager } from '../../logicManager';
 
 interface SceneData {
@@ -122,7 +122,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       height: canvasRef.current.clientHeight,
       isGuiMode: true,
     });
-    core.startEditMode();
+    core.switchMode(EditorMode);
     setCoreInstance(core);
 
     const shape2dInstance = getShape2d(core.renderType);
@@ -197,8 +197,7 @@ const createGameObject = useCallback((obj: GameObject) => {
         const gameObject = newGameObjectsMap.get(selectedObject.id);
         if (gameObject) {
           setTimeout(() => {
-            console.log('Выделяем объект:', gameObject);
-            coreInstance.highlightObject(gameObject, 'blue');
+
             requestRenderIfNotRequested();
           }, 0);
         }
@@ -285,21 +284,17 @@ useEffect(() => {
     return null;
   };
 
-  // Обработчики предпросмотра
-const handleStartPreview = () => {
-  if (coreInstance) {
-    coreInstance.disableGuiMode();
-    coreInstance.start();
-    // Запуск логики для текущей сцены
-    globalLogicManager.runLogicForScene(sceneName, coreInstance);
-  }
-};
+  const handleStartPreview = () => {
+    if (coreInstance) {
+      coreInstance.switchMode(PreviewMode, sceneName); // Переключаемся в режим предпросмотра
+      console.log('Preview mode started.');
+    }
+  };
 
   const handleStopPreview = () => {
     if (coreInstance) {
-      coreInstance.enableGuiMode();
-      coreInstance.stop();
-      console.log('Остановка предпросмотра.');
+      coreInstance.switchMode(EditorMode); // Возвращаемся в режим редактора
+      console.log('Preview mode stopped. Back to editor mode.');
     }
   };
 
