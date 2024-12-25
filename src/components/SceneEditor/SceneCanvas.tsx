@@ -120,9 +120,9 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       sceneManager: sceneManager,
       width: canvasRef.current.clientWidth,
       height: canvasRef.current.clientHeight,
+      isGuiMode: true,
     });
-
-    core.enableGuiMode();
+    core.startEditMode();
     setCoreInstance(core);
 
     const shape2dInstance = getShape2d(core.renderType);
