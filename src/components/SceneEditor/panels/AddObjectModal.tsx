@@ -5,7 +5,9 @@ import TilesMap from '../../../icons/tilesmap.png';
 import CharacterIcon from '../../../icons/character.png';
 import EnemyIcon from '../../../icons/enemy.png';
 import CustomModal from '../../Modal/CustomModal';
+
 import './AddObjectModal.scss';
+import ConfigureObjectModal from '../../Modal/ConfigureObjectModal';
 
 interface AddObjectModalProps {
   open: boolean;
@@ -112,82 +114,67 @@ const availableObjects = [
 ];
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [selectedObjectType, setSelectedObjectType] = useState<string | null>(null);
+  const [showSecondModal, setShowSecondModal] = useState(false); // Управление вторым модальным окном
+  const [selectedObject, setSelectedObject] = useState<any>(null); // Сохранение выбранного объекта
 
-  const openFileDialog = (type: string) => {
-    setSelectedObjectType(type);
-    fileInputRef.current?.click();
-  };
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !selectedObjectType) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const imageUrl = reader.result as string;
-      handleAddObject(selectedObjectType, imageUrl);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAddObject = (type: string, imageUrl: string = '') => {
-    const selectedObject = availableObjects
+  const handleSelectObject = (type: string) => {
+    const selected = availableObjects
       .flatMap((category) => category.objects)
       .find((obj) => obj.type === type);
-  
-    if (selectedObject) {
+
+    if (selected) {
       const newObject = {
-        ...selectedObject.params,
+        ...selected.params,
         id: uuidv4(),
-        type: selectedObject.type,
-        name: selectedObject.name,
-        image: imageUrl,
+        type: selected.type,
+        name: selected.name,
       };
-  
-      onAdd(newObject);
-      onClose();
+
+      setSelectedObject(newObject); // Сохраняем объект
+      setShowSecondModal(true); // Открываем второе модальное окно
     }
   };
 
-  const handleSelectObject = (type: string) => {
-    if (['sprite', 'spriteGrid', 'character', 'enemy'].includes(type)) {
-      openFileDialog(type);
-    } else {
-      handleAddObject(type);
+  const handleFinalizeObject = () => {
+    if (selectedObject) {
+      onAdd(selectedObject); // Передаем объект в `onAdd`
+      setShowSecondModal(false); // Закрываем второе модальное окно
+      onClose(); // Закрываем первое модальное окно
     }
   };
 
   return (
-    <CustomModal open={open} onClose={onClose} title="Добавить новый объект">
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleImageChange}
-      />
-      <div className="add-object-modal">
-        {availableObjects.map((category) => (
-          <div key={category.category} className="category">
-            <h4>{category.category}</h4>
-            <div className="object-list">
-              {category.objects.map((obj) => (
-                <div
-                  key={obj.type}
-                  className="object-item"
-                  onClick={() => handleSelectObject(obj.type)}
-                >
-                  <img src={obj.icon} alt={obj.name} className="object-icon" />
-                  <span className="object-name">{obj.name}</span>
-                </div>
-              ))}
+    <>
+      <CustomModal open={open} onClose={onClose} title="Добавить новый объект">
+        <div className="add-object-modal">
+          {availableObjects.map((category) => (
+            <div key={category.category} className="category">
+              <h4>{category.category}</h4>
+              <div className="object-list">
+                {category.objects.map((obj) => (
+                  <div
+                    key={obj.type}
+                    className="object-item"
+                    onClick={() => handleSelectObject(obj.type)}
+                  >
+                    <img src={obj.icon} alt={obj.name} className="object-icon" />
+                    <span className="object-name">{obj.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </CustomModal>
+          ))}
+        </div>
+      </CustomModal>
+
+      {/* Второе модальное окно */}
+      <ConfigureObjectModal
+        open={showSecondModal}
+        onClose={() => setShowSecondModal(false)}
+        selectedObject={selectedObject}
+        onSave={handleFinalizeObject}
+      />
+    </>
   );
 };
 
