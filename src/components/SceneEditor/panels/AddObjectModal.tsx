@@ -1,13 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import CircleIcon from '../../../icons/circle.png';
 import TilesMap from '../../../icons/tilesmap.png';
 import CharacterIcon from '../../../icons/character.png';
 import EnemyIcon from '../../../icons/enemy.png';
 import CustomModal from '../../Modal/CustomModal';
-
-import './AddObjectModal.scss';
 import ConfigureObjectModal from '../../Modal/ConfigureObjectModal';
+import './AddObjectModal.scss';
 
 interface AddObjectModalProps {
   open: boolean;
@@ -114,8 +113,8 @@ const availableObjects = [
 ];
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
-  const [showSecondModal, setShowSecondModal] = useState(false); // Управление вторым модальным окном
-  const [selectedObject, setSelectedObject] = useState<any>(null); // Сохранение выбранного объекта
+  const [showSecondModal, setShowSecondModal] = useState(false);
+  const [selectedObject, setSelectedObject] = useState<any>(null);
 
   const handleSelectObject = (type: string) => {
     const selected = availableObjects
@@ -130,16 +129,16 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
         name: selected.name,
       };
 
-      setSelectedObject(newObject); // Сохраняем объект
-      setShowSecondModal(true); // Открываем второе модальное окно
+      setSelectedObject(newObject);
+      setShowSecondModal(true);
     }
   };
 
-  const handleFinalizeObject = () => {
-    if (selectedObject) {
-      onAdd(selectedObject); // Передаем объект в `onAdd`
-      setShowSecondModal(false); // Закрываем второе модальное окно
-      onClose(); // Закрываем первое модальное окно
+  const handleFinalizeObject = (updatedObject: any) => {
+    if (updatedObject) {
+      onAdd(updatedObject);
+      setShowSecondModal(false);
+      onClose();
     }
   };
 
@@ -167,13 +166,14 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
         </div>
       </CustomModal>
 
-      {/* Второе модальное окно */}
-      <ConfigureObjectModal
-        open={showSecondModal}
-        onClose={() => setShowSecondModal(false)}
-        selectedObject={selectedObject}
-        onSave={handleFinalizeObject}
-      />
+      {selectedObject && (
+        <ConfigureObjectModal
+          open={showSecondModal}
+          onClose={() => setShowSecondModal(false)}
+          selectedObject={selectedObject}
+          onSave={handleFinalizeObject}
+        />
+      )}
     </>
   );
 };

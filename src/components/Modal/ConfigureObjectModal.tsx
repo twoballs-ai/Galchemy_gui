@@ -8,7 +8,7 @@ interface ConfigureObjectModalProps {
   open: boolean;
   onClose: () => void;
   selectedObject: any;
-  onSave: (updatedObject: any) => void; // Передаём обновлённый объект
+  onSave: (updatedObject: any) => void;
 }
 
 const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
@@ -31,7 +31,8 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
   };
 
   const handleSave = () => {
-    onSave({ ...selectedObject, image }); // Обновляем объект с картинкой
+    const updatedObject = { ...selectedObject, image };
+    onSave(updatedObject);
   };
 
   return (
@@ -46,7 +47,7 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
       }
     >
       <Tabs defaultActiveKey="1">
-        <TabPane tab="Изображения" key="1">
+        <TabPane tab="Изображение" key="1">
           <h3>Добавить изображение</h3>
           <input
             type="file"

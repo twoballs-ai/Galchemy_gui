@@ -46,24 +46,6 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
       };
     }
 
-    if (obj.type === 'character' || obj.type === 'enemy') {
-      // Загрузка статичного изображения или первого кадра анимации
-      const image = new Image();
-      image.src = obj.sprite || ''; // Используем свойство sprite для статичного изображения
-      gameObjectParams.image = image;
-
-      image.onload = () => {
-        requestRenderIfNotRequested();
-      };
-
-      image.onerror = () => {
-        console.error('Ошибка загрузки спрайта для объекта:', obj.id);
-      };
-
-      // Отключаем движение или другие действия
-      gameObjectParams.isStatic = true; // Оставляем объект статичным
-    }
-
     if (typeof gameObjectParams.width !== 'number') gameObjectParams.width = 50;
     if (typeof gameObjectParams.height !== 'number') gameObjectParams.height = 50;
 
