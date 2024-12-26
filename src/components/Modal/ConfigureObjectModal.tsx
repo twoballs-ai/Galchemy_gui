@@ -64,17 +64,36 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
             </div>
           )}
         </TabPane>
-        <TabPane tab="Переменные" key="2">
+        {selectedObject?.type === 'spriteGrid' && (
+          <TabPane tab="Параметры Grid" key="2">
+            <h3>Настройки Grid</h3>
+            <label>
+              Повторения по X:
+              <input
+                type="number"
+                defaultValue={selectedObject?.repeatX || 1}
+                onChange={(e) =>
+                  (selectedObject.repeatX = parseInt(e.target.value, 10))
+                }
+              />
+            </label>
+            <label>
+              Отступ по X:
+              <input
+                type="number"
+                defaultValue={selectedObject?.spacingX || 0}
+                onChange={(e) =>
+                  (selectedObject.spacingX = parseInt(e.target.value, 10))
+                }
+              />
+            </label>
+          </TabPane>
+        )}
+        <TabPane tab="Переменные" key="3">
           <h3>Управление переменными</h3>
-          {/* Логика добавления переменных */}
         </TabPane>
-        <TabPane tab="Логика" key="3">
+        <TabPane tab="Логика" key="4">
           <h3>Добавить логику</h3>
-          {/* Логика добавления логики */}
-        </TabPane>
-        <TabPane tab="Модификаторы" key="4">
-          <h3>Модификаторы</h3>
-          {/* Логика добавления модификаторов */}
         </TabPane>
       </Tabs>
     </CustomModal>

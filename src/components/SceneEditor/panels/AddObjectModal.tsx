@@ -43,7 +43,7 @@ const availableObjects = [
           id: uuidv4(),
           image: '',
           x: 0,
-          y: 800,
+          y: 100,
           width: 160,
           height: 150,
           repeatX: 12,
