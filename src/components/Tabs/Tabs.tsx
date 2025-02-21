@@ -7,13 +7,16 @@ interface TabsProps {
   activeTab: string;
   onTabClick: (tab: string) => void;
   onRemoveTab: (tab: string) => void;
+  showGlobalLogicTab?: boolean; // Новый проп для отображения глобальной вкладки
 }
 
-const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onTabClick, onRemoveTab }) => {
+const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onTabClick, onRemoveTab, showGlobalLogicTab = false }) => {
   const maxTabWidth = 150;
   const minTabWidth = 90;
   const containerWidth = 1000;
-  const tabWidth = Math.max(minTabWidth, Math.min(maxTabWidth, containerWidth / tabs.length));
+  // Если нужно показать вкладку глобальной логики, считаем общее количество вкладок как tabs.length + 1
+  const totalTabs = showGlobalLogicTab ? tabs.length + 1 : tabs.length;
+  const tabWidth = Math.max(minTabWidth, Math.min(maxTabWidth, containerWidth / totalTabs));
 
   return (
     <div className="tabs-container">
@@ -34,6 +37,16 @@ const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onTabClick, onRemoveTab })
           />
         </div>
       ))}
+      {showGlobalLogicTab && (
+        <div
+          key="projectLogic"
+          className={`tab ${activeTab === 'projectLogic' ? 'tab--active' : ''}`}
+          onClick={() => onTabClick('projectLogic')}
+          style={{ width: `${tabWidth}px` }}
+        >
+          Global Logic
+        </div>
+      )}
     </div>
   );
 };

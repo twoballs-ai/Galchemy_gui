@@ -45,34 +45,46 @@ const GameEditor: React.FC<GameEditorProps> = ({
     "left" | "right" | "top" | "bottom"
   >("left");
 
-  useEffect(() => {
-    const { openedScenes, activeScene: savedActiveScene } = loadOpenedScenes(project.name);
-    let projectData = loadProjectData(project.name);
-    const sceneNames = projectData ? projectData.scenes.map(s => s.sceneName) : [];
-  
-    if (openedScenes.length > 0) {
-      setSceneTabs(openedScenes.map((s) => s.key));
-      setActiveScene(savedActiveScene || openedScenes[0].key);
-      const editorStates: { [key: string]: string } = {};
-      openedScenes.forEach((scene) => {
-        editorStates[scene.key] = scene.state;
-      });
-      setEditorTabs(editorStates);
-    } else if (sceneNames.length > 0) {
-      // Открываем первую
-      const firstScene = sceneNames[0];
-      setActiveScene(firstScene);
-      setSceneTabs([firstScene]);
-      updateOpenedScenes(
-        project.name,
-        [{ title: firstScene, key: firstScene, state: "levelEditor" }],
-        firstScene
-      );
-    } else {
-      // Нет сцен вообще
-      handleNewScene();
+useEffect(() => {
+  const { openedScenes, activeScene: savedActiveScene } = loadOpenedScenes(project.name);
+  let projectData = loadProjectData(project.name);
+  const sceneNames = projectData ? projectData.scenes.map(s => s.sceneName) : [];
+
+  if (openedScenes.length > 0) {
+    const tabs = openedScenes.map((s) => s.key);
+    // Добавляем глобальную вкладку, если её нет
+    if (!tabs.includes("projectLogic")) {
+      tabs.push("projectLogic");
     }
-  }, [project]);
+    setSceneTabs(tabs);
+    setActiveScene(savedActiveScene || tabs[0]);
+    const editorStates: { [key: string]: string } = {};
+    openedScenes.forEach((scene) => {
+      editorStates[scene.key] = scene.state;
+    });
+    // Устанавливаем состояние для глобальной вкладки (например, "logicEditor")
+    editorStates["projectLogic"] = "logicEditor";
+    setEditorTabs(editorStates);
+  } else if (sceneNames.length > 0) {
+    // Открываем первую сцену и добавляем глобальную вкладку
+    const firstScene = sceneNames[0];
+    setActiveScene(firstScene);
+    setSceneTabs([firstScene, "projectLogic"]);
+    updateOpenedScenes(
+      project.name,
+      [
+        { title: firstScene, key: firstScene, state: "levelEditor" },
+        { title: "Глобальная логика", key: "projectLogic", state: "logicEditor" }
+      ],
+      firstScene
+    );
+  } else {
+    // Нет сцен вообще, сначала создаём новую сцену, а затем добавляем вкладку глобальной логики
+    handleNewScene();
+    setSceneTabs((prev) => [...prev, "projectLogic"]);
+    setEditorTabs((prev) => ({ ...prev, projectLogic: "logicEditor" }));
+  }
+}, [project]);
   
 
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
@@ -237,12 +249,14 @@ const GameEditor: React.FC<GameEditorProps> = ({
         </Dropdown>
 
         <Tabs
-          tabs={sceneTabs}
-          activeTab={activeScene}
-          onTabClick={handleSceneChange}
-          onAddTab={handleNewScene}
-          onRemoveTab={handleRemoveScene}
-        />
+  tabs={sceneTabs}
+  activeTab={activeScene}
+  onTabClick={handleSceneChange}
+  onAddTab={handleNewScene}
+  onRemoveTab={handleRemoveScene}
+  // Можно передать дополнительный проп, если компонент Tabs поддерживает его:
+  showGlobalLogicTab={false} // если глобальная вкладка уже включена в sceneTabs
+/>
       </Header>
 
       <Header
@@ -282,44 +296,37 @@ const GameEditor: React.FC<GameEditorProps> = ({
       </Header>
 
       <Layout>
-        <Content style={{ padding: "16px", background: "#2e2e2e" }}>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-            <Button
-              type={
-                editorTabs[activeScene] === "levelEditor"
-                  ? "primary"
-                  : "default"
-              }
-              onClick={() => handleEditorTabChange("levelEditor")}
-            >
-              Редактор уровня
-            </Button>
-            <Button
-              type={
-                editorTabs[activeScene] === "logicEditor"
-                  ? "primary"
-                  : "default"
-              }
-              onClick={() => handleEditorTabChange("logicEditor")}
-            >
-              Редактор логики
-            </Button>
-            <h2 style={{ color: "white" }}>Active Scene: {activeScene}</h2>
-          </div>
-          {editorTabs[activeScene] === "levelEditor" ? (
-            <SceneEditor
-              projectName={project.name}
-              sceneName={activeScene}
-              renderType={project.renderType}
-            />
-          ) : (
-            <LogicEditorContent
-            projectName={project.name}
-            sceneName={activeScene}
-          />
-          )}
-        </Content>
-      </Layout>
+  <Content style={{ padding: "16px", background: "#2e2e2e" }}>
+{activeScene !== "projectLogic" && (
+  <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+    <Button
+      type={editorTabs[activeScene] === "levelEditor" ? "primary" : "default"}
+      onClick={() => handleEditorTabChange("levelEditor")}
+    >
+      Редактор уровня
+    </Button>
+    <Button
+      type={editorTabs[activeScene] === "logicEditor" ? "primary" : "default"}
+      onClick={() => handleEditorTabChange("logicEditor")}
+    >
+      Редактор логики
+    </Button>
+    <h2 style={{ color: "white" }}>Active Scene: {activeScene}</h2>
+  </div>
+)}
+    {activeScene === "projectLogic" ? (
+      <LogicEditorContent projectName={project.name} scope="project" />
+    ) : editorTabs[activeScene] === "logicEditor" ? (
+      <LogicEditorContent projectName={project.name} sceneName={activeScene} scope="scene" />
+    ) : (
+      <SceneEditor
+        projectName={project.name}
+        sceneName={activeScene}
+        renderType={project.renderType}
+      />
+    )}
+  </Content>
+</Layout>
 
       <Drawer
         title="Параметры проекта"
