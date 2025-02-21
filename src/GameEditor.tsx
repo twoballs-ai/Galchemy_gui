@@ -9,9 +9,9 @@ import {
   PlayCircleOutlined,
   MenuOutlined,
 } from "@ant-design/icons";
-import LogicEditorContent from "./components/LogicEditor/LogicEditorContent";
-import SceneEditor from "./components/SceneEditor/SceneEditor";
-import Tabs from "./components/Tabs/Tabs";
+import LogicEditorContent from "./components/GameEditorComponents/LogicEditor/LogicEditorContent";
+import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
+import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import {
   saveProjectData,
   loadProjectData,
@@ -23,6 +23,7 @@ import {
   ProjectSummary,
 } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
+import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";
 
 const { Header, Content } = Layout;
 
@@ -41,9 +42,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const [activeScene, setActiveScene] = useState<string>("");
   const [editorTabs, setEditorTabs] = useState<{ [key: string]: string }>({});
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [drawerPlacement, setDrawerPlacement] = useState<
-    "left" | "right" | "top" | "bottom"
-  >("left");
 
 useEffect(() => {
   const { openedScenes, activeScene: savedActiveScene } = loadOpenedScenes(project.name);
@@ -328,14 +326,12 @@ useEffect(() => {
   </Content>
 </Layout>
 
-      <Drawer
-        title="Параметры проекта"
-        placement={drawerPlacement}
+<ProjectSettingsDrawer
+        visible={drawerVisible}
         onClose={toggleDrawer}
-        open={drawerVisible}
-      >
-        <p>Здесь можно редактировать параметры проекта.</p>
-      </Drawer>
+        project={project}
+        onUpdateProject={onUpdateProject}
+      />
     </Layout>
   );
 };

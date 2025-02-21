@@ -6,7 +6,7 @@ import SceneCanvas from './SceneCanvas';
 import SceneObjectsPanel from './panels/SceneObjectsPanel';
 import PropertiesPanel from './panels/PropertiesPanel';
 import './SceneEditor.scss';
-import { loadSceneData, saveSceneData } from '../../utils/storageUtils';
+import { loadSceneData, saveSceneData } from '../../../utils/storageUtils';
 import { v4 as uuidv4 } from 'uuid'; // Для генерации уникальных идентификаторов
 
 const ResponsiveGridLayout = WidthProvider(Responsive);

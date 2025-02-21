@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import CircleIcon from '../../../icons/circle.png';
-import TilesMap from '../../../icons/tilesmap.png';
-import CharacterIcon from '../../../icons/character.png';
-import EnemyIcon from '../../../icons/enemy.png';
+import CircleIcon from '../../../../icons/circle.png';
+import TilesMap from '../../../../icons/tilesmap.png';
+import CharacterIcon from '../../../../icons/character.png';
+import EnemyIcon from '../../../../icons/enemy.png';
 import CustomModal from '../../Modal/CustomModal';
 import ConfigureObjectModal from '../../Modal/ConfigureObjectModal';
 import './AddObjectModal.scss';

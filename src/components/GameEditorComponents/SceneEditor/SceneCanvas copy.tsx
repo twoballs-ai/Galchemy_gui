@@ -2,10 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Core, SceneManager, getShape2d, EditorMode, PreviewMode } from 'tette-core';
-import { globalLogicManager } from '../../logicManager';
-import PreviewControls from './sceneCanvas/PreviewControls';
-import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
-import GameObjectManager from './sceneCanvas/GameObjectManager';
+import { globalLogicManager } from '../../../logicManager';
 
 interface SceneData {
   sceneName: string;
@@ -123,7 +120,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       sceneManager: sceneManager,
       width: canvasRef.current.clientWidth,
       height: canvasRef.current.clientHeight,
-
+      isGuiMode: true,
     });
     core.switchMode(EditorMode);
     setCoreInstance(core);
@@ -139,13 +136,80 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     };
   }, [sceneName, renderType]);
 
+  // Создание игровых объектов
+const createGameObject = useCallback((obj: GameObject) => {
+  if (!shape2d) return null;
+
+  const shapeFunction = shape2d[obj.type];
+  if (!shapeFunction) {
+    console.warn('Неизвестный тип объекта:', obj.type);
+    return null;
+  }
+
+  const gameObjectParams = { ...obj };
+
+  if (obj.type === 'sprite' || obj.type === 'spriteGrid') {
+    const image = new Image();
+    image.src = obj.image || '';
+    gameObjectParams.image = image;
+
+    image.onload = () => {
+      requestRenderIfNotRequested();
+    };
+
+    image.onerror = () => {
+      console.error('Ошибка загрузки изображения для объекта:', obj.id);
+    };
+  }
+
+  // Убедитесь, что width и height заданы
+  if (typeof gameObjectParams.width !== 'number') gameObjectParams.width = 50; // значение по умолчанию
+  if (typeof gameObjectParams.height !== 'number') gameObjectParams.height = 50;
+
+  const gameObject = shapeFunction(gameObjectParams);
+  gameObject.id = obj.id;
+  return gameObject;
+}, [shape2d, requestRenderIfNotRequested]);
 
 
+  // Рендеринг сцены при изменении данных сцены
   useEffect(() => {
-    if (coreInstance) {
-      coreInstance.setSelectedObject(selectedObject);
+    if (coreInstance && shape2d && sceneData.objects) {
+      const sceneManager = coreInstance.getSceneManager();
+      sceneManager.clearScene(sceneName);
+
+      const newGameObjectsMap = new Map<string, GameObject>();
+
+      sceneData.objects.forEach((obj: GameObject) => {
+        const gameObject = createGameObject(obj);
+        if (gameObject) {
+          sceneManager.addGameObjectToScene(sceneName, gameObject);
+          newGameObjectsMap.set(obj.id, gameObject);
+        }
+      });
+
+      setGameObjectsMap(newGameObjectsMap);
+      sceneManager.changeScene(sceneName);
+      requestRenderIfNotRequested();
+
+      // Выделение выбранного объекта после рендеринга
+      if (selectedObject) {
+        const gameObject = newGameObjectsMap.get(selectedObject.id);
+        if (gameObject) {
+          setTimeout(() => {
+
+            requestRenderIfNotRequested();
+          }, 0);
+        }
+      }
     }
-  }, [selectedObject, coreInstance]);
+  }, [sceneData.objects, coreInstance, shape2d, sceneName, createGameObject, requestRenderIfNotRequested, selectedObject]);
+
+useEffect(() => {
+  if (coreInstance) {
+    coreInstance.setSelectedObject(selectedObject);
+  }
+}, [selectedObject, coreInstance]);
   // Обработчики событий мыши
   const handleMouseDown = useCallback((event: MouseEvent) => {
     const canvas = canvasRef.current;
@@ -222,34 +286,47 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
   const handleStartPreview = () => {
     if (coreInstance) {
-      coreInstance.switchMode(PreviewMode, sceneName);
-  
-      // Активация анимаций для всех объектов
-      gameObjectsMap.forEach((gameObject) => {
-        if (gameObject.type === 'character' || gameObject.type === 'enemy') {
-          // gameObject.isStatic = false; // Включаем динамическое поведение
-        }
-      });
+      coreInstance.switchMode(PreviewMode, sceneName); // Переключаемся в режим предпросмотра
       console.log('Preview mode started.');
     }
   };
-  
+
   const handleStopPreview = () => {
     if (coreInstance) {
-      coreInstance.switchMode(EditorMode);
-  
-      // Деактивация анимаций (статическое отображение)
-      gameObjectsMap.forEach((gameObject) => {
-        if (gameObject.type === 'character' || gameObject.type === 'enemy') {
-          // gameObject.isStatic = true; // Переводим в статический режим
-        }
-      });
-      console.log('Editor mode resumed.');
+      coreInstance.switchMode(EditorMode); // Возвращаемся в режим редактора
+      console.log('Preview mode stopped. Back to editor mode.');
     }
   };
 
   // Подключение функции resize
-  useCanvasResize(canvasRef, coreInstance);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !coreInstance) return;
+
+    const handleResize = () => {
+      const parent = canvas.parentElement;
+      if (parent) {
+        const newWidth = parent.clientWidth;
+        const newHeight = parent.clientHeight;
+        coreInstance.resize(newWidth, newHeight);
+        console.log(`Canvas resized to: ${newWidth}x${newHeight}`);
+      }
+    };
+
+    // Инициализируем размер при монтировании
+    handleResize();
+
+    // Создаем ResizeObserver для отслеживания изменений размеров родительского элемента
+    const resizeObserver = new ResizeObserver(handleResize);
+    const parent = canvas.parentElement;
+    if (parent) {
+      resizeObserver.observe(parent);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [coreInstance]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -258,16 +335,18 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
         id="canvas"
         style={{ border: '1px solid #ccc', width: '100%', height: '100%' }}
       />
-          <GameObjectManager
-        coreInstance={coreInstance}
-        shape2d={shape2d}
-        sceneData={sceneData}
-        sceneName={sceneName}
-        onGameObjectsMapUpdate={setGameObjectsMap}
-        requestRenderIfNotRequested={requestRenderIfNotRequested}
-      />
-      <PreviewControls onStartPreview={handleStartPreview} onStopPreview={handleStopPreview} />
-
+      <button
+        onClick={handleStartPreview}
+        style={{ position: 'absolute', top: 10, left: 10 }}
+      >
+        Start Preview
+      </button>
+      <button
+        onClick={handleStopPreview}
+        style={{ position: 'absolute', top: 10, left: 120 }}
+      >
+        Stop Preview
+      </button>
     </div>
   );
 };
