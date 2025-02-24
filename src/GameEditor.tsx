@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Layout, Button, Dropdown, Space, Drawer } from "antd";
+import { useDispatch } from "react-redux";
 import {
   DownOutlined,
   PlusOutlined,
@@ -13,7 +14,7 @@ import LogicEditorContent from "./components/GameEditorComponents/LogicEditor/Lo
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import {
-  saveProjectData,
+  // saveProjectData,
   loadProjectData,
   saveSceneData,
   loadSceneData,
@@ -22,6 +23,12 @@ import {
   deleteSceneData,
   ProjectSummary,
 } from "./utils/storageUtils";
+import {
+  addScene,
+  setActiveScene,
+  setOpenedScenes,
+  saveProject,
+} from "./store/projectSlice";
 import { globalLogicManager } from "./logicManager";
 import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";
 
@@ -38,6 +45,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
   onUpdateProject,
   onCloseProject,
 }) => {
+   const dispatch = useDispatch();
   const [sceneTabs, setSceneTabs] = useState<string[]>([]);
   const [activeScene, setActiveScene] = useState<string>("");
   const [editorTabs, setEditorTabs] = useState<{ [key: string]: string }>({});
@@ -113,7 +121,7 @@ useEffect(() => {
     projectData.scenes.push(newSceneData);
   
     // 5) Сохраняем полный объект
-    saveProjectData(project.name, projectData);
+    // saveProjectData(project.name, projectData);
   
     setSceneTabs((prevTabs) => [...prevTabs, newSceneName]);
     setActiveScene(newSceneName);

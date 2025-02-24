@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GameTypeSelector from './GameTypeSelector';
 import GameEditor from './GameEditor';
+import { v4 as uuidv4 } from 'uuid'; // Импорт функции генерации UUID
 import { Button, List, Modal, Space, Typography, Layout } from 'antd';
 import './App.scss';
 import { ProjectSummary, deleteProjectData, saveAllProjects, loadAllProjects } from './utils/storageUtils';
@@ -44,6 +45,7 @@ const App: React.FC = () => {
   const handleSelectGameType = (gameType: string) => {
     setIsGameTypeModalVisible(false);
     const newProject: ProjectSummary = {
+      id: uuidv4(), // Генерация уникального идентификатора
       name: `Project ${projects.length + 1}`,
       renderType: gameType,
     };
@@ -129,7 +131,7 @@ const App: React.FC = () => {
 
         {/* Modal */}
         <Modal
-          title="Выберите тип рендеринга"
+          title="Выбор типа проекта "
           open={isGameTypeModalVisible}
           onCancel={() => setIsGameTypeModalVisible(false)}
           footer={null}

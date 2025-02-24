@@ -2,21 +2,32 @@
 
 const ALL_PROJECTS_KEY = 'allProjects';
 
-// Интерфейсы
+// Интерфейсы название проекта
 export interface ProjectSummary {
+  id: string;
   name: string;
   renderType: string;
 }
 
+// Интерфейс данных отдельной сцены с добавленным идентификатором
 export interface SceneData {
+  id: string;           // Уникальный идентификатор сцены
   sceneName: string;
-  objects: GameObject[];
   settings: object;
 }
 
+// Интерфейс для открытых сцен (вкладок) в редакторе
+export interface OpenedScene {
+  id: string;       // Идентификатор сцены (тот же, что в SceneData)
+  title: string;    // Название вкладки (например, "Scene 2" или "Глобальная логика")
+  key: string;      // Ключ вкладки (может совпадать с id или быть другим уникальным значением)
+  state: string;    // Состояние вкладки (например, "levelEditor", "logicEditor")
+}
+
+// Обновлённая структура данных проекта: сохраняются только сцены и открытые вкладки
 export interface ProjectData {
   scenes: SceneData[];
-  openedScenes: { title: string; key: string; state: string }[];
+  openedScenes: OpenedScene[];
   activeScene: string;
 }
 
@@ -49,7 +60,6 @@ export const saveProjectData = (projectName: string, data: ProjectData) => {
     console.error(`Ошибка при сохранении данных проекта ${projectName}:`, error);
   }
 };
-
 // Загрузка данных конкретного проекта
 export const loadProjectData = (projectName: string): ProjectData | null => {
   try {
