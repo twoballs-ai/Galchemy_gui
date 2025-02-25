@@ -27,7 +27,7 @@ import {
   setActiveScene,
   setOpenedScenes,
   updateScene,
-} from "./store/projectSlice";
+} from "./store/";
 
 const { Header, Content } = Layout;
 

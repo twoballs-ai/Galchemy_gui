@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import projectReducer from './editorSlice';
+import projectReducer from './projectSlice';
 
 export const store = configureStore({
   reducer: {
-    editor: projectReducer,
+    project: projectReducer,
     // Добавляйте сюда другие редюсеры по мере необходимости
   },
 });
