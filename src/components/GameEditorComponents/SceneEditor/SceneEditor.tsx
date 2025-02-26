@@ -1,13 +1,18 @@
-// SceneEditor.tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
 import SceneCanvas from './SceneCanvas';
 import SceneObjectsPanel from './panels/SceneObjectsPanel';
 import PropertiesPanel from './panels/PropertiesPanel';
 import './SceneEditor.scss';
-import { loadSceneData, saveSceneData } from '../../../utils/storageUtils';
-import { v4 as uuidv4 } from 'uuid'; // Для генерации уникальных идентификаторов
+import { v4 as uuidv4 } from 'uuid';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../../store/store';
+import {
+  loadSceneObjects,
+  addSceneObject,
+  updateSceneObject,
+  removeSceneObject,
+} from '../../../store/slices/sceneObjectsSlice';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -39,17 +44,11 @@ const initialLayouts: Layouts = {
 
 interface SceneEditorProps {
   projectName: string;
-  sceneName: string;
+  activeScene: string;
   renderType: string;
 }
 
-interface SceneData {
-  sceneName: string;
-  objects: GameObject[];
-  settings: object;
-}
-
-interface GameObject {
+export interface GameObject {
   id: string;
   type: string;
   name: string;
@@ -57,7 +56,7 @@ interface GameObject {
   y: number;
   width?: number;
   height?: number;
-  radius?: number;
+  radius?: number | null;
   color?: string;
   borderColor?: string;
   borderWidth?: number;
@@ -65,69 +64,68 @@ interface GameObject {
   isStatic?: boolean;
   layer?: number;
   image?: string;
-  // Добавьте другие свойства по необходимости
 }
 
-const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, renderType }) => {
-  const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
-  const [sceneData, setSceneData] = useState<SceneData>({
-    sceneName: sceneName,
-    objects: [],
-    settings: {},
-  });
+const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene, renderType }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  // Получаем объекты из Redux
 
+  const sceneObjects = useSelector((state: RootState) => state.sceneObjects?.objects || []);
+
+  
+  // Локальное состояние для макетов и управления панелями
+  const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
   const [selectedObject, setSelectedObject] = useState<GameObject | null>(null);
   const [panels, setPanels] = useState({
     objectsPanel: true,
     propertiesPanel: true,
   });
+  // Если есть дополнительные настройки сцены, их можно хранить локально
+  const [sceneSettings, setSceneSettings] = useState<object>({});
 
-  useEffect(() => {
-    // Загружаем данные сцены при монтировании компонента
-    const loadedSceneData = loadSceneData(projectName, sceneName);
-    if (loadedSceneData) {
-      setSceneData(loadedSceneData);
+  // Функция глубокого клонирования макетов
+  const cloneLayouts = (layouts: Layouts): Layouts => {
+    const newLayouts: Layouts = {};
+    for (let bp in layouts) {
+      newLayouts[bp] = layouts[bp].map(item => ({ ...item }));
     }
-  }, [projectName, sceneName]);
-
-  useEffect(() => {
-    // Сохраняем данные сцены при их изменении
-    saveSceneData(projectName, sceneData);
-  }, [sceneData, projectName]);
+    return newLayouts;
+  };
 
   const onLayoutChange = (currentLayout: Layout[], allLayouts: Layouts) => {
     setLayouts(allLayouts);
-    // Можно сохранить макеты в localStorage, если необходимо
+    // По необходимости можно сохранить макеты в localStorage
   };
 
+  // Закрытие панели: обновляем флаг и удаляем панель из макетов
   const handleClosePanel = (panelKey: string) => {
-    setPanels((prev) => ({ ...prev, [panelKey]: false }));
-    // Удаляем панель из всех макетов
-    const newLayouts = { ...layouts };
-    Object.keys(newLayouts).forEach((breakpoint) => {
-      newLayouts[breakpoint] = newLayouts[breakpoint].filter(
-        (item) => item.i !== panelKey
-      );
+    setPanels(prev => ({ ...prev, [panelKey]: false }));
+    const newLayouts = cloneLayouts(layouts);
+    Object.keys(newLayouts).forEach(breakpoint => {
+      newLayouts[breakpoint] = newLayouts[breakpoint].filter(item => item.i !== panelKey);
     });
     setLayouts(newLayouts);
   };
 
+  // Открытие панели: если панели нет, добавляем её с дефолтной позицией
   const handleOpenPanel = (panelKey: string) => {
-    setPanels((prev) => ({ ...prev, [panelKey]: true }));
-    // Добавляем панель с новой позицией для каждого макета
-    const newLayouts = { ...layouts };
-    Object.keys(newLayouts).forEach((breakpoint) => {
-      newLayouts[breakpoint] = [
-        ...newLayouts[breakpoint],
-        {
-          i: panelKey,
-          x: 0,
-          y: Infinity,
-          w: Math.floor(cols[breakpoint] / 3), // Обеспечиваем целочисленное значение
-          h: 10,
-          minH: 5,
-        },
-      ];
+    if (panels[panelKey]) return;
+    setPanels(prev => ({ ...prev, [panelKey]: true }));
+    const newLayouts = cloneLayouts(layouts);
+    Object.keys(newLayouts).forEach(breakpoint => {
+      if (!newLayouts[breakpoint].find(item => item.i === panelKey)) {
+        newLayouts[breakpoint] = [
+          ...newLayouts[breakpoint],
+          {
+            i: panelKey,
+            x: 0,
+            y: Infinity,
+            w: Math.floor(cols[breakpoint] / 3),
+            h: 10,
+            minH: 5,
+          },
+        ];
+      }
     });
     setLayouts(newLayouts);
   };
@@ -136,7 +134,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
     setSelectedObject(object);
   };
 
-  const addObjectToScene = (newObject: Partial<GameObject>) => {
+  // Обработчики для работы с объектами через Redux
+  const handleAddObject = (newObject: Partial<GameObject>) => {
     const completeObject: GameObject = {
       id: uuidv4(),
       type: newObject.type || 'rectangle',
@@ -145,7 +144,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
       y: newObject.y || 0,
       width: newObject.width || 50,
       height: newObject.height || 50,
-      radius: newObject.radius || null,
+      radius: newObject.radius !== undefined ? newObject.radius : null,
       color: newObject.color || '#FF0000',
       borderColor: newObject.borderColor || '#000000',
       borderWidth: newObject.borderWidth || 1,
@@ -153,47 +152,26 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
       isStatic: newObject.isStatic || false,
       layer: newObject.layer || 0,
       image: newObject.image || '',
-      // Добавьте другие свойства по необходимости
     };
-
-    setSceneData((prevData: SceneData) => {
-      const updatedData = {
-        ...prevData,
-        objects: [...prevData.objects, completeObject],
-      };
-      return updatedData;
-    });
-
-    setSelectedObject(completeObject);
+    dispatch(addSceneObject({ activeScene, object: completeObject }));
   };
 
   const handleUpdateObject = (updatedObject: GameObject) => {
-    if (!updatedObject || !updatedObject.id) return;
-    setSceneData((prevData: SceneData) => {
-      const updatedData = {
-        ...prevData,
-        objects: prevData.objects.map((obj: GameObject) =>
-          obj.id === updatedObject.id ? updatedObject : obj
-        ),
-      };
-      return updatedData;
-    });
+    dispatch(updateSceneObject({ activeScene, object: updatedObject }));
     setSelectedObject(updatedObject);
   };
 
-  const removeObjectFromScene = (objectId: string) => {
-    setSceneData((prevData: SceneData) => {
-      const updatedData = {
-        ...prevData,
-        objects: prevData.objects.filter((obj: GameObject) => obj.id !== objectId),
-      };
-      // Если удаляемый объект был выбранным, сбрасываем selection
-      if (selectedObject && selectedObject.id === objectId) {
-        setSelectedObject(null);
-      }
-      return updatedData;
-    });
+  const handleRemoveObject = (objectId: string) => {
+    dispatch(removeSceneObject({ activeScene, objectId }));
+    if (selectedObject && selectedObject.id === objectId) {
+      setSelectedObject(null);
+    }
   };
+
+  // Загружаем объекты сцены при монтировании или изменении activeScene
+  useEffect(() => {
+    dispatch(loadSceneObjects(activeScene));
+  }, [activeScene, dispatch]);
 
   return (
     <div className="scene-editor">
@@ -205,14 +183,14 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
         rowHeight={30}
         onLayoutChange={onLayoutChange}
         draggableHandle=".panel-header"
-        isResizable={true} // Включение возможности изменения размеров панелей
+        isResizable={true}
       >
         {panels.objectsPanel && (
           <div key="objectsPanel" className="panel">
             <SceneObjectsPanel
-              objects={sceneData.objects}
-              onAddObject={addObjectToScene}
-              onRemoveObject={removeObjectFromScene}
+              objects={sceneObjects}
+              onAddObject={handleAddObject}
+              onRemoveObject={handleRemoveObject}
               onSelectObject={handleSelectObject}
               onClose={() => handleClosePanel('objectsPanel')}
             />
@@ -220,15 +198,14 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
         )}
         <div key="sceneCanvas" className="panel">
           <SceneCanvas
-            sceneName={sceneName}
+            activeScene={activeScene}
             renderType={renderType}
-            sceneData={sceneData}
+            sceneData={{ activeScene, objects: sceneObjects, settings: sceneSettings }}
             selectedObject={selectedObject}
             onSelectObject={handleSelectObject}
             onUpdateObject={handleUpdateObject}
           />
         </div>
-
         {panels.propertiesPanel && (
           <div key="propertiesPanel" className="panel">
             <PropertiesPanel
@@ -239,7 +216,6 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ projectName, sceneName, rende
           </div>
         )}
       </ResponsiveGridLayout>
-      {/* Кнопки для повторного открытия панелей */}
       <div className="panel-controls">
         {!panels.objectsPanel && (
           <button onClick={() => handleOpenPanel('objectsPanel')}>

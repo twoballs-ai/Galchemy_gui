@@ -25,7 +25,7 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
     onAddObject(newObject);
     setIsModalOpen(false);
   };
-console.log(objects)
+//console.log(objects)
   return (
     <div className="scene-objects-panel">
       <div className="panel-header">

@@ -1,6 +1,6 @@
 // GameEditor.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback  } from "react";
 import { Layout, Button, Dropdown, Space } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -9,7 +9,7 @@ import {
   PlayCircleOutlined,
   MenuOutlined,
 } from "@ant-design/icons";
-
+import { v4 as uuidv4 } from 'uuid';
 import LogicEditorContent from "./components/GameEditorComponents/LogicEditor/LogicEditorContent";
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
@@ -18,7 +18,7 @@ import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsD
 import { ProjectSummary } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
 
-import { RootState, AppDispatch } from "./store";
+import { RootState, AppDispatch } from "./store/store";
 import {
   loadProject,
   saveProject,
@@ -27,7 +27,8 @@ import {
   setActiveScene,
   setOpenedScenes,
   updateScene,
-} from "./store/projectSlice";
+  updateOpenedScene,
+} from "./store/slices/projectSlice";
 
 const { Header, Content } = Layout;
 
@@ -36,6 +37,13 @@ interface GameEditorProps {
   onUpdateProject: (updatedProject: ProjectSummary) => void;
   onCloseProject: () => void;
 }
+
+const createScene = (sceneName: string) => ({
+  id: `scene_${uuidv4()}`,
+  sceneName,
+  settings: {},
+});
+
 
 const GameEditor: React.FC<GameEditorProps> = ({
   project,
@@ -48,46 +56,74 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const { scenes, openedScenes, activeScene } = useSelector(
     (state: RootState) => state.project
   );
-
+console.log(openedScenes)
   // Локальное состояние для "логики редактора вкладок" (например, "levelEditor"/"logicEditor")
   const [editorTabs, setEditorTabs] = useState<{ [key: string]: string }>({});
   const [drawerVisible, setDrawerVisible] = useState(false);
-
+  const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   // Формируем список вкладок: из Redux + добавляем "projectLogic", если его нет
-  const sceneTabs = [...openedScenes.map((s) => s.key)];
-  if (!sceneTabs.includes("projectLogic")) {
-    sceneTabs.push("projectLogic");
+  const sceneTabs = openedScenes.map(s => ({
+    key: s.key,
+    sceneName: s.sceneName,
+  }));
+  
+  if (!sceneTabs.find(tab => tab.key === "projectLogic")) {
+    sceneTabs.push({ key: "projectLogic", sceneName: "Проектная логика" });
   }
-
   // При монтировании загружаем проект из localStorage
   useEffect(() => {
-    dispatch(loadProject(project.name));
+    dispatch(loadProject(project.name)).then(() => setIsProjectLoaded(true));
   }, [dispatch, project.name]);
 
-  // Создаём новую сцену и сразу сохраняем проект в localStorage
-  const handleNewScene = () => {
-    // Формируем данные новой сцены. ID, sceneName и settings - на ваше усмотрение
-    const index = scenes.length + 1;
-    const newScene = {
-      id: `scene_${Date.now()}`, // или uuid()
-      sceneName: `Scene ${index}`,
-      settings: {},
-    };
-    // Добавляем сцену в Redux
-    dispatch(addScene(newScene));
-    // Делаем её активной
-    dispatch(setActiveScene(newScene.id));
 
-    // По желанию - сохранить проект
+const addNewScene = useCallback(
+  (sceneName: string) => {
+    const newScene = createScene(sceneName);
+    dispatch(addScene(newScene));
+    
+    // Создаём объект для openedScenes с нужной структурой
+    const newOpenedScene = {
+      id: newScene.id,
+      sceneName: newScene.sceneName,
+      key: newScene.id, // можно использовать id как ключ
+      state: "levelEditor"  // либо другой дефолтный статус
+    };
+
+    // Обновляем openedScenes, добавляя новую сцену
+    dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
+    dispatch(setActiveScene(newScene.id));
     dispatch(saveProject(project.name));
-  };
+  },
+  [dispatch, project.name, openedScenes]
+);
+  // Если сцен нет и активная сцена не установлена – создаём дефолтную сцену
+  useEffect(() => {
+    if (isProjectLoaded && scenes.length === 0 && activeScene === "") {
+      addNewScene("Scene 1");
+    }
+  }, [isProjectLoaded, scenes, activeScene, addNewScene]);
+
+  // Создаём новую сцену (на основе количества уже созданных сцен)
+  const handleNewScene = useCallback(() => {
+    const index = scenes.length + 1;
+    addNewScene(`Scene ${index}`);
+  }, [scenes.length, addNewScene]);
 
   // Удаляем сцену по её идентификатору
-  const handleRemoveScene = (tabKey: string) => {
-    // Защитимся от удаления "projectLogic"
+  const handleRemoveOpenedScene = (tabKey: string) => {
+    // Защита от удаления глобальной вкладки
     if (tabKey === "projectLogic") return;
-
-    dispatch(removeScene({ sceneId: tabKey }));
+  
+    // Убираем сцену только из списка открытых вкладок
+    const updatedOpenedScenes = openedScenes.filter(scene => scene.key !== tabKey);
+    dispatch(setOpenedScenes(updatedOpenedScenes));
+  
+    // Если закрытая вкладка была активной, переключаем активную сцену на первую оставшуюся вкладку (или на "projectLogic")
+    if (activeScene === tabKey) {
+      const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "projectLogic";
+      dispatch(setActiveScene(newActive));
+    }
+    
     dispatch(saveProject(project.name));
   };
 
@@ -100,16 +136,21 @@ const GameEditor: React.FC<GameEditorProps> = ({
 
   // Меняем режим редактора (уровень / логика) — храним локально
   const handleEditorTabChange = (mode: string) => {
+    // Обновляем локальный стейт (если он вам ещё нужен)
     setEditorTabs((prevTabs) => ({
       ...prevTabs,
       [activeScene]: mode,
     }));
+  
+    // Обновляем state открытой сцены в Redux
+    dispatch(updateOpenedScene({ key: activeScene, newState: mode }));
+    dispatch(saveProject(project.name));
   };
 
   const handleRunGame = () => {
     // Запускаем "игру" для активной сцены
     if (activeScene === "projectLogic") {
-      console.log("Running global logic...");
+      //console.log("Running global logic...");
       return;
     }
     globalLogicManager.runLogicForScene(activeScene);
@@ -134,8 +175,10 @@ const GameEditor: React.FC<GameEditorProps> = ({
   ];
 
   // Определяем, какой режим редактора сейчас активен для текущей сцены
-  const currentEditorMode = editorTabs[activeScene] || "levelEditor";
-
+  // const currentEditorMode = editorTabs[activeScene] || "levelEditor";
+  const currentEditorMode =
+  openedScenes.find((scene) => scene.key === activeScene)?.state ||
+  "levelEditor";
   return (
     <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
       {/* Верхняя панель с меню и вкладками */}
@@ -179,7 +222,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
           activeTab={activeScene}
           onTabClick={handleSceneChange}
           onAddTab={handleNewScene}
-          onRemoveTab={handleRemoveScene}
+          onRemoveTab={handleRemoveOpenedScene}
           showGlobalLogicTab={false} // у нас уже вручную добавляется "projectLogic"
         />
       </Header>
@@ -251,13 +294,13 @@ const GameEditor: React.FC<GameEditorProps> = ({
           ) : currentEditorMode === "logicEditor" ? (
             <LogicEditorContent
               projectName={project.name}
-              sceneName={activeScene}
+              activeScene={activeScene}
               scope="scene"
             />
           ) : (
             <SceneEditor
               projectName={project.name}
-              sceneName={activeScene}
+              activeScene={activeScene}
               renderType={project.renderType}
             />
           )}

@@ -131,11 +131,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     const shape2dInstance = getShape2d(core.renderType);
     setShape2d(shape2dInstance);
 
-    console.log('Core и shape2d инициализированы:', core, shape2dInstance);
+    //console.log('Core и shape2d инициализированы:', core, shape2dInstance);
 
     return () => {
       core.stop();
-      console.log('Core остановлен.');
+      //console.log('Core остановлен.');
     };
   }, [sceneName, renderType]);
 
@@ -182,7 +182,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
     const updatedObject: GameObject = { ...selectedObject, x: x - dragOffset.x, y: y - dragOffset.y };
 
-    console.log(`Moving object ${updatedObject.id} to (${updatedObject.x}, ${updatedObject.y})`);
+    //console.log(`Moving object ${updatedObject.id} to (${updatedObject.x}, ${updatedObject.y})`);
 
     handleUpdateObjectLocal(updatedObject);
   }, [isDragging, selectedObject, dragOffset, handleUpdateObjectLocal]);
@@ -230,7 +230,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
           // gameObject.isStatic = false; // Включаем динамическое поведение
         }
       });
-      console.log('Preview mode started.');
+      //console.log('Preview mode started.');
     }
   };
   
@@ -244,7 +244,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
           // gameObject.isStatic = true; // Переводим в статический режим
         }
       });
-      console.log('Editor mode resumed.');
+      //console.log('Editor mode resumed.');
     }
   };
 

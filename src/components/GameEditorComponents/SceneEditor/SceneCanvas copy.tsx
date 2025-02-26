@@ -128,11 +128,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     const shape2dInstance = getShape2d(core.renderType);
     setShape2d(shape2dInstance);
 
-    console.log('Core и shape2d инициализированы:', core, shape2dInstance);
+    //console.log('Core и shape2d инициализированы:', core, shape2dInstance);
 
     return () => {
       core.stop();
-      console.log('Core остановлен.');
+      //console.log('Core остановлен.');
     };
   }, [sceneName, renderType]);
 
@@ -246,7 +246,7 @@ useEffect(() => {
 
     const updatedObject: GameObject = { ...selectedObject, x: x - dragOffset.x, y: y - dragOffset.y };
 
-    console.log(`Moving object ${updatedObject.id} to (${updatedObject.x}, ${updatedObject.y})`);
+    //console.log(`Moving object ${updatedObject.id} to (${updatedObject.x}, ${updatedObject.y})`);
 
     handleUpdateObjectLocal(updatedObject);
   }, [isDragging, selectedObject, dragOffset, handleUpdateObjectLocal]);
@@ -287,14 +287,14 @@ useEffect(() => {
   const handleStartPreview = () => {
     if (coreInstance) {
       coreInstance.switchMode(PreviewMode, sceneName); // Переключаемся в режим предпросмотра
-      console.log('Preview mode started.');
+      //console.log('Preview mode started.');
     }
   };
 
   const handleStopPreview = () => {
     if (coreInstance) {
       coreInstance.switchMode(EditorMode); // Возвращаемся в режим редактора
-      console.log('Preview mode stopped. Back to editor mode.');
+      //console.log('Preview mode stopped. Back to editor mode.');
     }
   };
 
@@ -309,7 +309,7 @@ useEffect(() => {
         const newWidth = parent.clientWidth;
         const newHeight = parent.clientHeight;
         coreInstance.resize(newWidth, newHeight);
-        console.log(`Canvas resized to: ${newWidth}x${newHeight}`);
+        //console.log(`Canvas resized to: ${newWidth}x${newHeight}`);
       }
     };
 

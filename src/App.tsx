@@ -54,7 +54,7 @@ const App: React.FC = () => {
   };
 
   const handleEditProject = (project: ProjectSummary) => {
-    console.log('Выбранный проект:', JSON.stringify(project, null, 2));
+    //console.log('Выбранный проект:', JSON.stringify(project, null, 2));
     setSelectedProject(project);
     setIsEditorOpen(true);
   };

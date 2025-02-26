@@ -18,10 +18,10 @@ export interface SceneData {
 
 // Интерфейс для открытых сцен (вкладок) в редакторе
 export interface OpenedScene {
-  id: string;       // Идентификатор сцены (тот же, что в SceneData)
-  title: string;    // Название вкладки (например, "Scene 2" или "Глобальная логика")
-  key: string;      // Ключ вкладки (может совпадать с id или быть другим уникальным значением)
-  state: string;    // Состояние вкладки (например, "levelEditor", "logicEditor")
+  id: string;
+  sceneName: string;
+  key: string;
+  state: string; // например, "default" или другой статус редактора
 }
 
 // Обновлённая структура данных проекта: сохраняются только сцены и открытые вкладки
@@ -54,12 +54,17 @@ export const loadAllProjects = (): ProjectSummary[] => {
 // Сохранение данных конкретного проекта
 export const saveProjectData = (projectName: string, data: ProjectData) => {
   try {
+    //console.log("dddddd")
     const key = `ProjectData:${projectName}`;
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
     console.error(`Ошибка при сохранении данных проекта ${projectName}:`, error);
   }
 };
+
+
+
+
 // Загрузка данных конкретного проекта
 export const loadProjectData = (projectName: string): ProjectData | null => {
   try {
@@ -79,40 +84,40 @@ export const deleteProjectData = (projectName: string) => {
     localStorage.removeItem(key);
     const projects = loadAllProjects().filter((project) => project.name !== projectName);
     saveAllProjects(projects);
-    console.log(`Данные проекта "${projectName}" успешно удалены из localStorage.`);
+    //console.log(`Данные проекта "${projectName}" успешно удалены из localStorage.`);
   } catch (error) {
     console.error(`Ошибка при удалении данных проекта ${projectName}:`, error);
   }
 };
 
 // Сохранение данных сцены в проекте
-export const saveSceneData = (projectName: string, sceneData: SceneData) => {
-  try {
-    const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
-    const sceneIndex = projectData.scenes.findIndex((s) => s.sceneName === sceneData.sceneName);
+// export const saveSceneData = (projectName: string, sceneData: SceneData) => {
+//   try {
+//     const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
+//     const sceneIndex = projectData.scenes.findIndex((s) => s.sceneName === sceneData.sceneName);
 
-    if (sceneIndex > -1) {
-      projectData.scenes[sceneIndex] = sceneData;
-    } else {
-      projectData.scenes.push(sceneData);
-    }
+//     if (sceneIndex > -1) {
+//       projectData.scenes[sceneIndex] = sceneData;
+//     } else {
+//       projectData.scenes.push(sceneData);
+//     }
 
-    saveProjectData(projectName, projectData);
-  } catch (error) {
-    console.error(`Ошибка при сохранении данных сцены ${sceneData.sceneName} в проект ${projectName}:`, error);
-  }
-};
+//     saveProjectData(projectName, projectData);
+//   } catch (error) {
+//     console.error(`Ошибка при сохранении данных сцены ${sceneData.sceneName} в проект ${projectName}:`, error);
+//   }
+// };
 
-// Загрузка данных сцены из проекта
-export const loadSceneData = (projectName: string, sceneName: string): SceneData | null => {
-  try {
-    const projectData = loadProjectData(projectName);
-    return projectData?.scenes.find((scene) => scene.sceneName === sceneName) || null;
-  } catch (error) {
-    console.error(`Ошибка при загрузке данных сцены ${sceneName} из проекта ${projectName}:`, error);
-    return null;
-  }
-};
+// // Загрузка данных сцены из проекта
+// export const loadSceneData = (projectName: string, sceneName: string): SceneData | null => {
+//   try {
+//     const projectData = loadProjectData(projectName);
+//     return projectData?.scenes.find((scene) => scene.sceneName === sceneName) || null;
+//   } catch (error) {
+//     console.error(`Ошибка при загрузке данных сцены ${sceneName} из проекта ${projectName}:`, error);
+//     return null;
+//   }
+// };
 
 // Удаление данных сцены из проекта
 export const deleteSceneData = (projectName: string, sceneName: string) => {
@@ -120,7 +125,7 @@ export const deleteSceneData = (projectName: string, sceneName: string) => {
     const projectData = loadProjectData(projectName);
     if (projectData) {
       projectData.scenes = projectData.scenes.filter((scene) => scene.sceneName !== sceneName);
-      saveProjectData(projectName, projectData);
+      // saveProjectData(projectName, projectData);
     }
   } catch (error) {
     console.error(`Ошибка при удалении данных сцены ${sceneName} из проекта ${projectName}:`, error);
@@ -128,34 +133,34 @@ export const deleteSceneData = (projectName: string, sceneName: string) => {
 };
 
 // Сохранение открытых сцен в проекте
-export const updateOpenedScenes = (
-  projectName: string,
-  openedScenes: { title: string; key: string; state: string }[],
-  activeScene: string
-) => {
-  try {
-    const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
-    projectData.openedScenes = openedScenes;
-    projectData.activeScene = activeScene;
-    saveProjectData(projectName, projectData);
-  } catch (error) {
-    console.error(`Ошибка при обновлении открытых сцен в проекте ${projectName}:`, error);
-  }
-};
+// export const updateOpenedScenes = (
+//   projectName: string,
+//   openedScenes: { title: string; key: string; state: string }[],
+//   activeScene: string
+// ) => {
+//   try {
+//     const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
+//     projectData.openedScenes = openedScenes;
+//     projectData.activeScene = activeScene;
+//     // saveProjectData(projectName, projectData);
+//   } catch (error) {
+//     console.error(`Ошибка при обновлении открытых сцен в проекте ${projectName}:`, error);
+//   }
+// };
 
 // Загрузка открытых сцен из проекта
-export const loadOpenedScenes = (projectName: string) => {
-  try {
-    const projectData = loadProjectData(projectName);
-    return {
-      openedScenes: projectData?.openedScenes || [],
-      activeScene: projectData?.activeScene || '',
-    };
-  } catch (error) {
-    console.error(`Ошибка при загрузке открытых сцен из проекта ${projectName}:`, error);
-    return {
-      openedScenes: [],
-      activeScene: '',
-    };
-  }
-};
+// export const loadOpenedScenes = (projectName: string) => {
+//   try {
+//     const projectData = loadProjectData(projectName);
+//     return {
+//       openedScenes: projectData?.openedScenes || [],
+//       activeScene: projectData?.activeScene || '',
+//     };
+//   } catch (error) {
+//     console.error(`Ошибка при загрузке открытых сцен из проекта ${projectName}:`, error);
+//     return {
+//       openedScenes: [],
+//       activeScene: '',
+//     };
+//   }
+// };

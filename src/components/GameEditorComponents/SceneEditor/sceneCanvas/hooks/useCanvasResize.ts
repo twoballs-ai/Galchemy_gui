@@ -11,7 +11,7 @@ const useCanvasResize = (canvasRef: React.RefObject<HTMLCanvasElement>, coreInst
         const newWidth = parent.clientWidth;
         const newHeight = parent.clientHeight;
         coreInstance.resize(newWidth, newHeight);
-        console.log(`Canvas resized to: ${newWidth}x${newHeight}`);
+        //console.log(`Canvas resized to: ${newWidth}x${newHeight}`);
       }
     };
 

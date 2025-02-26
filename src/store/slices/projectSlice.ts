@@ -8,26 +8,25 @@ import {
   ProjectData,
   SceneData,
   OpenedScene
-} from '../utils/storageUtils';
+} from '../../utils/storageUtils';
 
-/** Определяем структуру объекта внутри сцены */
-export interface SceneObject {
+/**
+ * Если объекты не нужны в проектном срезе,
+ * то SceneData будет выглядеть без поля objects.
+ */
+export interface SceneData {
   id: string;
-  name: string;
-  // Любые дополнительные поля
-}
-
-/** Расширяем SceneData для хранения массива objects */
-export interface ExtendedSceneData extends SceneData {
-  objects: SceneObject[];
+  sceneName: string;
+  settings?: Record<string, unknown>;
 }
 
 export interface ProjectState {
-  scenes: ExtendedSceneData[];
+  scenes: SceneData[];
   openedScenes: OpenedScene[];
   activeScene: string;  // хранит id текущей активной сцены
 }
 
+// Начальное состояние
 const initialState: ProjectState = {
   scenes: [],
   openedScenes: [],
@@ -36,13 +35,15 @@ const initialState: ProjectState = {
 
 /**
  * Thunk для сохранения данных проекта в localStorage.
- * Если у нас есть название проекта (projectName), сохраняем всё, что есть в Redux-состоянии.
+ * Здесь сохраняем только scenes (без объектов),
+ * openedScenes и activeScene.
  */
 export const saveProject = createAsyncThunk(
   'project/saveProject',
   async (projectName: string, { getState }) => {
     const state = getState() as { project: ProjectState };
     const projectData: ProjectData = {
+      // Берём только нужные поля
       scenes: state.project.scenes.map(scene => ({
         id: scene.id,
         sceneName: scene.sceneName,
@@ -57,7 +58,6 @@ export const saveProject = createAsyncThunk(
 
 /**
  * Thunk для загрузки данных проекта из localStorage.
- * В примере просто грузим, а затем диспатчим loadProjectState для заполнения Redux.
  */
 export const loadProject = createAsyncThunk(
   'project/loadProject',
@@ -76,60 +76,34 @@ const projectSlice = createSlice({
     /** Заполняем state на основе загруженных данных ProjectData */
     loadProjectState(state, action: PayloadAction<ProjectData>) {
       state.scenes = action.payload.scenes.map(scene => ({
-        ...scene,
-        // Дополняем each scene объектами, если нужно
-        // Если вам не нужны objects в Redux, уберите это
-        objects: []
+        id: scene.id,
+        sceneName: scene.sceneName,
+        settings: scene.settings
       }));
       state.openedScenes = action.payload.openedScenes;
       state.activeScene = action.payload.activeScene;
     },
 
-    /** Добавляем новую сцену */
-    addScene: {
-      prepare: (sceneName: string) => {
-        const newId = uuidv4();
-        return {
-          payload: {
-            id: newId,
-            sceneName,
-            settings: {},
-            objects: [] as SceneObject[]
-          }
-        };
-      },
-      reducer: (state, action: PayloadAction<ExtendedSceneData>) => {
-        state.scenes.push(action.payload);
+    /** Добавляем новую сцену (объекты не используем) */
+    addScene(state, action: PayloadAction<SceneData>) {
+      console.log("add_scenes")
+      state.scenes.push(action.payload);
+    },
+    updateOpenedScene(
+      state,
+      action: PayloadAction<{ key: string; newState: string }>
+    ) {
+      const openedScene = state.openedScenes.find(s => s.key === action.payload.key);
+      if (openedScene) {
+        openedScene.state = action.payload.newState;
       }
     },
-
-    /** Добавляем объект в указанную сцену */
-    addSceneObject(state, action: PayloadAction<{ sceneId: string; objectName: string }>) {
-      const { sceneId, objectName } = action.payload;
-      const scene = state.scenes.find(scene => scene.id === sceneId);
-      if (scene) {
-        scene.objects.push({
-          id: uuidv4(),
-          name: objectName
-        });
-      }
-    },
-
     /** Удаляем сцену по её id */
     removeScene(state, action: PayloadAction<string>) {
       state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
       // Если удаляем активную сцену, сбросим activeScene
       if (state.activeScene === action.payload) {
         state.activeScene = state.scenes.length > 0 ? state.scenes[0].id : '';
-      }
-    },
-
-    /** Удаляем объект из сцены */
-    removeSceneObject(state, action: PayloadAction<{ sceneId: string; objectId: string }>) {
-      const { sceneId, objectId } = action.payload;
-      const scene = state.scenes.find(scene => scene.id === sceneId);
-      if (scene) {
-        scene.objects = scene.objects.filter(obj => obj.id !== objectId);
       }
     },
 
@@ -144,17 +118,16 @@ const projectSlice = createSlice({
     }
   },
   extraReducers: builder => {
-    // Можно обрабатывать fulfilled/rejected для saveProject, loadProject и т.п.
+    // Обработка fulfilled/rejected для saveProject, loadProject (при желании)
   }
 });
 
 export const {
   loadProjectState,
   addScene,
-  addSceneObject,
   removeScene,
-  removeSceneObject,
   setActiveScene,
-  setOpenedScenes
+  setOpenedScenes,
+  updateOpenedScene
 } = projectSlice.actions;
 export default projectSlice.reducer;

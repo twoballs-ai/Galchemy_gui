@@ -27,10 +27,10 @@ export class GlobalLogicManager {
   runLogicForScene(sceneName: string, coreInstance: any) {
     const graph = this.getGraph(sceneName);
     if (!graph) {
-      console.log(`Нет логики для сцены "${sceneName}"`);
+      //console.log(`Нет логики для сцены "${sceneName}"`);
       return;
     }
-    console.log(`Запуск логики для сцены "${sceneName}".`, graph);
+    //console.log(`Запуск логики для сцены "${sceneName}".`, graph);
 
     // Здесь вы разбираете graph и делаете нужные действия:
     // 1) Ищете узел "OnSceneStart"

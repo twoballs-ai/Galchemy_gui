@@ -1,7 +1,7 @@
 // LogicEditorContent.tsx
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { loadSceneData, saveSceneData } from '../../../utils/storageUtils';
+import { loadSceneData, saveSceneData } from '../../../../utils/storageUtils';
 import { Button, Card, Space } from 'antd';
 
 interface Condition {
@@ -36,21 +36,21 @@ interface LogicEditorContentProps {
 
 const LogicEditorContent: React.FC<LogicEditorContentProps> = ({
   projectName,
-  sceneName,
+  activeScene,
 }) => {
   const [sceneData, setSceneData] = useState<SceneData | null>(null);
 
-  useEffect(() => {
-    const loadedSceneData = loadSceneData(projectName, sceneName);
-    if (loadedSceneData) {
-      setSceneData(loadedSceneData);
-    }
-  }, [projectName, sceneName]);
+  // useEffect(() => {
+  //   const loadedSceneData = loadSceneData(projectName, sceneName);
+  //   if (loadedSceneData) {
+  //     setSceneData(loadedSceneData);
+  //   }
+  // }, [projectName, sceneName]);
 
   const handleSave = () => {
     if (sceneData) {
       // Сохраняем sceneData с обновлёнными logicEvents
-      saveSceneData(projectName, sceneData);
+      // saveSceneData(projectName, sceneData);
     }
   };
 

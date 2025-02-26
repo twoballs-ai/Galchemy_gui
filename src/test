@@ -109,7 +109,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const handleRunGame = () => {
     // Запускаем "игру" для активной сцены
     if (activeScene === "projectLogic") {
-      console.log("Running global logic...");
+      //console.log("Running global logic...");
       return;
     }
     globalLogicManager.runLogicForScene(activeScene);
