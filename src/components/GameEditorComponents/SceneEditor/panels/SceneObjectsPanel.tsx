@@ -1,31 +1,41 @@
-// components/panels/SceneObjectsPanel.tsx
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { addSceneObject, loadSceneObjects, removeSceneObject, setCurrentObject } from '../../../../store/slices/sceneObjectsSlice';
+import AddObjectModal from '../../Modal/AddObjectModal';
+import './SceneObjectsPanel.scss';
 
-import React, { useState } from 'react';
-import AddObjectModal from './AddObjectModal';
-import './SceneObjectsPanel.scss'; // Импортируем SCSS
+const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const dispatch = useDispatch();
 
-interface SceneObjectsPanelProps {
-  objects: any[];
-  onAddObject: (object: any) => void;
-  onRemoveObject: (objectId: string) => void;
-  onSelectObject: (object: any) => void; // Добавлено
-  onClose: () => void;
-}
+  const objects = useSelector((state: RootState) => state.sceneObjects.objects);
+  const activeScene = useSelector((state: RootState) => state.project.activeScene);
+  const selectedObject = useSelector((state: RootState) => state.sceneObjects.currentObject);
 
-const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
-  objects,
-  onAddObject,
-  onRemoveObject,
-  onSelectObject,
-  onClose,
-}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleAddObject = (newObject: any) => {
-    onAddObject(newObject);
-    setIsModalOpen(false);
+  // При изменении activeScene (например, при входе в проект) подгружаем объекты из базы
+  useEffect(() => {
+    if (activeScene) {
+      dispatch(loadSceneObjects(activeScene));
+    }
+  }, [activeScene, dispatch]);
+
+  const handleSelectObject = (object: any) => {
+    dispatch(setCurrentObject(object));
   };
-//console.log(objects)
+
+  const handleRemoveObject = (objectId: string) => {
+    if (!activeScene) return;
+    dispatch(removeSceneObject({ activeScene, objectId }));
+  };
+
+  // Добавление нового объекта в сцену
+  const handleAddObject = (newObject: any) => {
+    if (!activeScene) return;
+    dispatch(addSceneObject({ activeScene, object: newObject }));
+  };
+
   return (
     <div className="scene-objects-panel">
       <div className="panel-header">
@@ -33,17 +43,31 @@ const SceneObjectsPanel: React.FC<SceneObjectsPanelProps> = ({
         <button onClick={onClose}>Закрыть</button>
       </div>
       <div className="panel-content">
-<ul>
-  {objects.map((object) => (
-    <li key={object.id} onClick={() => onSelectObject(object)}>
-      {object.name || 'Без имени'} {/* Показываем имя объекта или "Без имени" */}
-      <button onClick={() => onRemoveObject(object.id)}>Удалить</button>
-    </li>
-  ))}
-</ul>
-        {/* Кнопка "Добавить объект" перемещена вниз */}
-        <button className="add-object" onClick={() => setIsModalOpen(true)}>Добавить объект</button>
+        <ul>
+          {objects.map((object) => (
+            <li
+              key={object.id}
+              className={selectedObject?.id === object.id ? 'selected' : ''}
+              onClick={() => handleSelectObject(object)}
+            >
+              {object.name || 'Без имени'}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveObject(object.id);
+                }}
+              >
+                Удалить
+              </button>
+            </li>
+          ))}
+        </ul>
+        <button className="add-object" onClick={() => setIsModalOpen(true)}>
+          Добавить объект
+        </button>
       </div>
+
+      {/* Модальное окно добавления объекта */}
       <AddObjectModal open={isModalOpen} onAdd={handleAddObject} onClose={() => setIsModalOpen(false)} />
     </div>
   );

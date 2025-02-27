@@ -48,11 +48,14 @@ async function getDB(): Promise<IDBPDatabase<MyDB>> {
 /**
  * Получает объекты для заданной сцены из IndexedDB.
  */
-export async function getSceneObjects(sceneId: string): Promise<GameObject[]> {
-  const db = await getDB();
-  return db.getAllFromIndex(SCENE_OBJECTS_STORE, 'by-sceneId', sceneId);
-}
 
+export async function getSceneObjects(sceneId: string): Promise<GameObject[]> {
+  console.log('Запрашиваем объекты для sceneId:', sceneId);
+  const db = await getDB();
+  const objects = await db.getAllFromIndex(SCENE_OBJECTS_STORE, 'by-sceneId', sceneId);
+  console.log('Получены объекты:', objects);
+  return objects;
+}
 /**
  * Добавляет объект в IndexedDB и возвращает добавленный объект.
  * Перед добавлением гарантируем, что поле sceneId установлено.

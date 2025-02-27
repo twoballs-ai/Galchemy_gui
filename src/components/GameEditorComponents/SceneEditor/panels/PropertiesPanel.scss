@@ -1,47 +1,83 @@
 .properties-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(80, 80, 80);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+
+  .panel-header {
     display: flex;
-    flex-direction: column;
-    background-color: rgb(80, 80, 80);
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 15px;
-    height: 100%;
-  
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-  
-      span {
-        margin: 0;
-        font-size: 18px;
-        color: white;
-      }
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      color: white;
     }
-  
-    .panel-body {
-      flex-grow: 1;
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-  
-      label {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 10px;
-        color: white;
-  
-        input {
-          margin-top: 5px;
-          padding: 5px;
-          border: 1px solid #ccc;
-          border-radius: 3px;
-        }
-      }
-  
-      p {
-        color: white;
+
+    button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 5px 10px;
+
+      &:hover {
+        background-color: #c0392b;
       }
     }
   }
-  
+
+  .panel-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    max-height: calc(100vh - 100px);
+
+    /* Настройка скроллбара для Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #0b3d91 #2e2e2e;
+
+    /* Настройка скроллбара для WebKit (Chrome, Edge, Safari) */
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #0b3d91;
+      border-radius: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: #2e2e2e;
+      border-radius: 4px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 10px;
+      color: white;
+
+      input,
+      select,
+      textarea {
+        margin-top: 5px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+    }
+
+    p {
+      color: white;
+    }
+  }
+}

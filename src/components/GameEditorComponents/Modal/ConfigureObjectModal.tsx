@@ -7,17 +7,17 @@ const { TabPane } = Tabs;
 interface ConfigureObjectModalProps {
   open: boolean;
   onClose: () => void;
-  selectedObject: any;
+  selectedAddObject: any;
   onSave: (updatedObject: any) => void;
 }
 
 const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
   open,
   onClose,
-  selectedObject,
+  selectedAddObject,
   onSave,
 }) => {
-  const [image, setImage] = useState<string | null>(selectedObject?.image || null);
+  const [image, setImage] = useState<string | null>(selectedAddObject?.image || null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -31,7 +31,7 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
   };
 
   const handleSave = () => {
-    const updatedObject = { ...selectedObject, image };
+    const updatedObject = { ...selectedAddObject, image };
     onSave(updatedObject);
   };
 
@@ -39,7 +39,7 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
     <CustomModal
       open={open}
       onClose={onClose}
-      title={`Настройка объекта: ${selectedObject?.name || ''}`}
+      title={`Настройка объекта: ${selectedAddObject?.name || ''}`}
       footer={
         <button onClick={handleSave} style={{ marginTop: '10px' }}>
           Сохранить объект
@@ -64,16 +64,16 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
             </div>
           )}
         </TabPane>
-        {selectedObject?.type === 'spriteGrid' && (
+        {selectedAddObject?.type === 'spriteGrid' && (
           <TabPane tab="Параметры Grid" key="2">
             <h3>Настройки Grid</h3>
             <label>
               Повторения по X:
               <input
                 type="number"
-                defaultValue={selectedObject?.repeatX || 1}
+                defaultValue={selectedAddObject?.repeatX || 1}
                 onChange={(e) =>
-                  (selectedObject.repeatX = parseInt(e.target.value, 10))
+                  (selectedAddObject.repeatX = parseInt(e.target.value, 10))
                 }
               />
             </label>
@@ -81,9 +81,9 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
               Отступ по X:
               <input
                 type="number"
-                defaultValue={selectedObject?.spacingX || 0}
+                defaultValue={selectedAddObject?.spacingX || 0}
                 onChange={(e) =>
-                  (selectedObject.spacingX = parseInt(e.target.value, 10))
+                  (selectedAddObject.spacingX = parseInt(e.target.value, 10))
                 }
               />
             </label>

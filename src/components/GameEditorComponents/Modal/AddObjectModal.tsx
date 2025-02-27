@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import CircleIcon from '../../../../icons/circle.png';
-import TilesMap from '../../../../icons/tilesmap.png';
-import CharacterIcon from '../../../../icons/character.png';
-import EnemyIcon from '../../../../icons/enemy.png';
-import CustomModal from '../../Modal/CustomModal';
-import ConfigureObjectModal from '../../Modal/ConfigureObjectModal';
+import CircleIcon from '../../../icons/circle.png';
+import TilesMap from '../../../icons/tilesmap.png';
+import CharacterIcon from '../../../icons/character.png';
+import EnemyIcon from '../../../icons/enemy.png';
+import CustomModal from './CustomModal';
+import ConfigureObjectModal from './ConfigureObjectModal';
 import './AddObjectModal.scss';
 
 interface AddObjectModalProps {
@@ -23,13 +23,11 @@ const availableObjects = [
         type: 'sprite',
         icon: CircleIcon,
         params: {
-          id: uuidv4(),
-          image: '',
           x: 100,
           y: 100,
           width: 100,
           height: 100,
-          preserveAspectRatio: true,
+          image: '',
           enablePhysics: true,
           isStatic: false,
           layer: 2,
@@ -40,12 +38,11 @@ const availableObjects = [
         type: 'spriteGrid',
         icon: TilesMap,
         params: {
-          id: uuidv4(),
-          image: '',
           x: 0,
           y: 100,
           width: 160,
           height: 150,
+          image: '',
           repeatX: 12,
           spacingX: 0,
           enablePhysics: true,
@@ -63,12 +60,10 @@ const availableObjects = [
         type: 'character',
         icon: CharacterIcon,
         params: {
-          id: uuidv4(),
           x: 200,
           y: 200,
           width: 50,
           height: 100,
-          color: 'blue',
           sprite: '',
           animations: {
             idle: [],
@@ -87,12 +82,10 @@ const availableObjects = [
         type: 'enemy',
         icon: EnemyIcon,
         params: {
-          id: uuidv4(),
           x: 300,
           y: 200,
           width: 50,
           height: 100,
-          color: 'red',
           sprite: '',
           animations: {
             idle: [],
@@ -114,7 +107,7 @@ const availableObjects = [
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
   const [showSecondModal, setShowSecondModal] = useState(false);
-  const [selectedObject, setSelectedObject] = useState<any>(null);
+  const [selectedAddObject, setSelectedAddObject] = useState<any>(null);
 
   const handleSelectObject = (type: string) => {
     const selected = availableObjects
@@ -129,17 +122,15 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
         name: selected.name,
       };
 
-      setSelectedObject(newObject);
+      setSelectedAddObject(newObject);
       setShowSecondModal(true);
     }
   };
 
   const handleFinalizeObject = (updatedObject: any) => {
-    if (updatedObject) {
-      onAdd(updatedObject);
-      setShowSecondModal(false);
-      onClose();
-    }
+    onAdd(updatedObject);
+    setShowSecondModal(false);
+    onClose();
   };
 
   return (
@@ -166,11 +157,11 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
         </div>
       </CustomModal>
 
-      {selectedObject && (
+      {selectedAddObject && (
         <ConfigureObjectModal
           open={showSecondModal}
           onClose={() => setShowSecondModal(false)}
-          selectedObject={selectedObject}
+          selectedAddObject={selectedAddObject}
           onSave={handleFinalizeObject}
         />
       )}

@@ -1,88 +1,109 @@
 .scene-objects-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(80, 80, 80);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+
+  .panel-header {
     display: flex;
-    flex-direction: column;
-    background-color: rgb(80, 80, 80);
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 15px;
-    height: 100%;
-    // max-width: 300px;
-  
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-  
-      h3 {
-        margin: 0;
-        font-size: 18px;
-      }
-  
-      button {
-        background-color: #e74c3c;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        padding: 5px 10px;
-  
-        &:hover {
-          background-color: #c0392b;
-        }
-      }
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
     }
-  
-    .panel-content {
-      flex-grow: 1;
-      margin-bottom: 10px;
-      display: flex;
-      flex-direction: column; // Добавляем flex-direction
-  
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        flex-grow: 1; // Добавляем для растягивания
-  
-        li {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 5px 0;
-          border-bottom: 1px solid #ccc;
-  
-          &:last-child {
-            border-bottom: none;
-          }
-  
-          button {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            padding: 3px 8px;
-  
-            &:hover {
-              background-color: #c0392b;
-            }
-          }
-        }
-      }
-  
-      button.add-object {
-        margin-top: auto; // Прижимаем кнопку к низу
-        background-color: #3498db;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        padding: 8px;
-  
-        &:hover {
-          background-color: #2980b9;
-        }
+
+    button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 5px 10px;
+
+      &:hover {
+        background-color: #c0392b;
       }
     }
   }
-  
+
+  .panel-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex-grow: 1;
+      overflow-y: auto;
+      max-height: calc(100vh - 100px);
+
+      /* Firefox scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: #0b3d91 #2e2e2e;
+
+      /* WebKit (Chrome, Edge, Safari) */
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #0b3d91;
+        border-radius: 4px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #2e2e2e;
+        border-radius: 4px;
+      }
+
+      li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #ccc;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        button {
+          background-color: #e74c3c;
+          color: white;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          padding: 3px 8px;
+
+          &:hover {
+            background-color: #c0392b;
+          }
+        }
+      }
+    }
+
+    button.add-object {
+      margin-top: auto;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 8px;
+
+      &:hover {
+        background-color: #2980b9;
+      }
+    }
+  }
+}

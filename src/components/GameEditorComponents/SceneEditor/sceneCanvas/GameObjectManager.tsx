@@ -1,13 +1,11 @@
-// src/components/sceneCanvas/GameObjectManager.tsx
-
 import React, { useEffect } from 'react';
-import { GameObject, Core, SceneData } from '../../types';
+
 
 interface GameObjectManagerProps {
   coreInstance: Core | null;
   shape2d: any;
   sceneData: SceneData;
-  sceneName: string;
+  activeScene: string;
   onGameObjectsMapUpdate: (map: Map<string, GameObject>) => void;
   requestRenderIfNotRequested: () => void;
 }
@@ -16,11 +14,11 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
   coreInstance,
   shape2d,
   sceneData,
-  sceneName,
+  activeScene,
   onGameObjectsMapUpdate,
   requestRenderIfNotRequested,
 }) => {
-  // Логика создания объекта
+  // Функция создания игрового объекта
   const createGameObject = (obj: GameObject) => {
     if (!shape2d) return null;
 
@@ -32,7 +30,28 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
 
     const gameObjectParams = { ...obj };
 
-    if (obj.type === 'sprite' || obj.type === 'spriteGrid') {
+    // Если объект - персонаж или враг, загружаем анимации
+    if (obj.type === 'character' || obj.type === 'enemy') {
+      gameObjectParams.animations = {};
+
+      if (obj.animations) {
+        Object.keys(obj.animations).forEach((key) => {
+          const image = new Image();
+          image.src = obj.animations[key];
+
+          image.onload = () => {
+            requestRenderIfNotRequested();
+          };
+
+          image.onerror = () => {
+            console.error(`Ошибка загрузки анимации "${key}" для объекта:`, obj.id);
+          };
+
+          gameObjectParams.animations[key] = image;
+        });
+      }
+    } else if (obj.type === 'sprite' || obj.type === 'spriteGrid') {
+      // Если объект - спрайт, загружаем изображение
       const image = new Image();
       image.src = obj.image || '';
       gameObjectParams.image = image;
@@ -54,27 +73,27 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
     return gameObject;
   };
 
-  // Рендеринг объектов
+  // Рендеринг объектов при изменении сцены
   useEffect(() => {
     if (coreInstance && shape2d && sceneData.objects) {
       const sceneManager = coreInstance.getSceneManager();
-      sceneManager.clearScene(sceneName);
+      sceneManager.clearScene(activeScene);
 
       const newGameObjectsMap = new Map<string, GameObject>();
 
       sceneData.objects.forEach((obj: GameObject) => {
         const gameObject = createGameObject(obj);
         if (gameObject) {
-          sceneManager.addGameObjectToScene(sceneName, gameObject);
+          sceneManager.addGameObjectToScene(activeScene, gameObject);
           newGameObjectsMap.set(obj.id, gameObject);
         }
       });
 
       onGameObjectsMapUpdate(newGameObjectsMap);
-      sceneManager.changeScene(sceneName);
+      sceneManager.changeScene(activeScene);
       requestRenderIfNotRequested();
     }
-  }, [coreInstance, shape2d, sceneData.objects, sceneName, requestRenderIfNotRequested]);
+  }, [coreInstance, shape2d, sceneData.objects, activeScene, requestRenderIfNotRequested]);
 
   return null;
 };

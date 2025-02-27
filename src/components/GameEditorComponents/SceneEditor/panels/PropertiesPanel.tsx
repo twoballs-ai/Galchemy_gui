@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../../../store/store";
+import { updateSceneObject } from "../../../../store/slices/sceneObjectsSlice";
 import "./PropertiesPanel.scss";
 
-interface PropertiesPanelProps {
-  object: any;
-  onUpdate: (updatedObject: any) => void;
-}
-
 const objectPropertiesConfig = {
-  
   sprite: [
     { key: "x", label: "X", type: "number" },
     { key: "y", label: "Y", type: "number" },
@@ -35,38 +32,76 @@ const objectPropertiesConfig = {
     { key: "isStatic", label: "Is Static", type: "checkbox" },
     { key: "layer", label: "Layer", type: "number" },
   ],
+  character: [
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "width", label: "Width", type: "number" },
+    { key: "height", label: "Height", type: "number" },
+    { key: "sprite", label: "Sprite", type: "file" },
+    { key: "health", label: "Health", type: "number" },
+    { key: "speed", label: "Speed", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
+  ],
+  enemy: [
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "width", label: "Width", type: "number" },
+    { key: "height", label: "Height", type: "number" },
+    { key: "sprite", label: "Sprite", type: "file" },
+    { key: "health", label: "Health", type: "number" },
+    { key: "speed", label: "Speed", type: "number" },
+    { key: "enablePhysics", label: "Enable Physics", type: "checkbox" },
+    { key: "layer", label: "Layer", type: "number" },
+    { key: "leftBoundary", label: "Left Boundary", type: "number" },
+    { key: "rightBoundary", label: "Right Boundary", type: "number" },
+  ],
 };
 
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
-  object,
-  onUpdate,
-}) => {
+const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const dispatch = useDispatch();
+  const selectedObject = useSelector(
+    (state: RootState) => state.sceneObjects.currentObject
+  );
+  const activeScene = useSelector(
+    (state: RootState) => state.project.activeScene
+  );
+
+  // Локальное состояние для редактирования параметров объекта
   const [properties, setProperties] = useState<any>({});
 
   useEffect(() => {
-    if (object) {
-      setProperties({ ...object });
+    if (selectedObject) {
+      setProperties({ ...selectedObject });
     } else {
       setProperties({});
     }
-  }, [object]);
+  }, [selectedObject]);
 
   const handleChange = (key: string, value: any) => {
-    if (!object) return;
+    if (!selectedObject) return;
     const updatedProperties = { ...properties, [key]: value };
     setProperties(updatedProperties);
-    onUpdate(updatedProperties);
+    // Обновляем объект в базе и Redux через thunk
+    if (activeScene && selectedObject) {
+      dispatch(updateSceneObject({ activeScene, object: updatedProperties }));
+    }
   };
 
-  const propertiesConfig = object ? objectPropertiesConfig[object.type] : null;
+  const propertiesConfig = selectedObject
+    ? objectPropertiesConfig[selectedObject.type]
+    : null;
 
   return (
     <div className="properties-panel">
       <div className="panel-header">
-        <span>Свойства {object ? `- ${object.name}` : ""}</span>
+        <h3>
+          Свойства {selectedObject ? `- ${selectedObject.name}` : ""}
+        </h3>
+        <button onClick={onClose}>Закрыть</button>
       </div>
       <div className="panel-body">
-        {object ? (
+        {selectedObject ? (
           propertiesConfig ? (
             propertiesConfig.map((prop) => {
               let inputElement = null;
@@ -75,28 +110,10 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   inputElement = (
                     <input
                       type="number"
-                      value={properties[prop.key]}
+                      value={properties[prop.key] || 0}
                       onChange={(e) =>
                         handleChange(prop.key, parseFloat(e.target.value))
                       }
-                    />
-                  );
-                  break;
-                case "color":
-                  inputElement = (
-                    <input
-                      type="color"
-                      value={properties[prop.key]}
-                      onChange={(e) => handleChange(prop.key, e.target.value)}
-                    />
-                  );
-                  break;
-                case "text":
-                  inputElement = (
-                    <input
-                      type="text"
-                      value={properties[prop.key]}
-                      onChange={(e) => handleChange(prop.key, e.target.value)}
                     />
                   );
                   break;
@@ -104,71 +121,45 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   inputElement = (
                     <input
                       type="checkbox"
-                      checked={properties[prop.key]}
-                      onChange={(e) => handleChange(prop.key, e.target.checked)}
+                      checked={properties[prop.key] || false}
+                      onChange={(e) =>
+                        handleChange(prop.key, e.target.checked)
+                      }
                     />
                   );
                   break;
-                case "select":
+                case "file":
                   inputElement = (
-                    <select
-                      value={properties[prop.key]}
-                      onChange={(e) => handleChange(prop.key, e.target.value)}
-                    >
-                      {prop.options.map((option: string) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  );
-                  break;
-                case "textarea":
-                  inputElement = (
-                    <textarea
-                      value={JSON.stringify(properties[prop.key], null, 2)}
+                    <input
+                      type="file"
+                      accept="image/*"
                       onChange={(e) => {
-                        try {
-                          const value = JSON.parse(e.target.value);
-                          handleChange(prop.key, value);
-                        } catch (error) {
-                          // Обработка ошибки парсинга JSON
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            handleChange(prop.key, reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
                         }
                       }}
                     />
                   );
                   break;
-                  case "file":
-                    inputElement = (
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              const imageUrl = reader.result as string;
-                              handleChange(prop.key, imageUrl);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    );
-                    break;
                 default:
                   inputElement = (
                     <input
                       type="text"
-                      value={properties[prop.key]}
-                      onChange={(e) => handleChange(prop.key, e.target.value)}
+                      value={properties[prop.key] || ""}
+                      onChange={(e) =>
+                        handleChange(prop.key, e.target.value)
+                      }
                     />
                   );
               }
               return (
                 <label key={prop.key}>
-                  {prop.label}:{inputElement}
+                  {prop.label}: {inputElement}
                 </label>
               );
             })

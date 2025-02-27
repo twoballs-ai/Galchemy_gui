@@ -6,7 +6,6 @@ import {
   saveProjectData,
   loadProjectData,
   ProjectData,
-  SceneData,
   OpenedScene
 } from '../../utils/storageUtils';
 

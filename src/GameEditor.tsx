@@ -299,8 +299,8 @@ const addNewScene = useCallback(
             />
           ) : (
             <SceneEditor
+            activeScene={activeScene}
               projectName={project.name}
-              activeScene={activeScene}
               renderType={project.renderType}
             />
           )}

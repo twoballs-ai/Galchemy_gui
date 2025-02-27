@@ -1,18 +1,11 @@
-// SceneCanvas.tsx
-
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { setCurrentObject, updateSceneObject } from '../../../store/slices/sceneObjectsSlice';
 import { Core, SceneManager, getShape2d, EditorMode, PreviewMode } from 'tette-core';
-import { globalLogicManager } from '../../../logicManager';
 import PreviewControls from './sceneCanvas/PreviewControls';
 import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectManager from './sceneCanvas/GameObjectManager';
-
-interface SceneData {
-  sceneName: string;
-  objects: GameObject[];
-  settings: object;
-  logicGraph?: any; 
-}
 
 interface GameObject {
   id: string;
@@ -22,42 +15,33 @@ interface GameObject {
   width?: number;
   height?: number;
   image?: string;
-  // Другие свойства
-
-  // Методы для проверки точки и получения bounding box
   containsPoint?: (x: number, y: number) => boolean;
   getBoundingBox?: () => { x: number; y: number; width: number; height: number };
 }
 
 interface SceneCanvasProps {
-  sceneName: string;
   renderType: string;
-  sceneData: SceneData;
-  selectedObject: GameObject | null;
-  onSelectObject: (object: GameObject | null) => void;
-  onUpdateObject: (updatedObject: GameObject) => void;
 }
 
-const SceneCanvas: React.FC<SceneCanvasProps> = ({
-  sceneName,
-  renderType,
-  sceneData,
-  selectedObject,
-  onSelectObject,
-  onUpdateObject,
-}) => {
+const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
+  const dispatch = useDispatch();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  
+
   const [coreInstance, setCoreInstance] = useState<Core | null>(null);
   const [shape2d, setShape2d] = useState<any>(null);
   const [gameObjectsMap, setGameObjectsMap] = useState<Map<string, GameObject>>(new Map());
 
-  // Состояния для перетаскивания
+  // ✅ Теперь активная сцена берётся из Redux
+  const activeScene = useSelector((state: RootState) => state.project.activeScene);
+  // ✅ Теперь объекты сцены загружаются напрямую из Redux
+  const sceneObjects = useSelector((state: RootState) => state.sceneObjects.objects);
+  const selectedObject = useSelector((state: RootState) => state.sceneObjects.currentObject);
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  // Функция запроса рендера, если не запрошен
   const requestRenderIfNotRequested = useCallback(() => {
     if (animationFrameIdRef.current === null) {
       animationFrameIdRef.current = requestAnimationFrame(() => {
@@ -67,20 +51,17 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     }
   }, [coreInstance]);
 
-  // Обработчики событий
   const handleSelectObject = useCallback((object: GameObject | null) => {
-    onSelectObject(object);
-  }, [onSelectObject]);
+    dispatch(setCurrentObject(object));
+  }, [dispatch]);
 
   const handleUpdateObjectLocal = useCallback((updatedObject: GameObject) => {
-    // Обновляем gameObjectsMap без прямой мутации
     setGameObjectsMap((prevMap) => {
       const newMap = new Map(prevMap);
       const gameObject = newMap.get(updatedObject.id);
       if (gameObject) {
         const updatedGameObject = { ...gameObject, x: updatedObject.x, y: updatedObject.y };
 
-        // Обновление изображения, если изменилось
         if (
           updatedObject.image &&
           (updatedObject.type === 'sprite' || updatedObject.type === 'spriteGrid') &&
@@ -93,7 +74,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
             requestRenderIfNotRequested();
           };
           image.onerror = () => {
-            console.error('Ошибка загрузки изображения для объекта:', updatedObject.id);
+            console.error('Ошибка загрузки изображения:', updatedObject.id);
           };
         }
 
@@ -102,11 +83,9 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       return newMap;
     });
 
-    // Уведомляем родителя об обновлении объекта
-    onUpdateObject(updatedObject);
-  }, [requestRenderIfNotRequested, onUpdateObject]);
+    dispatch(updateSceneObject({ activeScene, object: updatedObject }));
+  }, [dispatch, activeScene, requestRenderIfNotRequested]);
 
-  // Инициализация Core и Shape2D
   useEffect(() => {
     if (!canvasRef.current) {
       console.error('Canvas не найден.');
@@ -114,7 +93,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     }
 
     const sceneManager = new SceneManager();
-    sceneManager.createScene(sceneName);
+    sceneManager.createScene(activeScene);
 
     const core = new Core({
       canvasId: canvasRef.current.id,
@@ -123,7 +102,6 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
       sceneManager: sceneManager,
       width: canvasRef.current.clientWidth,
       height: canvasRef.current.clientHeight,
-
     });
     core.switchMode(EditorMode);
     setCoreInstance(core);
@@ -131,22 +109,17 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     const shape2dInstance = getShape2d(core.renderType);
     setShape2d(shape2dInstance);
 
-    //console.log('Core и shape2d инициализированы:', core, shape2dInstance);
-
     return () => {
       core.stop();
-      //console.log('Core остановлен.');
     };
-  }, [sceneName, renderType]);
-
-
+  }, [activeScene, renderType]);
 
   useEffect(() => {
     if (coreInstance) {
       coreInstance.setSelectedObject(selectedObject);
     }
   }, [selectedObject, coreInstance]);
-  // Обработчики событий мыши
+
   const handleMouseDown = useCallback((event: MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -159,7 +132,6 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
     if (clickedObject) {
       handleSelectObject(clickedObject);
-
       setIsDragging(true);
       const gameObject = gameObjectsMap.get(clickedObject.id);
       if (gameObject) {
@@ -182,14 +154,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
 
     const updatedObject: GameObject = { ...selectedObject, x: x - dragOffset.x, y: y - dragOffset.y };
 
-    //console.log(`Moving object ${updatedObject.id} to (${updatedObject.x}, ${updatedObject.y})`);
-
     handleUpdateObjectLocal(updatedObject);
   }, [isDragging, selectedObject, dragOffset, handleUpdateObjectLocal]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-    // Дополнительные действия при отпускании мыши, если необходимо
   }, []);
 
   useEffect(() => {
@@ -207,67 +176,38 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({
     };
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
-  // Получение объекта под курсором
   const getObjectAtPosition = (x: number, y: number): GameObject | null => {
-    const objects = Array.from(gameObjectsMap.values());
-
-    for (let i = objects.length - 1; i >= 0; i--) {
-      const gameObject = objects[i];
+    for (let i = sceneObjects.length - 1; i >= 0; i--) {
+      const gameObject = sceneObjects[i];
       if (gameObject.containsPoint && gameObject.containsPoint(x, y)) {
-        return sceneData.objects.find(obj => obj.id === gameObject.id) || null;
+        return gameObject;
       }
     }
     return null;
   };
 
   const handleStartPreview = () => {
-    if (coreInstance) {
-      coreInstance.switchMode(PreviewMode, sceneName);
-  
-      // Активация анимаций для всех объектов
-      gameObjectsMap.forEach((gameObject) => {
-        if (gameObject.type === 'character' || gameObject.type === 'enemy') {
-          // gameObject.isStatic = false; // Включаем динамическое поведение
-        }
-      });
-      //console.log('Preview mode started.');
-    }
-  };
-  
-  const handleStopPreview = () => {
-    if (coreInstance) {
-      coreInstance.switchMode(EditorMode);
-  
-      // Деактивация анимаций (статическое отображение)
-      gameObjectsMap.forEach((gameObject) => {
-        if (gameObject.type === 'character' || gameObject.type === 'enemy') {
-          // gameObject.isStatic = true; // Переводим в статический режим
-        }
-      });
-      //console.log('Editor mode resumed.');
-    }
+    coreInstance?.switchMode(PreviewMode, activeScene);
   };
 
-  // Подключение функции resize
+  const handleStopPreview = () => {
+    coreInstance?.switchMode(EditorMode);
+  };
+
   useCanvasResize(canvasRef, coreInstance);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <canvas
-        ref={canvasRef}
-        id="canvas"
-        style={{ border: '1px solid #ccc', width: '100%', height: '100%' }}
-      />
-          <GameObjectManager
+      <canvas ref={canvasRef} id="canvas" style={{ border: '1px solid #ccc', width: '100%', height: '100%' }} />
+      <GameObjectManager
         coreInstance={coreInstance}
         shape2d={shape2d}
-        sceneData={sceneData}
-        sceneName={sceneName}
+        sceneData={{ activeScene, objects: sceneObjects, settings: {} }}
+        activeScene={activeScene}
         onGameObjectsMapUpdate={setGameObjectsMap}
         requestRenderIfNotRequested={requestRenderIfNotRequested}
       />
       <PreviewControls onStartPreview={handleStartPreview} onStopPreview={handleStopPreview} />
-
     </div>
   );
 };

@@ -1,15 +1,14 @@
-// store/sceneObjectsSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-
 import { 
   getSceneObjects, 
   dbAddSceneObject, 
   dbUpdateSceneObject, 
   dbRemoveSceneObject 
 } from '../../utils/dbUtils';
-
+  
 export interface GameObject {
   id: string;
+  sceneId: string;
   type: string;
   name: string;
   x: number;
@@ -26,20 +25,19 @@ export interface GameObject {
   image?: string;
 }
 
-// Тип состояния для объектов на сцене
 interface SceneObjectsState {
   objects: GameObject[];
+  currentObject: GameObject | null; // новый элемент
   loading: boolean;
   error?: string;
 }
 
 const initialState: SceneObjectsState = {
   objects: [],
+  currentObject: null,
   loading: false,
   error: undefined,
 };
-
-// Асинхронный thunk для загрузки объектов из IndexedDB для заданной сцены
 export const loadSceneObjects = createAsyncThunk(
   'sceneObjects/load',
   async (activeScene: string, { rejectWithValue }) => {
@@ -52,7 +50,6 @@ export const loadSceneObjects = createAsyncThunk(
   }
 );
 
-// Асинхронный thunk для добавления объекта
 export const addSceneObject = createAsyncThunk(
   'sceneObjects/add',
   async (
@@ -68,7 +65,6 @@ export const addSceneObject = createAsyncThunk(
   }
 );
 
-// Асинхронный thunk для обновления объекта
 export const updateSceneObject = createAsyncThunk(
   'sceneObjects/update',
   async (
@@ -84,7 +80,6 @@ export const updateSceneObject = createAsyncThunk(
   }
 );
 
-// Асинхронный thunk для удаления объекта
 export const removeSceneObject = createAsyncThunk(
   'sceneObjects/remove',
   async (
@@ -104,11 +99,15 @@ const sceneObjectsSlice = createSlice({
   name: 'sceneObjects',
   initialState,
   reducers: {
-    // Если нужна синхронная логика для обновления объектов без обращения к IndexedDB:
     clearObjects(state) {
       state.objects = [];
     },
-    // Локальное добавление объекта (например, для оптимистичных обновлений)
+    setCurrentObject(state, action: PayloadAction<GameObject>) {
+      state.currentObject = action.payload;
+    },
+    clearCurrentObject(state) {
+      state.currentObject = null;
+    },
     addLocalObject(state, action: PayloadAction<GameObject>) {
       state.objects.push(action.payload);
     },
@@ -145,6 +144,7 @@ const sceneObjectsSlice = createSlice({
           state.objects[index] = action.payload;
         }
       })
+      
       .addCase(removeSceneObject.fulfilled, (state, action: PayloadAction<string>) => {
         state.objects = state.objects.filter(obj => obj.id !== action.payload);
       });
@@ -152,7 +152,9 @@ const sceneObjectsSlice = createSlice({
 });
 
 export const {
-  clearObjects,
+  clearObjects, 
+  setCurrentObject, 
+  clearCurrentObject ,
   addLocalObject,
   updateLocalObject,
   removeLocalObject,
