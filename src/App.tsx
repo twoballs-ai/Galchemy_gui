@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import GameTypeSelector from './GameTypeSelector';
 import GameEditor from './GameEditor';
-import { v4 as uuidv4 } from 'uuid'; // Импорт функции генерации UUID
+import { v4 as uuidv4 } from 'uuid';
 import { Button, List, Modal, Space, Typography, Layout } from 'antd';
 import './App.scss';
 import { ProjectSummary, deleteProjectData, saveAllProjects, loadAllProjects } from './utils/storageUtils';
+import { useDispatch } from 'react-redux';
+import { setCurrentProjectId } from './store/slices/projectSlice';
 
 const { Header, Content } = Layout;
 
 const App: React.FC = () => {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectSummary | null>(null);
-  
   const [isGameTypeModalVisible, setIsGameTypeModalVisible] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false); // Состояние авторизации
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+
+  const dispatch = useDispatch();
 
   // Загружаем проекты из localStorage при загрузке
   useEffect(() => {
@@ -22,8 +25,6 @@ const App: React.FC = () => {
     if (storedProjects.length > 0) {
       setProjects(storedProjects);
     }
-
-    // Проверка авторизации (пока заглушка)
     checkUserAuth();
   }, []);
 
@@ -34,8 +35,7 @@ const App: React.FC = () => {
 
   // Функция проверки авторизации (заглушка)
   const checkUserAuth = () => {
-    // Здесь можно будет добавить реальную проверку авторизации
-    setIsUserLoggedIn(false); // Пока всегда возвращаем, что пользователь не авторизован
+    setIsUserLoggedIn(false);
   };
 
   const handleCreateProject = () => {
@@ -45,27 +45,23 @@ const App: React.FC = () => {
   const handleSelectGameType = (gameType: string) => {
     setIsGameTypeModalVisible(false);
     const newProject: ProjectSummary = {
-      id: uuidv4(), // Генерация уникального идентификатора
+      id: uuidv4(),
       name: `Project ${projects.length + 1}`,
       renderType: gameType,
     };
-    const updatedProjects = [...projects, newProject];
-    setProjects(updatedProjects);
+    setProjects([...projects, newProject]);
   };
 
   const handleEditProject = (project: ProjectSummary) => {
-    //console.log('Выбранный проект:', JSON.stringify(project, null, 2));
+    // При редактировании устанавливаем текущий проект по его id
+    dispatch(setCurrentProjectId(project.id));
     setSelectedProject(project);
     setIsEditorOpen(true);
   };
 
-  const handleDeleteProject = (projectName: string) => {
-    // Удаляем данные конкретного проекта из localStorage
-    deleteProjectData(projectName);
-  
-    // Удаляем проект из списка всех проектов
-    const updatedProjects = projects.filter((project) => project.name !== projectName);
-    setProjects(updatedProjects);
+  const handleDeleteProject = (projectId: string) => {
+    deleteProjectData(projectId);
+    setProjects(projects.filter((project) => project.id !== projectId));
   };
 
   const handleCloseEditor = () => {
@@ -74,51 +70,56 @@ const App: React.FC = () => {
   };
 
   const handleUpdateProject = (updatedProject: ProjectSummary) => {
-    const updatedProjects = projects.map((proj) =>
-      proj.name === updatedProject.name ? updatedProject : proj
-    );
-    setProjects(updatedProjects);
+    setProjects(projects.map((proj) =>
+      proj.id === updatedProject.id ? updatedProject : proj
+    ));
   };
 
   return (
     <Layout className="app-container">
-      {/* Header */}
-
-
-      {/* Content */}
       <Content>
         {!isEditorOpen ? (
-          <>      <Header className="app-header">
-          <Typography.Title level={3} className="header-title">
-            Tette Game Editor
-          </Typography.Title>
-          <Typography.Text className="header-welcome">
-            Приветствуем вас в редакторе игр Tette
-          </Typography.Text>
-          <Typography.Text className="header-user">
-            {isUserLoggedIn ? 'Вы вошли в систему' : 'Гость'}
-          </Typography.Text>
-        </Header>
-        <div className="main-page">
-            <Typography.Title level={2} className="main-title">Мои проекты</Typography.Title>
-            <Space style={{ marginBottom: '20px' }}>
-              <Button type="primary" onClick={handleCreateProject}>Создать новый проект</Button>
-            </Space>
-            <List
-              bordered
-              dataSource={projects}
-              renderItem={(project) => (
-                <List.Item
-                  actions={[
-                    <Button type="link" onClick={() => handleEditProject(project)}>Редактировать</Button>,
-                    <Button type="link" danger onClick={() => handleDeleteProject(project.name)}>Удалить</Button>,
-                  ]}
-                >
-                  {project.name} – {project.renderType}
-                </List.Item>
-              )}
-            />
-          </div></>
+          <>
+            <Header className="app-header">
+              <Typography.Title level={3} className="header-title">
+                Tette Game Editor
+              </Typography.Title>
+              <Typography.Text className="header-welcome">
+                Приветствуем вас в редакторе игр Tette
+              </Typography.Text>
+              <Typography.Text className="header-user">
+                {isUserLoggedIn ? 'Вы вошли в систему' : 'Гость'}
+              </Typography.Text>
+            </Header>
+            <div className="main-page">
+              <Typography.Title level={2} className="main-title">
+                Мои проекты
+              </Typography.Title>
+              <Space style={{ marginBottom: '20px' }}>
+                <Button type="primary" onClick={handleCreateProject}>
+                  Создать новый проект
+                </Button>
+              </Space>
+              <List
+                bordered
+                dataSource={projects}
+                renderItem={(project) => (
+                  <List.Item
+                    actions={[
+                      <Button type="link" onClick={() => handleEditProject(project)}>
+                        Редактировать
+                      </Button>,
+                      <Button type="link" danger onClick={() => handleDeleteProject(project.id)}>
+                        Удалить
+                      </Button>,
+                    ]}
+                  >
+                    {project.name} – {project.renderType}
+                  </List.Item>
+                )}
+              />
+            </div>
+          </>
         ) : (
           selectedProject && (
             <GameEditor
@@ -129,9 +130,8 @@ const App: React.FC = () => {
           )
         )}
 
-        {/* Modal */}
         <Modal
-          title="Выбор типа проекта "
+          title="Выбор типа проекта"
           open={isGameTypeModalVisible}
           onCancel={() => setIsGameTypeModalVisible(false)}
           footer={null}

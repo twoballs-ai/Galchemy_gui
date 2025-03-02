@@ -1,51 +1,53 @@
-# React + TypeScript + Vite
+```markdown
+# TETTE_GUI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**TETTE_GUI** — это графический интерфейс для игрового движка Tette.js, построенный на основе ядра `tette-core`. Он служит оболочкой для запуска игр и интерактивных приложений на различных платформах, включая веб и настольные компьютеры.
 
-Currently, two official plugins are available:
-![alt text](image.png)
+## Основные возможности
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Настройка интерфейса и элементов управления:** обеспечивает удобное взаимодействие с приложением.
+- **Интеграция с ядром `tette-core`:** управляет рендерингом и позволяет использовать мощные возможности движка.
+- **Среда разработки:** помогает быстро прототипировать игры и интерактивные приложения.
+- **Поддержка импорта ресурсов и редактирования сцен:** облегчает организацию и настройку игровых уровней.
 
-## Expanding the ESLint configuration
+## Установка
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+1. Клонируйте репозиторий GUI:
+   ```bash
+   git clone https://github.com/twoballs-ai/TETTE_GUI.git
+   cd TETTE_GUI
+   npm install
+   ```
 
-- Configure the top-level `parserOptions` property like this:
+2. Запустите проект:
+   ```bash
+   npm run start
+   ```
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Документация
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+- **Руководство пользователя:** подробно описывает функционал TETTE_GUI и содержит примеры создания приложений.
+- **Примеры:** ознакомьтесь с [examples](https://github.com/twoballs-ai/TETTE_GUI/tree/main/examples) для быстрого старта.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Разработка и сборка
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+1. Установите зависимости:
+   ```bash
+   npm install
+   ```
+
+2. Для сборки проекта выполните:
+   ```bash
+   npm run build
+   ```
+
+## Сообщество и поддержка
+
+- **Форум разработчиков**
+- **Discord:** Присоединяйтесь к нашему [Discord серверу](https://discord.gg/your-server) для обсуждений и поддержки.
+- **Issues:** Используйте [Issues](https://github.com/twoballs-ai/TETTE_GUI/issues) для вопросов и предложений.
+
+## Лицензия
+
+TETTE_GUI распространяется под лицензией MIT. Подробности см. в файле [LICENSE](LICENSE).
 ```

@@ -1,22 +1,18 @@
-// storageUtils.ts
-
 const ALL_PROJECTS_KEY = 'allProjects';
+const CURRENT_PROJECT_KEY = 'currentProjectId';
 
-// Интерфейсы название проекта
 export interface ProjectSummary {
   id: string;
   name: string;
   renderType: string;
 }
 
-// Интерфейс данных отдельной сцены с добавленным идентификатором
 export interface SceneData {
   id: string;           // Уникальный идентификатор сцены
   sceneName: string;
   settings: object;
 }
 
-// Интерфейс для открытых сцен (вкладок) в редакторе
 export interface OpenedScene {
   id: string;
   sceneName: string;
@@ -24,11 +20,32 @@ export interface OpenedScene {
   state: string; // например, "default" или другой статус редактора
 }
 
-// Обновлённая структура данных проекта: сохраняются только сцены и открытые вкладки
 export interface ProjectData {
   scenes: SceneData[];
   openedScenes: OpenedScene[];
   activeScene: string;
+}
+
+export interface LogicCondition {
+  id: string;
+  type: string;
+  params: Record<string, any>;
+}
+
+export interface LogicAction {
+  id: string;
+  type: string;
+  params: Record<string, any>;
+}
+
+export interface LogicEvent {
+  id: string;
+  conditions: LogicCondition[];
+  actions: LogicAction[];
+}
+
+export interface SceneLogicData {
+  logicEvents: LogicEvent[];
 }
 
 // Сохранение списка всех проектов
@@ -51,116 +68,109 @@ export const loadAllProjects = (): ProjectSummary[] => {
   }
 };
 
-// Сохранение данных конкретного проекта
-export const saveProjectData = (projectName: string, data: ProjectData) => {
+// Сохранение данных конкретного проекта по его id
+export const saveProjectData = (projectId: string, data: ProjectData) => {
   try {
-    //console.log("dddddd")
-    const key = `ProjectData:${projectName}`;
+    const key = `ProjectData:${projectId}`;
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
-    console.error(`Ошибка при сохранении данных проекта ${projectName}:`, error);
+    console.error(`Ошибка при сохранении данных проекта ${projectId}:`, error);
   }
 };
 
-
-
-
-// Загрузка данных конкретного проекта
-export const loadProjectData = (projectName: string): ProjectData | null => {
+// Загрузка данных конкретного проекта по его id
+export const loadProjectData = (projectId: string): ProjectData | null => {
   try {
-    const key = `ProjectData:${projectName}`;
+    const key = `ProjectData:${projectId}`;
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error(`Ошибка при загрузке данных проекта ${projectName}:`, error);
+    console.error(`Ошибка при загрузке данных проекта ${projectId}:`, error);
     return null;
   }
 };
 
-// Удаление данных проекта
-export const deleteProjectData = (projectName: string) => {
+// Удаление данных проекта по его id
+export const deleteProjectData = (projectId: string) => {
   try {
-    const key = `ProjectData:${projectName}`;
+    const key = `ProjectData:${projectId}`;
     localStorage.removeItem(key);
-    const projects = loadAllProjects().filter((project) => project.name !== projectName);
+    const projects = loadAllProjects().filter((project) => project.id !== projectId);
     saveAllProjects(projects);
-    //console.log(`Данные проекта "${projectName}" успешно удалены из localStorage.`);
   } catch (error) {
-    console.error(`Ошибка при удалении данных проекта ${projectName}:`, error);
+    console.error(`Ошибка при удалении данных проекта ${projectId}:`, error);
   }
 };
 
-// Сохранение данных сцены в проекте
-// export const saveSceneData = (projectName: string, sceneData: SceneData) => {
-//   try {
-//     const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
-//     const sceneIndex = projectData.scenes.findIndex((s) => s.sceneName === sceneData.sceneName);
-
-//     if (sceneIndex > -1) {
-//       projectData.scenes[sceneIndex] = sceneData;
-//     } else {
-//       projectData.scenes.push(sceneData);
-//     }
-
-//     saveProjectData(projectName, projectData);
-//   } catch (error) {
-//     console.error(`Ошибка при сохранении данных сцены ${sceneData.sceneName} в проект ${projectName}:`, error);
-//   }
-// };
-
-// // Загрузка данных сцены из проекта
-// export const loadSceneData = (projectName: string, sceneName: string): SceneData | null => {
-//   try {
-//     const projectData = loadProjectData(projectName);
-//     return projectData?.scenes.find((scene) => scene.sceneName === sceneName) || null;
-//   } catch (error) {
-//     console.error(`Ошибка при загрузке данных сцены ${sceneName} из проекта ${projectName}:`, error);
-//     return null;
-//   }
-// };
-
-// Удаление данных сцены из проекта
-export const deleteSceneData = (projectName: string, sceneName: string) => {
+// Удаление данных сцены из проекта по имени сцены
+export const deleteSceneData = (projectId: string, sceneName: string) => {
   try {
-    const projectData = loadProjectData(projectName);
+    const projectData = loadProjectData(projectId);
     if (projectData) {
       projectData.scenes = projectData.scenes.filter((scene) => scene.sceneName !== sceneName);
-      // saveProjectData(projectName, projectData);
+      // Если требуется, можно сохранить обновлённые данные
     }
   } catch (error) {
-    console.error(`Ошибка при удалении данных сцены ${sceneName} из проекта ${projectName}:`, error);
+    console.error(`Ошибка при удалении данных сцены ${sceneName} из проекта ${projectId}:`, error);
   }
 };
 
-// Сохранение открытых сцен в проекте
-// export const updateOpenedScenes = (
-//   projectName: string,
-//   openedScenes: { title: string; key: string; state: string }[],
-//   activeScene: string
-// ) => {
-//   try {
-//     const projectData = loadProjectData(projectName) || { scenes: [], openedScenes: [], activeScene: '' };
-//     projectData.openedScenes = openedScenes;
-//     projectData.activeScene = activeScene;
-//     // saveProjectData(projectName, projectData);
-//   } catch (error) {
-//     console.error(`Ошибка при обновлении открытых сцен в проекте ${projectName}:`, error);
-//   }
-// };
+// Работа с логикой сцены
+const getLogicStorageKey = (projectId: string, sceneId: string) => {
+  return `LogicData:${projectId}:${sceneId}`;
+};
 
-// Загрузка открытых сцен из проекта
-// export const loadOpenedScenes = (projectName: string) => {
-//   try {
-//     const projectData = loadProjectData(projectName);
-//     return {
-//       openedScenes: projectData?.openedScenes || [],
-//       activeScene: projectData?.activeScene || '',
-//     };
-//   } catch (error) {
-//     console.error(`Ошибка при загрузке открытых сцен из проекта ${projectName}:`, error);
-//     return {
-//       openedScenes: [],
-//       activeScene: '',
-//     };
-//   }
-// };
+export const saveSceneLogic = (projectId: string, sceneId: string, logicData: SceneLogicData) => {
+  try {
+    const key = getLogicStorageKey(projectId, sceneId);
+    localStorage.setItem(key, JSON.stringify(logicData));
+  } catch (error) {
+    console.error(`Ошибка при сохранении логики сцены ${sceneId} в проекте ${projectId}:`, error);
+  }
+};
+
+export const loadSceneLogic = (projectId: string, sceneId: string): SceneLogicData | null => {
+  try {
+    const key = getLogicStorageKey(projectId, sceneId);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : { logicEvents: [] };
+  } catch (error) {
+    console.error(`Ошибка при загрузке логики сцены ${sceneId} в проекте ${projectId}:`, error);
+    return { logicEvents: [] };
+  }
+};
+
+export const deleteSceneLogic = (projectId: string, sceneId: string) => {
+  try {
+    const key = getLogicStorageKey(projectId, sceneId);
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Ошибка при удалении логики сцены ${sceneId} в проекте ${projectId}:`, error);
+  }
+};
+
+// Работа с текущим проектом
+export const setCurrentProjectToLS = (projectId: string) => {
+  try {
+    localStorage.setItem(CURRENT_PROJECT_KEY, projectId);
+  } catch (error) {
+    console.error('Ошибка при установке текущего проекта:', error);
+  }
+};
+
+export const getCurrentProject = (): string | null => {
+  try {
+    return localStorage.getItem(CURRENT_PROJECT_KEY);
+  } catch (error) {
+    console.error('Ошибка при получении текущего проекта:', error);
+    return null;
+  }
+};
+
+export const clearCurrentProject = () => {
+  try {
+    localStorage.removeItem(CURRENT_PROJECT_KEY);
+  } catch (error) {
+    console.error('Ошибка при очистке текущего проекта:', error);
+  }
+};

@@ -1,5 +1,22 @@
 import React, { useEffect } from 'react';
 
+// Пример определения типов для GameObject и SceneData:
+interface GameObject {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  image?: string;
+  animations?: { [key: string]: string | string[] };
+  isAnimated?: boolean;
+  [key: string]: any;
+}
+
+interface SceneData {
+  objects: GameObject[];
+}
 
 interface GameObjectManagerProps {
   coreInstance: Core | null;
@@ -19,50 +36,31 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
   requestRenderIfNotRequested,
 }) => {
   // Функция создания игрового объекта
-  const createGameObject = (obj: GameObject) => {
+  const createGameObject = (obj: GameObject): GameObject | null => {
     if (!shape2d) return null;
 
     const shapeFunction = shape2d[obj.type];
     if (!shapeFunction) {
-      console.warn('Неизвестный тип объекта:', obj.type);
-      return null;
+        console.warn('Неизвестный тип объекта:', obj.type);
+        return null;
     }
 
     const gameObjectParams = { ...obj };
+    delete gameObjectParams.type;
 
-    // Если объект - персонаж или враг, загружаем анимации
-    if (obj.type === 'character' || obj.type === 'enemy') {
-      gameObjectParams.animations = {};
+    // Передаем строку, не создаем new Image
+    if (obj.image) {
+        gameObjectParams.image = obj.image;
+    }
 
-      if (obj.animations) {
-        Object.keys(obj.animations).forEach((key) => {
-          const image = new Image();
-          image.src = obj.animations[key];
+    if ((obj.type === 'character' || obj.type === 'enemy') && obj.isAnimated) {
+        gameObjectParams.animations = {};
 
-          image.onload = () => {
-            requestRenderIfNotRequested();
-          };
-
-          image.onerror = () => {
-            console.error(`Ошибка загрузки анимации "${key}" для объекта:`, obj.id);
-          };
-
-          gameObjectParams.animations[key] = image;
-        });
-      }
-    } else if (obj.type === 'sprite' || obj.type === 'spriteGrid') {
-      // Если объект - спрайт, загружаем изображение
-      const image = new Image();
-      image.src = obj.image || '';
-      gameObjectParams.image = image;
-
-      image.onload = () => {
-        requestRenderIfNotRequested();
-      };
-
-      image.onerror = () => {
-        console.error('Ошибка загрузки изображения для объекта:', obj.id);
-      };
+        if (obj.animations) {
+            Object.keys(obj.animations).forEach((key) => {
+                gameObjectParams.animations[key] = obj.animations[key];
+            });
+        }
     }
 
     if (typeof gameObjectParams.width !== 'number') gameObjectParams.width = 50;
@@ -70,8 +68,13 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
 
     const gameObject = shapeFunction(gameObjectParams);
     gameObject.id = obj.id;
+
+    if (gameObject && 'type' in gameObject) {
+        delete gameObject.type;
+    }
+
     return gameObject;
-  };
+};
 
   // Рендеринг объектов при изменении сцены
   useEffect(() => {
@@ -84,6 +87,7 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
       sceneData.objects.forEach((obj: GameObject) => {
         const gameObject = createGameObject(obj);
         if (gameObject) {
+          console.log(gameObject);
           sceneManager.addGameObjectToScene(activeScene, gameObject);
           newGameObjectsMap.set(obj.id, gameObject);
         }

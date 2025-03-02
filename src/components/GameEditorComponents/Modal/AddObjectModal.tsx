@@ -27,7 +27,7 @@ const availableObjects = [
           y: 100,
           width: 100,
           height: 100,
-          image: '',
+          image: '', // Путь к изображению
           enablePhysics: true,
           isStatic: false,
           layer: 2,
@@ -42,7 +42,7 @@ const availableObjects = [
           y: 100,
           width: 160,
           height: 150,
-          image: '',
+          image: '', // Путь к изображению
           repeatX: 12,
           spacingX: 0,
           enablePhysics: true,
@@ -64,7 +64,7 @@ const availableObjects = [
           y: 200,
           width: 50,
           height: 100,
-          sprite: '',
+          image: '', // Путь к изображению
           animations: {
             idle: [],
             run: [],
@@ -75,6 +75,8 @@ const availableObjects = [
           speed: 30,
           enablePhysics: true,
           layer: 3,
+          preserveAspectRatio: false,
+          isAnimated: false, // false = использовать спрайт, true = использовать анимации
         },
       },
       {
@@ -86,7 +88,7 @@ const availableObjects = [
           y: 200,
           width: 50,
           height: 100,
-          sprite: '',
+          image: '', // Путь к изображению
           animations: {
             idle: [],
             run: [],
@@ -99,6 +101,7 @@ const availableObjects = [
           layer: 3,
           leftBoundary: 100,
           rightBoundary: 500,
+          isAnimated: false,
         },
       },
     ],

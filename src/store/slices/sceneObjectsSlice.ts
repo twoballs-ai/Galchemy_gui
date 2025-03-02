@@ -5,7 +5,8 @@ import {
   dbUpdateSceneObject, 
   dbRemoveSceneObject 
 } from '../../utils/dbUtils';
-  
+
+// "Сырые" данные объекта из базы / Redux
 export interface GameObject {
   id: string;
   sceneId: string;
@@ -27,17 +28,19 @@ export interface GameObject {
 
 interface SceneObjectsState {
   objects: GameObject[];
-  currentObject: GameObject | null; // новый элемент
+  currentObjectId: string | null; // <-- Храним только ID, а не весь объект
   loading: boolean;
   error?: string;
 }
 
 const initialState: SceneObjectsState = {
   objects: [],
-  currentObject: null,
+  currentObjectId: null,
   loading: false,
   error: undefined,
 };
+
+// Thunks (не меняются):
 export const loadSceneObjects = createAsyncThunk(
   'sceneObjects/load',
   async (activeScene: string, { rejectWithValue }) => {
@@ -102,11 +105,12 @@ const sceneObjectsSlice = createSlice({
     clearObjects(state) {
       state.objects = [];
     },
-    setCurrentObject(state, action: PayloadAction<GameObject>) {
-      state.currentObject = action.payload;
+    // Вместо setCurrentObject -> setCurrentObjectId
+    setCurrentObjectId(state, action: PayloadAction<string | null>) {
+      state.currentObjectId = action.payload;
     },
     clearCurrentObject(state) {
-      state.currentObject = null;
+      state.currentObjectId = null;
     },
     addLocalObject(state, action: PayloadAction<GameObject>) {
       state.objects.push(action.payload);
@@ -144,7 +148,6 @@ const sceneObjectsSlice = createSlice({
           state.objects[index] = action.payload;
         }
       })
-      
       .addCase(removeSceneObject.fulfilled, (state, action: PayloadAction<string>) => {
         state.objects = state.objects.filter(obj => obj.id !== action.payload);
       });
@@ -152,11 +155,12 @@ const sceneObjectsSlice = createSlice({
 });
 
 export const {
-  clearObjects, 
-  setCurrentObject, 
-  clearCurrentObject ,
+  clearObjects,
+  setCurrentObjectId,     // экшен для выбора объекта
+  clearCurrentObject,
   addLocalObject,
   updateLocalObject,
   removeLocalObject,
 } = sceneObjectsSlice.actions;
+
 export default sceneObjectsSlice.reducer;

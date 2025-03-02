@@ -4,6 +4,7 @@ import { RootState } from "../../../../store/store";
 import { updateSceneObject } from "../../../../store/slices/sceneObjectsSlice";
 import "./PropertiesPanel.scss";
 
+// Конфигурация свойств (не меняется)
 const objectPropertiesConfig = {
   sprite: [
     { key: "x", label: "X", type: "number" },
@@ -60,14 +61,21 @@ const objectPropertiesConfig = {
 
 const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const dispatch = useDispatch();
-  const selectedObject = useSelector(
-    (state: RootState) => state.sceneObjects.currentObject
-  );
-  const activeScene = useSelector(
-    (state: RootState) => state.project.activeScene
-  );
 
-  // Локальное состояние для редактирования параметров объекта
+  // Вместо selectedObject, теперь:
+  // 1) Получаем currentObjectId
+  const currentObjectId = useSelector(
+    (state: RootState) => state.sceneObjects.currentObjectId
+  );
+  // 2) Ищем объект в массиве objects, если есть id
+  const objects = useSelector((state: RootState) => state.sceneObjects.objects);
+  const selectedObject = currentObjectId
+    ? objects.find((obj) => obj.id === currentObjectId)
+    : null;
+
+  const activeScene = useSelector((state: RootState) => state.project.activeScene);
+
+  // Локальное состояние для редактирования
   const [properties, setProperties] = useState<any>({});
 
   useEffect(() => {
@@ -78,16 +86,26 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   }, [selectedObject]);
 
+  // Обработчик изменений
   const handleChange = (key: string, value: any) => {
     if (!selectedObject) return;
+
+    // Обновляем локальный стейт
     const updatedProperties = { ...properties, [key]: value };
     setProperties(updatedProperties);
-    // Обновляем объект в базе и Redux через thunk
-    if (activeScene && selectedObject) {
-      dispatch(updateSceneObject({ activeScene, object: updatedProperties }));
+
+    // Отправляем обновления в Redux и БД
+    if (activeScene) {
+      dispatch(
+        updateSceneObject({
+          activeScene,
+          object: updatedProperties,
+        })
+      );
     }
   };
 
+  // Определяем, какие поля отобразить, исходя из типа объекта
   const propertiesConfig = selectedObject
     ? objectPropertiesConfig[selectedObject.type]
     : null;
@@ -96,10 +114,11 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     <div className="properties-panel">
       <div className="panel-header">
         <h3>
-          Свойства {selectedObject ? `- ${selectedObject.name}` : ""}
+          Свойства {selectedObject ? `- ${selectedObject.name || ""}` : ""}
         </h3>
         <button onClick={onClose}>Закрыть</button>
       </div>
+
       <div className="panel-body">
         {selectedObject ? (
           propertiesConfig ? (
@@ -112,22 +131,22 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       type="number"
                       value={properties[prop.key] || 0}
                       onChange={(e) =>
-                        handleChange(prop.key, parseFloat(e.target.value))
+                        handleChange(prop.key, parseFloat(e.target.value) || 0)
                       }
                     />
                   );
                   break;
+
                 case "checkbox":
                   inputElement = (
                     <input
                       type="checkbox"
                       checked={properties[prop.key] || false}
-                      onChange={(e) =>
-                        handleChange(prop.key, e.target.checked)
-                      }
+                      onChange={(e) => handleChange(prop.key, e.target.checked)}
                     />
                   );
                   break;
+
                 case "file":
                   inputElement = (
                     <input
@@ -146,17 +165,18 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     />
                   );
                   break;
+
                 default:
+                  // По умолчанию, text
                   inputElement = (
                     <input
                       type="text"
                       value={properties[prop.key] || ""}
-                      onChange={(e) =>
-                        handleChange(prop.key, e.target.value)
-                      }
+                      onChange={(e) => handleChange(prop.key, e.target.value)}
                     />
                   );
               }
+
               return (
                 <label key={prop.key}>
                   {prop.label}: {inputElement}
