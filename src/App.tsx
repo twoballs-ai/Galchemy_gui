@@ -53,11 +53,10 @@ const App: React.FC = () => {
   };
 
   const handleEditProject = (project: ProjectSummary) => {
-    // При редактировании устанавливаем текущий проект по его id
-    dispatch(setCurrentProjectId(project.id));
+    dispatch(setCurrentProjectId(project.id));  // Установили текущий проект
     setSelectedProject(project);
     setIsEditorOpen(true);
-  };
+};
 
   const handleDeleteProject = (projectId: string) => {
     deleteProjectData(projectId);

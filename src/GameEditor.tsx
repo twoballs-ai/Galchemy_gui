@@ -72,8 +72,8 @@ console.log(openedScenes)
   }
   // При монтировании загружаем проект из localStorage
   useEffect(() => {
-    dispatch(loadProject(project.name)).then(() => setIsProjectLoaded(true));
-  }, [dispatch, project.name]);
+    dispatch(loadProject(project.id)).then(() => setIsProjectLoaded(true));
+  }, [dispatch, project.id]);
 
 
 const addNewScene = useCallback(

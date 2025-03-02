@@ -41,37 +41,42 @@ const initialState: ProjectState = {
  * Здесь сохраняем только scenes (без объектов), openedScenes и activeScene.
  */
 export const saveProject = createAsyncThunk(
-  'project/saveProject',
-  async (_, { getState }) => {
-    const state = getState() as { project: ProjectState };
-    const projectId = state.project.currentProjectId;
-    if (!projectId) {
-      console.warn('saveProject: Нет текущего проекта');
-      return;
+    'project/saveProject',
+    async (_, { getState }) => {
+        const state = getState() as { project: ProjectState };
+        const projectId = state.project.currentProjectId;
+
+        if (!projectId) {
+            console.warn('saveProject: Нет текущего проекта');
+            return;
+        }
+
+        const projectData: ProjectData = {
+            scenes: state.project.scenes.map(scene => ({
+                id: scene.id,
+                sceneName: scene.sceneName,
+                settings: scene.settings
+            })),
+            openedScenes: state.project.openedScenes,
+            activeScene: state.project.activeScene
+        };
+
+        saveProjectData(projectId, projectData);
     }
-    const projectData: ProjectData = {
-      scenes: state.project.scenes.map(scene => ({
-        id: scene.id,
-        sceneName: scene.sceneName,
-        settings: scene.settings
-      })),
-      openedScenes: state.project.openedScenes,
-      activeScene: state.project.activeScene
-    };
-    saveProjectData(projectId, projectData);
-  }
 );
+
 
 /**
  * Thunk для загрузки данных проекта из localStorage.
  */
 export const loadProject = createAsyncThunk(
   'project/loadProject',
-  async (projectName: string, { dispatch }) => {
-    const data = loadProjectData(projectName);
-    if (data) {
-      dispatch(loadProjectState(data));
-    }
+  async (projectId: string, { dispatch }) => {
+      const data = loadProjectData(projectId);
+      if (data) {
+          dispatch(loadProjectState(data));
+          dispatch(setCurrentProjectId(projectId));  // Запоминаем текущий проект
+      }
   }
 );
 
