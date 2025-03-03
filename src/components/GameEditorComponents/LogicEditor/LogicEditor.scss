@@ -1,0 +1,91 @@
+.logic-editor-container {
+    width: 100%;
+    max-width: auto;
+    margin: 0 auto;
+    background-color: #111;
+    padding: 16px;
+    color: #fff;
+  
+    .draggable-event {
+      display: flex;
+      flex-direction: row;
+      background-color: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: default;
+      margin-bottom: 8px;
+  
+      .drag-handle {
+        background-color: #444;
+        padding: 4px;
+        cursor: grab;
+        user-select: none;
+        margin-right: 8px;
+        text-align: center;
+        font-weight: bold;
+        color: #ccc;
+      }
+  
+      .event-content {
+        background-color: #222;
+        padding: 8px;
+        border-radius: 4px;
+        width: 100%;
+  
+        .columns {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 8px;
+  
+          .column {
+            flex: 1;
+  
+            h4 {
+              margin: 0 0 4px;
+              font-size: 1rem;
+            }
+  
+            ul {
+              list-style: none;
+              padding: 0;
+              margin: 0 0 8px;
+            }
+  
+            li {
+              margin-bottom: 4px;
+              font-size: 0.9rem;
+            }
+          }
+        }
+  
+        button {
+          background-color: #555;
+          color: #fff;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.9rem;
+  
+          &:hover {
+            background-color: #666;
+          }
+        }
+      }
+    }
+  
+    .drag-handle-mini {
+      width: 10px;
+      height: 100%;
+      background-color: #777;
+      margin-right: 4px;
+      cursor: grab;
+    }
+  
+    .condition-content,
+    .action-content {
+      flex: 1;
+    }
+  }
+  

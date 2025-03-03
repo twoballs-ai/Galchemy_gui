@@ -81,10 +81,10 @@ const App: React.FC = () => {
           <>
             <Header className="app-header">
               <Typography.Title level={3} className="header-title">
-                Tette Game Editor
+                Game Alchemy Editor
               </Typography.Title>
               <Typography.Text className="header-welcome">
-                Приветствуем вас в редакторе игр Tette
+                Приветствуем вас в редакторе игр Game Alchemy
               </Typography.Text>
               <Typography.Text className="header-user">
                 {isUserLoggedIn ? 'Вы вошли в систему' : 'Гость'}
