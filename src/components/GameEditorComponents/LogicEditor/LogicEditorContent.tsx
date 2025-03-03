@@ -1,211 +1,205 @@
-// LogicEditorContent.tsx
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { loadSceneData, saveSceneData } from '../../../../utils/storageUtils';
-import { Button, Card, Space } from 'antd';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store'; // проверь путь под себя
 
-interface Condition {
+// Типы данных и функции для работы с логикой
+export interface LogicCondition {
   id: string;
   type: string;
-  params: any;
+  params: Record<string, any>;
 }
 
-interface Action {
+export interface LogicAction {
   id: string;
   type: string;
-  params: any;
+  params: Record<string, any>;
 }
 
-interface LogicEvent {
+export interface LogicEvent {
   id: string;
-  conditions: Condition[];
-  actions: Action[];
+  conditions: LogicCondition[];
+  actions: LogicAction[];
 }
 
-interface SceneData {
-  sceneName: string;
-  objects: any[];
-  settings: any;
-  logicEvents?: LogicEvent[];
+export interface SceneLogicData {
+  logicEvents: LogicEvent[];
 }
 
-interface LogicEditorContentProps {
-  projectName: string;
-  sceneName: string;
-}
+const getLogicStorageKey = (projectId: string, sceneId: string) => {
+  return `LogicData:${projectId}:${sceneId}`;
+};
 
-const LogicEditorContent: React.FC<LogicEditorContentProps> = ({
-  projectName,
-  activeScene,
-}) => {
-  const [sceneData, setSceneData] = useState<SceneData | null>(null);
+const saveSceneLogic = (
+  projectId: string,
+  sceneId: string,
+  logicData: SceneLogicData
+) => {
+  try {
+    const key = getLogicStorageKey(projectId, sceneId);
+    localStorage.setItem(key, JSON.stringify(logicData));
+  } catch (error) {
+    console.error(`Ошибка при сохранении логики сцены ${sceneId} в проекте ${projectId}:`, error);
+  }
+};
 
-  // useEffect(() => {
-  //   const loadedSceneData = loadSceneData(projectName, sceneName);
-  //   if (loadedSceneData) {
-  //     setSceneData(loadedSceneData);
-  //   }
-  // }, [projectName, sceneName]);
+const loadSceneLogic = (projectId: string, sceneId: string): SceneLogicData => {
+  try {
+    const key = getLogicStorageKey(projectId, sceneId);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : { logicEvents: [] };
+  } catch (error) {
+    console.error(`Ошибка при загрузке логики сцены ${sceneId} в проекте ${projectId}:`, error);
+    return { logicEvents: [] };
+  }
+};
 
-  const handleSave = () => {
-    if (sceneData) {
-      // Сохраняем sceneData с обновлёнными logicEvents
-      // saveSceneData(projectName, sceneData);
+// Компонент LogicEditor, который теперь сам берёт projectId и sceneId из Redux
+const LogicEditor: React.FC = () => {
+  const projectId = useSelector((state: RootState) => state.project.currentProjectId);
+  const sceneId = useSelector((state: RootState) => state.project.activeScene);
+
+  const [logicData, setLogicData] = useState<SceneLogicData>({ logicEvents: [] });
+
+  useEffect(() => {
+    if (projectId && sceneId) {
+      const loadedLogic = loadSceneLogic(projectId, sceneId);
+      setLogicData(loadedLogic);
+    }
+  }, [projectId, sceneId]);
+
+  const updateLogic = (updatedLogic: SceneLogicData) => {
+    setLogicData(updatedLogic);
+    if (projectId && sceneId) {
+      saveSceneLogic(projectId, sceneId, updatedLogic);
     }
   };
 
   const handleAddEvent = () => {
-    if (!sceneData) return;
     const newEvent: LogicEvent = {
       id: uuidv4(),
       conditions: [],
       actions: [],
     };
-    const updatedData = {
-      ...sceneData,
-      logicEvents: [...(sceneData.logicEvents || []), newEvent],
-    };
-    setSceneData(updatedData);
+    updateLogic({ logicEvents: [...logicData.logicEvents, newEvent] });
   };
 
   const handleRemoveEvent = (eventId: string) => {
-    if (!sceneData) return;
-    const updatedEvents = (sceneData.logicEvents || []).filter((ev) => ev.id !== eventId);
-    const updatedData = { ...sceneData, logicEvents: updatedEvents };
-    setSceneData(updatedData);
+    updateLogic({
+      logicEvents: logicData.logicEvents.filter((ev) => ev.id !== eventId),
+    });
   };
 
   const handleAddCondition = (eventId: string) => {
-    if (!sceneData) return;
-    const updatedEvents = (sceneData.logicEvents || []).map((ev) => {
+    const updatedEvents = logicData.logicEvents.map((ev) => {
       if (ev.id === eventId) {
-        const newCondition: Condition = {
+        const newCondition: LogicCondition = {
           id: uuidv4(),
-          type: 'onKeyDown', // пример значения по умолчанию
-          params: { key: 'Space' }, // пример
+          type: 'onKeyDown',
+          params: { key: 'Space' },
         };
         return { ...ev, conditions: [...ev.conditions, newCondition] };
       }
       return ev;
     });
-    setSceneData({ ...sceneData, logicEvents: updatedEvents });
+
+    updateLogic({ logicEvents: updatedEvents });
   };
 
   const handleRemoveCondition = (eventId: string, conditionId: string) => {
-    if (!sceneData) return;
-    const updatedEvents = (sceneData.logicEvents || []).map((ev) => {
+    const updatedEvents = logicData.logicEvents.map((ev) => {
       if (ev.id === eventId) {
-        const filteredConds = ev.conditions.filter((c) => c.id !== conditionId);
-        return { ...ev, conditions: filteredConds };
+        return {
+          ...ev,
+          conditions: ev.conditions.filter((c) => c.id !== conditionId),
+        };
       }
       return ev;
     });
-    setSceneData({ ...sceneData, logicEvents: updatedEvents });
+
+    updateLogic({ logicEvents: updatedEvents });
   };
 
   const handleAddAction = (eventId: string) => {
-    if (!sceneData) return;
-    const updatedEvents = (sceneData.logicEvents || []).map((ev) => {
+    const updatedEvents = logicData.logicEvents.map((ev) => {
       if (ev.id === eventId) {
-        const newAction: Action = {
+        const newAction: LogicAction = {
           id: uuidv4(),
-          type: 'moveObject', // пример
+          type: 'moveObject',
           params: { objectId: 'player', dx: 5, dy: 0 },
         };
         return { ...ev, actions: [...ev.actions, newAction] };
       }
       return ev;
     });
-    setSceneData({ ...sceneData, logicEvents: updatedEvents });
+
+    updateLogic({ logicEvents: updatedEvents });
   };
 
   const handleRemoveAction = (eventId: string, actionId: string) => {
-    if (!sceneData) return;
-    const updatedEvents = (sceneData.logicEvents || []).map((ev) => {
+    const updatedEvents = logicData.logicEvents.map((ev) => {
       if (ev.id === eventId) {
-        const filteredActs = ev.actions.filter((a) => a.id !== actionId);
-        return { ...ev, actions: filteredActs };
+        return {
+          ...ev,
+          actions: ev.actions.filter((a) => a.id !== actionId),
+        };
       }
       return ev;
     });
-    setSceneData({ ...sceneData, logicEvents: updatedEvents });
+
+    updateLogic({ logicEvents: updatedEvents });
   };
 
-  const logicEvents = sceneData?.logicEvents || [];
+  if (!projectId || !sceneId) {
+    return (
+      <div style={{ color: 'white' }}>
+        Нет активного проекта или сцены
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: '16px', color: 'white' }}>
-      <h2>Редактор логики событий</h2>
-      <Button type="primary" onClick={handleAddEvent} style={{ marginBottom: '16px' }}>
-        Добавить событие
-      </Button>
+    <div style={{ padding: '16px', backgroundColor: '#222', color: '#fff' }}>
+      <h2>Редактор логики событий для сцены {sceneId}</h2>
+      <button onClick={handleAddEvent}>Добавить событие</button>
 
-      {logicEvents.map((ev) => (
-        <Card
+      {logicData.logicEvents.map((ev) => (
+        <div
           key={ev.id}
-          title={`Событие ${ev.id}`}
-          style={{ marginBottom: '16px', backgroundColor: '#333' }}
-          extra={
-            <Button danger onClick={() => handleRemoveEvent(ev.id)}>
-              Удалить
-            </Button>
-          }
+          style={{ border: '1px solid #555', padding: '8px', margin: '8px 0' }}
         >
-          <div style={{ marginBottom: '8px' }}>
-            <strong>Условия:</strong>
-            <Button type="link" onClick={() => handleAddCondition(ev.id)}>
-              + добавить условие
-            </Button>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <strong>Событие {ev.id}</strong>
+            <button onClick={() => handleRemoveEvent(ev.id)}>Удалить событие</button>
+          </div>
+          <div>
+            <h4>Условия</h4>
+            <button onClick={() => handleAddCondition(ev.id)}>+ Добавить условие</button>
             <ul>
               {ev.conditions.map((cond) => (
                 <li key={cond.id}>
-                  <span style={{ color: '#0f0' }}>
-                    {cond.type} (params: {JSON.stringify(cond.params)})
-                  </span>
-                  <Button
-                    danger
-                    size="small"
-                    onClick={() => handleRemoveCondition(ev.id, cond.id)}
-                    style={{ marginLeft: '8px' }}
-                  >
-                    x
-                  </Button>
+                  {cond.type} (params: {JSON.stringify(cond.params)})
+                  <button onClick={() => handleRemoveCondition(ev.id, cond.id)}>x</button>
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <strong>Действия:</strong>
-            <Button type="link" onClick={() => handleAddAction(ev.id)}>
-              + добавить действие
-            </Button>
+            <h4>Действия</h4>
+            <button onClick={() => handleAddAction(ev.id)}>+ Добавить действие</button>
             <ul>
               {ev.actions.map((act) => (
                 <li key={act.id}>
-                  <span style={{ color: '#ff0' }}>
-                    {act.type} (params: {JSON.stringify(act.params)})
-                  </span>
-                  <Button
-                    danger
-                    size="small"
-                    onClick={() => handleRemoveAction(ev.id, act.id)}
-                    style={{ marginLeft: '8px' }}
-                  >
-                    x
-                  </Button>
+                  {act.type} (params: {JSON.stringify(act.params)})
+                  <button onClick={() => handleRemoveAction(ev.id, act.id)}>x</button>
                 </li>
               ))}
             </ul>
           </div>
-        </Card>
+        </div>
       ))}
-      <Space>
-        <Button type="primary" onClick={handleSave}>
-          Сохранить
-        </Button>
-      </Space>
     </div>
   );
 };
 
-export default LogicEditorContent;
+export default LogicEditor;

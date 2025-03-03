@@ -12,7 +12,6 @@ interface TabsProps {
   activeTab: string;
   onTabClick: (tabKey: string) => void;
   onRemoveTab: (tabKey: string) => void;
-  showGlobalLogicTab?: boolean; // Новый проп для отображения глобальной вкладки
 }
 
 const Tabs: React.FC<TabsProps> = ({
@@ -20,21 +19,25 @@ const Tabs: React.FC<TabsProps> = ({
   activeTab,
   onTabClick,
   onRemoveTab,
-  showGlobalLogicTab = false,
 }) => {
   const maxTabWidth = 150;
   const minTabWidth = 90;
   const containerWidth = 1000;
-  // Если нужно показать вкладку глобальной логики, считаем общее количество вкладок как tabs.length + 1
-  const totalTabs = showGlobalLogicTab ? tabs.length + 1 : tabs.length;
+
+  // Вставляем проектную логику (projectLogic) в самое начало, если её ещё нет
+  const allTabs: Tab[] = [
+    { key: 'projectLogic', sceneName: 'Проектная логика' },
+    ...tabs.filter(tab => tab.key !== 'projectLogic'),
+  ];
+
   const tabWidth = Math.max(
     minTabWidth,
-    Math.min(maxTabWidth, containerWidth / totalTabs)
+    Math.min(maxTabWidth, containerWidth / allTabs.length)
   );
 
   return (
     <div className="tabs-container">
-      {tabs.map((tab) => (
+      {allTabs.map((tab) => (
         <div
           key={tab.key}
           className={`tab ${activeTab === tab.key ? 'tab--active' : ''}`}
@@ -42,27 +45,17 @@ const Tabs: React.FC<TabsProps> = ({
           style={{ width: `${tabWidth}px` }}
         >
           {tab.sceneName}
-          <CloseOutlined
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemoveTab(tab.key);
-            }}
-            className="close-icon"
-          />
+          {tab.key !== 'projectLogic' && (
+            <CloseOutlined
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveTab(tab.key);
+              }}
+              className="close-icon"
+            />
+          )}
         </div>
       ))}
-      {showGlobalLogicTab && (
-        <div
-          key="projectLogic"
-          className={`tab ${
-            activeTab === 'projectLogic' ? 'tab--active' : ''
-          }`}
-          onClick={() => onTabClick('projectLogic')}
-          style={{ width: `${tabWidth}px` }}
-        >
-          Global Logic
-        </div>
-      )}
     </div>
   );
 };

@@ -15,7 +15,7 @@ import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEdit
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";
 
-import { ProjectSummary } from "./utils/storageUtils";
+import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
 
 import { RootState, AppDispatch } from "./store/store";
@@ -44,6 +44,10 @@ const createScene = (sceneName: string) => ({
   settings: {},
 });
 
+const createInitialSceneLogic = (projectId: string, sceneId: string) => {
+  const initialLogic: SceneLogicData = { logicEvents: [] };
+  saveSceneLogic(projectId, sceneId, initialLogic);
+};
 
 const GameEditor: React.FC<GameEditorProps> = ({
   project,
@@ -67,9 +71,6 @@ console.log(openedScenes)
     sceneName: s.sceneName,
   }));
   
-  if (!sceneTabs.find(tab => tab.key === "projectLogic")) {
-    sceneTabs.push({ key: "projectLogic", sceneName: "Проектная логика" });
-  }
   // При монтировании загружаем проект из localStorage
   useEffect(() => {
     dispatch(loadProject(project.id)).then(() => setIsProjectLoaded(true));
@@ -81,18 +82,19 @@ const addNewScene = useCallback(
     const newScene = createScene(sceneName);
     dispatch(addScene(newScene));
     
-    // Создаём объект для openedScenes с нужной структурой
+    // Создаём сразу начальную логику
+    createInitialSceneLogic(project.id, newScene.id);
+
     const newOpenedScene = {
       id: newScene.id,
       sceneName: newScene.sceneName,
-      key: newScene.id, // можно использовать id как ключ
-      state: "levelEditor"  // либо другой дефолтный статус
+      key: newScene.id,
+      state: "levelEditor"
     };
 
-    // Обновляем openedScenes, добавляя новую сцену
     dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
     dispatch(setActiveScene(newScene.id));
-    dispatch(saveProject(project.name));
+    dispatch(saveProject(project.id));
   },
   [dispatch, project.name, openedScenes]
 );
@@ -110,28 +112,25 @@ const addNewScene = useCallback(
   }, [scenes.length, addNewScene]);
 
   // Удаляем сцену по её идентификатору
-  const handleRemoveOpenedScene = (tabKey: string) => {
-    // Защита от удаления глобальной вкладки
-    if (tabKey === "projectLogic") return;
-  
-    // Убираем сцену только из списка открытых вкладок
+const handleRemoveOpenedScene = (tabKey: string) => {
+    if (tabKey === 'projectLogic') return;  // Защита не нужна, но можно оставить на всякий случай
+
     const updatedOpenedScenes = openedScenes.filter(scene => scene.key !== tabKey);
     dispatch(setOpenedScenes(updatedOpenedScenes));
-  
-    // Если закрытая вкладка была активной, переключаем активную сцену на первую оставшуюся вкладку (или на "projectLogic")
+
     if (activeScene === tabKey) {
-      const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "projectLogic";
-      dispatch(setActiveScene(newActive));
+        const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : 'projectLogic';
+        dispatch(setActiveScene(newActive));
     }
-    
-    dispatch(saveProject(project.name));
-  };
+
+    dispatch(saveProject(project.id));
+};
 
   // Переключаем активную сцену (или "projectLogic")
   const handleSceneChange = (tabKey: string) => {
     dispatch(setActiveScene(tabKey));
     // По желанию сохраним
-    dispatch(saveProject(project.name));
+    dispatch(saveProject(project.id));
   };
 
   // Меняем режим редактора (уровень / логика) — храним локально
@@ -144,7 +143,7 @@ const addNewScene = useCallback(
   
     // Обновляем state открытой сцены в Redux
     dispatch(updateOpenedScene({ key: activeScene, newState: mode }));
-    dispatch(saveProject(project.name));
+    dispatch(saveProject(project.id));
   };
 
   const handleRunGame = () => {
@@ -289,21 +288,17 @@ const addNewScene = useCallback(
             </div>
           )}
 
-          {activeScene === "projectLogic" ? (
-            <LogicEditorContent projectName={project.name} scope="project" />
-          ) : currentEditorMode === "logicEditor" ? (
-            <LogicEditorContent
-              projectName={project.name}
-              activeScene={activeScene}
-              scope="scene"
-            />
-          ) : (
-            <SceneEditor
-            activeScene={activeScene}
-              projectName={project.name}
-              renderType={project.renderType}
-            />
-          )}
+{activeScene === "projectLogic" ? (
+    <LogicEditorContent />
+) : currentEditorMode === "logicEditor" ? (
+    <LogicEditorContent />
+) : (
+    <SceneEditor
+        activeScene={activeScene}
+        projectName={project.name}
+        renderType={project.renderType}
+    />
+)}
         </Content>
       </Layout>
 
