@@ -309,7 +309,6 @@ const LogicEditor: React.FC = () => {
         strategy={verticalListSortingStrategy}
       >
         <div className="logic-editor-container">
-          <h2>Редактор логики событий для сцены {sceneId}</h2>
           <button onClick={handleAddEvent}>Добавить событие</button>
           {logicData.logicEvents.map(ev => (
             <SortableEvent
