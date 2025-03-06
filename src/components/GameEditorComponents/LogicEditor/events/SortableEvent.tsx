@@ -35,16 +35,6 @@ const SortableEvent: React.FC<SortableEventProps> = ({
   // Состояние для управления открытием модального окна для добавления условия
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Пример списков игровых объектов и условий для модального окна
-  const gameObjects = [
-    { id: 'obj1', name: 'Игрок' },
-    { id: 'obj2', name: 'Враг' },
-  ];
-  const gameConditions = [
-    { id: 'cond1', name: 'Нажатие W' },
-    { id: 'cond2', name: 'Нажатие S' },
-  ];
-
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div className="draggable-event">
@@ -108,8 +98,6 @@ const SortableEvent: React.FC<SortableEventProps> = ({
           onAddCondition(event.id, newCondition);
           setModalOpen(false);
         }}
-        gameObjects={gameObjects}
-        gameConditions={gameConditions}
       />
     </div>
   );

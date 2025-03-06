@@ -19,7 +19,8 @@ const availableObjects = [
     category: 'Спрайты',
     objects: [
       {
-        name: 'Спрайт',
+        // Изменили: поле name переименовано в title
+        title: 'Спрайт',
         type: 'sprite',
         icon: CircleIcon,
         params: {
@@ -34,7 +35,7 @@ const availableObjects = [
         },
       },
       {
-        name: 'Sprite Grid',
+        title: 'Sprite Grid',
         type: 'spriteGrid',
         icon: TilesMap,
         params: {
@@ -56,7 +57,7 @@ const availableObjects = [
     category: 'Персонажи',
     objects: [
       {
-        name: 'Персонаж',
+        title: 'Персонаж',
         type: 'character',
         icon: CharacterIcon,
         params: {
@@ -76,11 +77,11 @@ const availableObjects = [
           enablePhysics: true,
           layer: 3,
           preserveAspectRatio: false,
-          isAnimated: false, // false = использовать спрайт, true = использовать анимации
+          isAnimated: false,
         },
       },
       {
-        name: 'Враг',
+        title: 'Враг',
         type: 'enemy',
         icon: EnemyIcon,
         params: {
@@ -118,11 +119,15 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
       .find((obj) => obj.type === type);
 
     if (selected) {
+      // При выборе объекта:
+      // - Поле title получает исходное значение (selected.title)
+      // - Поле name устанавливается пустым, чтобы пользователь сам записал нужное название
       const newObject = {
         ...selected.params,
         id: uuidv4(),
         type: selected.type,
-        name: selected.name,
+        title: selected.title, // исходное название сохраняется как title
+        name: '',            // поле name оставляем пустым для ввода пользователем
       };
 
       setSelectedAddObject(newObject);
@@ -150,8 +155,8 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
                     className="object-item"
                     onClick={() => handleSelectObject(obj.type)}
                   >
-                    <img src={obj.icon} alt={obj.name} className="object-icon" />
-                    <span className="object-name">{obj.name}</span>
+                    <img src={obj.icon} alt={obj.title} className="object-icon" />
+                    <span className="object-name">{obj.title}</span>
                   </div>
                 ))}
               </div>

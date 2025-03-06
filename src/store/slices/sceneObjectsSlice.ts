@@ -12,6 +12,7 @@ export interface GameObject {
   sceneId: string;
   type: string;
   name: string;
+  title: string;
   x: number;
   y: number;
   width?: number;

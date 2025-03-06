@@ -19,15 +19,23 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
   selectedAddObject,
   onSave,
 }) => {
+  // Состояние для пользовательского имени объекта
+  const [customName, setCustomName] = useState<string>(
+    selectedAddObject?.name || ""
+  );
+
   // Определяем, является ли объект анимированным (enemy или character)
   const isAnimatedObject =
-    selectedAddObject?.type === "enemy" || selectedAddObject?.type === "character";
+    selectedAddObject?.type === "enemy" ||
+    selectedAddObject?.type === "character";
 
-  // Состояние для переключения режима в одной вкладке: "image" или "animations"
+  // Состояние для переключения режима в первой вкладке: "image" или "animations"
   const [activeMediaTab, setActiveMediaTab] = useState("image");
-  const [useAnimations, setUseAnimations] = useState(selectedAddObject?.isAnimated || false);
+  const [useAnimations, setUseAnimations] = useState(
+    selectedAddObject?.isAnimated || false
+  );
 
-  // Состояние для обычного изображения (sprite)
+  // Состояние для изображения (sprite)
   const [image, setImage] = useState<string | null>(
     selectedAddObject?.image || null
   );
@@ -45,7 +53,7 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
     attack: selectedAddObject?.animations?.attack || [],
   });
 
-  // Обработчик загрузки изображения для режима "image"
+  // Обработчик загрузки изображения
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -56,7 +64,7 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
     reader.readAsDataURL(file);
   };
 
-  // Обработчик загрузки кадров для конкретного типа анимации
+  // Обработчик загрузки кадров для анимаций
   const handleAnimationUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
     animType: "idle" | "run" | "jump" | "attack"
@@ -82,7 +90,11 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
   };
 
   const handleSave = () => {
-    const updatedObject = { ...selectedAddObject, isAnimated: useAnimations };
+    const updatedObject = { 
+      ...selectedAddObject, 
+      isAnimated: useAnimations,
+      name: customName  // присваиваем пользовательское имя
+    };
     if (useAnimations) {
       updatedObject.image = image;
       updatedObject.animations = {
@@ -97,19 +109,35 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
     onSave(updatedObject);
   };
 
+  useEffect(() => {
+    setCustomName(selectedAddObject?.name || "");
+  }, [selectedAddObject]);
+
   return (
     <CustomModal
       open={open}
       onClose={onClose}
-      title={`Настройка объекта: ${selectedAddObject?.name || ""}`}
+      title={`Настройка объекта: ${selectedAddObject?.title || ""}`}
       footer={
         <button onClick={handleSave} style={{ marginTop: "10px" }}>
           Сохранить объект
         </button>
       }
     >
+      {/* Первая вкладка переименована в "Основное" */}
       <Tabs defaultActiveKey="1">
-        <TabPane tab="Изображение" key="1">
+        <TabPane tab="Основное" key="1">
+          <div style={{ marginBottom: "16px" }}>
+            <label>
+              Имя объекта:
+              <input
+                type="text"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                style={{ marginLeft: "8px", padding: "4px" }}
+              />
+            </label>
+          </div>
           {isAnimatedObject && (
             <div className="mb-4 flex gap-4">
               <button
@@ -195,7 +223,6 @@ const ConfigureObjectModal: React.FC<ConfigureObjectModalProps> = ({
           )}
         </TabPane>
   
-        {/* Если объект типа spriteGrid, добавляем отдельную вкладку для параметров Grid */}
         {selectedAddObject?.type === "spriteGrid" && (
           <TabPane tab="Параметры Grid" key="2">
             <h3>Настройки Grid</h3>
