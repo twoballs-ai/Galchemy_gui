@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../../../store/store';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -10,6 +10,11 @@ import {
 } from '@dnd-kit/sortable';
 import SortableEvent from './events/SortableEvent';
 import './LogicEditor.scss';
+import { loadSceneObjects } from '../../../store/slices/sceneObjectsSlice'; // Импорт thunk для загрузки объектов
+
+interface LogicEditorProps {
+  activeScene: string;
+}
 
 // Типы данных
 export interface LogicCondition {
@@ -72,16 +77,24 @@ const loadSceneLogic = (projectId: string, sceneId: string): SceneLogicData => {
 };
 
 // Основной компонент редактора логики
-const LogicEditor: React.FC = () => {
+const LogicEditor: React.FC<LogicEditorProps> = ({ activeScene }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const projectId = useSelector(
     (state: RootState) => state.project.currentProjectId
   );
-  const sceneId = useSelector((state: RootState) => state.project.activeScene);
+  // Используем переданный пропс activeScene в качестве sceneId
+  const sceneId = activeScene;
 
-  const [logicData, setLogicData] = useState<SceneLogicData>({
-    logicEvents: [],
-  });
+  const [logicData, setLogicData] = useState<SceneLogicData>({ logicEvents: [] });
 
+  // Загружаем объекты сцены (если они нужны для логики)
+  useEffect(() => {
+    if (sceneId) {
+      dispatch(loadSceneObjects(sceneId));
+    }
+  }, [sceneId, dispatch]);
+
+  // Загружаем сохранённую логику сцены из localStorage
   useEffect(() => {
     if (projectId && sceneId) {
       const loadedLogic = loadSceneLogic(projectId, sceneId);
@@ -183,10 +196,7 @@ const LogicEditor: React.FC = () => {
     const overId = over.id.toString();
 
     // Если это перетаскивание события (не миниблок условий/действий)
-    if (
-      !activeId.startsWith('condition-') &&
-      !activeId.startsWith('action-')
-    ) {
+    if (!activeId.startsWith('condition-') && !activeId.startsWith('action-')) {
       if (activeId !== overId) {
         const oldIndex = logicData.logicEvents.findIndex(ev => ev.id === activeId);
         const newIndex = logicData.logicEvents.findIndex(ev => ev.id === overId);
@@ -201,7 +211,6 @@ const LogicEditor: React.FC = () => {
     const parts = activeId.split('-');
     if (parts.length < 3) return;
     const itemType = parts[0]; // "condition" или "action"
-    const itemId = parts[1];
     const sourceEventId = parts.slice(2).join('-'); // на случай, если eventId содержит дефис
 
     // Формируем id контейнера для источника: "conditions-{sourceEventId}" или "actions-{sourceEventId}"
@@ -221,8 +230,12 @@ const LogicEditor: React.FC = () => {
       if (eventIndex === -1) return;
       const currentEvent = logicData.logicEvents[eventIndex];
       if (itemType === 'condition') {
-        const oldIndex = currentEvent.conditions.findIndex(cond => `condition-${cond.id}-${eventId}` === activeId);
-        const newIndex = currentEvent.conditions.findIndex(cond => `condition-${cond.id}-${eventId}` === overId);
+        const oldIndex = currentEvent.conditions.findIndex(
+          cond => `condition-${cond.id}-${eventId}` === activeId
+        );
+        const newIndex = currentEvent.conditions.findIndex(
+          cond => `condition-${cond.id}-${eventId}` === overId
+        );
         if (oldIndex === -1 || newIndex === -1) return;
         const newConditions = arrayMove(currentEvent.conditions, oldIndex, newIndex);
         const updatedEvent = { ...currentEvent, conditions: newConditions };
@@ -230,8 +243,12 @@ const LogicEditor: React.FC = () => {
         newEvents[eventIndex] = updatedEvent;
         updateLogic({ logicEvents: newEvents });
       } else if (itemType === 'action') {
-        const oldIndex = currentEvent.actions.findIndex(act => `action-${act.id}-${eventId}` === activeId);
-        const newIndex = currentEvent.actions.findIndex(act => `action-${act.id}-${eventId}` === overId);
+        const oldIndex = currentEvent.actions.findIndex(
+          act => `action-${act.id}-${eventId}` === activeId
+        );
+        const newIndex = currentEvent.actions.findIndex(
+          act => `action-${act.id}-${eventId}` === overId
+        );
         if (oldIndex === -1 || newIndex === -1) return;
         const newActions = arrayMove(currentEvent.actions, oldIndex, newIndex);
         const updatedEvent = { ...currentEvent, actions: newActions };
@@ -253,13 +270,17 @@ const LogicEditor: React.FC = () => {
       const sourceEvent = logicData.logicEvents[sourceEventIndex];
       const destEvent = logicData.logicEvents[destEventIndex];
       if (itemType === 'condition') {
-        const condIndex = sourceEvent.conditions.findIndex(cond => `condition-${cond.id}-${sourceEventId}` === activeId);
+        const condIndex = sourceEvent.conditions.findIndex(
+          cond => `condition-${cond.id}-${sourceEventId}` === activeId
+        );
         if (condIndex === -1) return;
         const movedCond = sourceEvent.conditions[condIndex];
         const newSourceConditions = [...sourceEvent.conditions];
         newSourceConditions.splice(condIndex, 1);
         const newDestConditions = [...destEvent.conditions];
-        const destIndex = newDestConditions.findIndex(cond => `condition-${cond.id}-${destEventId}` === overId);
+        const destIndex = newDestConditions.findIndex(
+          cond => `condition-${cond.id}-${destEventId}` === overId
+        );
         if (destIndex === -1) {
           newDestConditions.push(movedCond);
         } else {
@@ -272,13 +293,17 @@ const LogicEditor: React.FC = () => {
         newEvents[destEventIndex] = updatedDestEvent;
         updateLogic({ logicEvents: newEvents });
       } else if (itemType === 'action') {
-        const actIndex = sourceEvent.actions.findIndex(act => `action-${act.id}-${sourceEventId}` === activeId);
+        const actIndex = sourceEvent.actions.findIndex(
+          act => `action-${act.id}-${sourceEventId}` === activeId
+        );
         if (actIndex === -1) return;
         const movedAct = sourceEvent.actions[actIndex];
         const newSourceActions = [...sourceEvent.actions];
         newSourceActions.splice(actIndex, 1);
         const newDestActions = [...destEvent.actions];
-        const destIndex = newDestActions.findIndex(act => `action-${act.id}-${destEventId}` === overId);
+        const destIndex = newDestActions.findIndex(
+          act => `action-${act.id}-${destEventId}` === overId
+        );
         if (destIndex === -1) {
           newDestActions.push(movedAct);
         } else {

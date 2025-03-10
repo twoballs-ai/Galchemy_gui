@@ -20,7 +20,7 @@ const GameConditionsSelector: React.FC<GameConditionsSelectorProps> = ({
           onClick={() => onSelect(cond)}
           style={{
             padding: '4px 8px',
-            background: selectedId === cond.id ? '#ddd' : 'transparent',
+            background: selectedId === cond.id ? '#0053a0' : 'transparent',
             cursor: 'pointer',
             borderRadius: '4px',
             marginBottom: '4px',

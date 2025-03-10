@@ -13,6 +13,7 @@ interface ObjectsSelectorProps {
 }
 
 const ObjectsSelector: React.FC<ObjectsSelectorProps> = ({ objects, selectedId, onSelect }) => {
+  console.log(objects)
   return (
     <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
       {objects.map((obj) => (

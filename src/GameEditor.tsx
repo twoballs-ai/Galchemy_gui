@@ -289,9 +289,9 @@ const handleRemoveOpenedScene = (tabKey: string) => {
           )}
 
 {activeScene === "projectLogic" ? (
-    <LogicEditorContent />
+    <LogicEditorContent activeScene={activeScene} />
 ) : currentEditorMode === "logicEditor" ? (
-    <LogicEditorContent />
+    <LogicEditorContent activeScene={activeScene} />
 ) : (
     <SceneEditor
         activeScene={activeScene}
