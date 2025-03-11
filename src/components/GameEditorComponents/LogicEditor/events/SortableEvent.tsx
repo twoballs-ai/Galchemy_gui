@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import ConditionItem from './conditions/ConditionItem';
 import ActionItem from './actions/ActionItem';
-import AddConditionModal, { LogicCondition } from './conditions/AddConditionModal';
+import AddConditionModal, { LogicCondition } from './conditions/conditionModals/AddConditionModal';
 import { LogicEvent } from './LogicEditor';
 
 interface SortableEventProps {

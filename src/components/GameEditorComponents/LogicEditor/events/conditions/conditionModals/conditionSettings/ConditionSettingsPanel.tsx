@@ -46,23 +46,17 @@ const ConditionSettingsPanel: React.FC<ConditionSettingsPanelProps> = ({
         { id: 'onKeyDown', name: 'Нажатие клавиши', defaultParams: { key: 'Space', delay: 0 } },
         { id: 'onKeyUp', name: 'Отпускание клавиши', defaultParams: { key: 'Space', delay: 0 } },
       ],
-      'Нажатия мыши': [
-        { id: 'onMouseClick', name: 'Клик мышью', defaultParams: {} },
-      ],
-      'Нажатия на экран': [
-        { id: 'onTouch', name: 'Сенсорное касание', defaultParams: {} },
-      ],
+      'Нажатия мыши': [{ id: 'onMouseClick', name: 'Клик мышью', defaultParams: {} }],
+      'Нажатия на экран': [{ id: 'onTouch', name: 'Сенсорное касание', defaultParams: {} }],
     },
     sprite: {
-      'Movement': [
+      Movement: [
         { id: 'moveLeft', name: 'Движение влево', defaultParams: { speed: 5 } },
         { id: 'moveRight', name: 'Движение вправо', defaultParams: { speed: 5 } },
       ],
     },
     default: {
-      'Default Conditions': [
-        { id: 'defaultCondition', name: 'Условие по умолчанию', defaultParams: {} },
-      ],
+      'Default Conditions': [{ id: 'defaultCondition', name: 'Условие по умолчанию', defaultParams: {} }],
     },
   };
 
@@ -71,8 +65,7 @@ const ConditionSettingsPanel: React.FC<ConditionSettingsPanelProps> = ({
   return (
     <div style={{ flex: 1, paddingLeft: '8px', display: 'flex', flexDirection: 'row', gap: '16px' }}>
       {/* Левая колонка: список групп условий */}
-      <div style={{ flex: 1,          borderRight: '3px solid #0053a0',
-            paddingRight: '8px', }}>
+      <div style={{ flex: 1, borderRight: '3px solid #0053a0', paddingRight: '8px' }}>
         {Object.entries(groups).map(([groupName, conditions]) => (
           <div key={groupName} style={{ marginBottom: '16px' }}>
             <h5>{groupName}</h5>
@@ -82,7 +75,6 @@ const ConditionSettingsPanel: React.FC<ConditionSettingsPanelProps> = ({
                   key={cond.id}
                   onClick={() => onSelectCondition(cond)}
                   style={{
-                    
                     padding: '4px 8px',
                     background: selectedCondition?.id === cond.id ? '#0053a0' : 'transparent',
                     cursor: 'pointer',
