@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 import { v4 as uuidv4 } from 'uuid';
 import LogicEditorContent from "./components/GameEditorComponents/LogicEditor/LogicEditorContent";
-import CodeEditorContent from "./components/GameEditorComponents/LogicEditor/CodeEditorContent"; // Новый импорт
+import CodeEditorContent from "./components/GameEditorComponents/CodeEditor/CodeEditorContent"; // Новый импорт
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";

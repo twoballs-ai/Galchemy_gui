@@ -1,15 +1,49 @@
 // CodeEditorContent.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Editor from "@monaco-editor/react";
 
 interface CodeEditorContentProps {
   activeScene: string;
 }
 
-const CodeEditorContent: React.FC<CodeEditorContentProps> = ({ activeScene }) => {
+const getCodeStorageKey = (sceneId: string) => `CodeLogic:${sceneId}`;
+
+const loadSceneCode = (sceneId: string): string => {
+  const key = getCodeStorageKey(sceneId);
   return (
-    <div style={{ color: "white" }}>
-      <h2>Code Editor для {activeScene}</h2>
-      {/* Здесь можно интегрировать ваш кодовый редактор, например, Ace Editor или Monaco */}
+    localStorage.getItem(key) ||
+    `// Редактор кода для сцены ${sceneId}\n\nfunction runLogic() {\n  console.log("Hello, World!");\n}\n`
+  );
+};
+
+const saveSceneCode = (sceneId: string, code: string) => {
+  localStorage.setItem(getCodeStorageKey(sceneId), code);
+};
+
+const CodeEditorContent: React.FC<CodeEditorContentProps> = ({ activeScene }) => {
+  const [code, setCode] = useState<string>("");
+
+  // При смене activeScene загружаем код для данной сцены
+  useEffect(() => {
+    const loadedCode = loadSceneCode(activeScene);
+    setCode(loadedCode);
+  }, [activeScene]);
+
+  const handleEditorChange = (value: string | undefined) => {
+    const newCode = value || "";
+    setCode(newCode);
+    saveSceneCode(activeScene, newCode);
+  };
+
+  return (
+    <div style={{ height: "90vh", width: "100%" }}>
+      <Editor
+        height="100%"
+        defaultLanguage="javascript"
+        value={code}
+        onChange={handleEditorChange}
+        theme="vs-dark"
+      />
     </div>
   );
 };
