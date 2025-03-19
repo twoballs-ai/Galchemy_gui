@@ -1,6 +1,5 @@
 // GameEditor.tsx
-
-import React, { useEffect, useState, useCallback  } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Layout, Button, Dropdown, Space } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -11,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import { v4 as uuidv4 } from 'uuid';
 import LogicEditorContent from "./components/GameEditorComponents/LogicEditor/LogicEditorContent";
+import CodeEditorContent from "./components/GameEditorComponents/LogicEditor/CodeEditorContent"; // Новый импорт
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";
@@ -45,7 +45,7 @@ const createScene = (sceneName: string) => ({
 });
 
 const createInitialSceneLogic = (projectId: string, sceneId: string) => {
-  const initialLogic: SceneLogicData = { logicEvents: [] };
+  const initialLogic = { logicEvents: [] };
   saveSceneLogic(projectId, sceneId, initialLogic);
 };
 
@@ -56,100 +56,85 @@ const GameEditor: React.FC<GameEditorProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Из Redux-среза "project":
   const { scenes, openedScenes, activeScene } = useSelector(
     (state: RootState) => state.project
   );
-console.log(openedScenes)
-  // Локальное состояние для "логики редактора вкладок" (например, "levelEditor"/"logicEditor")
+
   const [editorTabs, setEditorTabs] = useState<{ [key: string]: string }>({});
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-  // Формируем список вкладок: из Redux + добавляем "projectLogic", если его нет
+
   const sceneTabs = openedScenes.map(s => ({
     key: s.key,
     sceneName: s.sceneName,
   }));
   
-  // При монтировании загружаем проект из localStorage
   useEffect(() => {
     dispatch(loadProject(project.id)).then(() => setIsProjectLoaded(true));
   }, [dispatch, project.id]);
 
+  const addNewScene = useCallback(
+    (sceneName: string) => {
+      const newScene = createScene(sceneName);
+      dispatch(addScene(newScene));
+      
+      createInitialSceneLogic(project.id, newScene.id);
 
-const addNewScene = useCallback(
-  (sceneName: string) => {
-    const newScene = createScene(sceneName);
-    dispatch(addScene(newScene));
-    
-    // Создаём сразу начальную логику
-    createInitialSceneLogic(project.id, newScene.id);
+      const newOpenedScene = {
+        id: newScene.id,
+        sceneName: newScene.sceneName,
+        key: newScene.id,
+        state: "levelEditor"
+      };
 
-    const newOpenedScene = {
-      id: newScene.id,
-      sceneName: newScene.sceneName,
-      key: newScene.id,
-      state: "levelEditor"
-    };
+      dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
+      dispatch(setActiveScene(newScene.id));
+      dispatch(saveProject(project.id));
+    },
+    [dispatch, project.id, openedScenes]
+  );
 
-    dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
-    dispatch(setActiveScene(newScene.id));
-    dispatch(saveProject(project.id));
-  },
-  [dispatch, project.name, openedScenes]
-);
-  // Если сцен нет и активная сцена не установлена – создаём дефолтную сцену
   useEffect(() => {
     if (isProjectLoaded && scenes.length === 0 && activeScene === "") {
       addNewScene("Scene 1");
     }
   }, [isProjectLoaded, scenes, activeScene, addNewScene]);
 
-  // Создаём новую сцену (на основе количества уже созданных сцен)
   const handleNewScene = useCallback(() => {
     const index = scenes.length + 1;
     addNewScene(`Scene ${index}`);
   }, [scenes.length, addNewScene]);
 
-  // Удаляем сцену по её идентификатору
-const handleRemoveOpenedScene = (tabKey: string) => {
-    if (tabKey === 'projectLogic') return;  // Защита не нужна, но можно оставить на всякий случай
+  const handleRemoveOpenedScene = (tabKey: string) => {
+    if (tabKey === 'projectLogic') return;
 
     const updatedOpenedScenes = openedScenes.filter(scene => scene.key !== tabKey);
     dispatch(setOpenedScenes(updatedOpenedScenes));
 
     if (activeScene === tabKey) {
-        const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : 'projectLogic';
-        dispatch(setActiveScene(newActive));
+      const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : 'projectLogic';
+      dispatch(setActiveScene(newActive));
     }
 
     dispatch(saveProject(project.id));
-};
+  };
 
-  // Переключаем активную сцену (или "projectLogic")
   const handleSceneChange = (tabKey: string) => {
     dispatch(setActiveScene(tabKey));
-    // По желанию сохраним
     dispatch(saveProject(project.id));
   };
 
-  // Меняем режим редактора (уровень / логика) — храним локально
   const handleEditorTabChange = (mode: string) => {
-    // Обновляем локальный стейт (если он вам ещё нужен)
     setEditorTabs((prevTabs) => ({
       ...prevTabs,
       [activeScene]: mode,
     }));
-  
-    // Обновляем state открытой сцены в Redux
     dispatch(updateOpenedScene({ key: activeScene, newState: mode }));
     dispatch(saveProject(project.id));
   };
 
   const handleRunGame = () => {
-    // Запускаем "игру" для активной сцены
     if (activeScene === "projectLogic") {
-      //console.log("Running global logic...");
       return;
     }
     globalLogicManager.runLogicForScene(activeScene);
@@ -157,7 +142,6 @@ const handleRemoveOpenedScene = (tabKey: string) => {
 
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
 
-  // Меню
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: handleNewScene },
     { label: "Закрыть проект", key: "close", onClick: onCloseProject },
@@ -173,14 +157,23 @@ const handleRemoveOpenedScene = (tabKey: string) => {
     { label: "Контакты", key: "contact" },
   ];
 
-  // Определяем, какой режим редактора сейчас активен для текущей сцены
-  // const currentEditorMode = editorTabs[activeScene] || "levelEditor";
   const currentEditorMode =
-  openedScenes.find((scene) => scene.key === activeScene)?.state ||
-  "levelEditor";
+    openedScenes.find((scene) => scene.key === activeScene)?.state ||
+    "levelEditor";
+
+  // Функция для рендера логического редактора в зависимости от выбора проекта
+  const renderLogicEditor = () => {
+    if (project.logicEditorMode === "visual") {
+      return <LogicEditorContent activeScene={activeScene} />;
+    } else if (project.logicEditorMode === "code") {
+      return <CodeEditorContent activeScene={activeScene} />;
+    }
+    // Если не задано, можно вернуть дефолтный вариант:
+    return <LogicEditorContent activeScene={activeScene} />;
+  };
+
   return (
     <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
-      {/* Верхняя панель с меню и вкладками */}
       <Header
         style={{
           background: "#1f1f1f",
@@ -222,11 +215,10 @@ const handleRemoveOpenedScene = (tabKey: string) => {
           onTabClick={handleSceneChange}
           onAddTab={handleNewScene}
           onRemoveTab={handleRemoveOpenedScene}
-          showGlobalLogicTab={false} // у нас уже вручную добавляется "projectLogic"
+          showGlobalLogicTab={false}
         />
       </Header>
 
-      {/* Панель с кнопками "New Scene" и "Run Game" */}
       <Header
         style={{
           background: "#1f1f1f",
@@ -280,25 +272,20 @@ const handleRemoveOpenedScene = (tabKey: string) => {
                 Редактор логики
               </Button>
               <h2 style={{ color: "white" }}>
-                Active Scene: {
-                  // Показать имя сцены:
-                  scenes.find((s) => s.id === activeScene)?.sceneName || activeScene
-                }
+                Active Scene: {scenes.find((s) => s.id === activeScene)?.sceneName || activeScene}
               </h2>
             </div>
           )}
 
-{activeScene === "projectLogic" ? (
-    <LogicEditorContent activeScene={activeScene} />
-) : currentEditorMode === "logicEditor" ? (
-    <LogicEditorContent activeScene={activeScene} />
-) : (
-    <SceneEditor
-        activeScene={activeScene}
-        projectName={project.name}
-        renderType={project.renderType}
-    />
-)}
+          {activeScene === "projectLogic" || currentEditorMode === "logicEditor"
+            ? renderLogicEditor()
+            : (
+              <SceneEditor
+                activeScene={activeScene}
+                projectName={project.name}
+                renderType={project.renderType}
+              />
+            )}
         </Content>
       </Layout>
 

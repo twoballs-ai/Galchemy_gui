@@ -5,6 +5,7 @@ export interface ProjectSummary {
   id: string;
   name: string;
   renderType: string;
+  logicEditorMode: string;
 }
 
 export interface SceneData {
