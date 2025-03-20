@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 import { v4 as uuidv4 } from "uuid";
 import LogicGuiEditorContent from "./components/GameEditorComponents/LogicGuiEditor/LogicGuiEditorContent";
-import LogicCodeEditorContent from "./components/GameEditorComponents/LogicCodeEditor/LogicCodeEditorContent"; // Новый импорт
+import LogicCodeEditorContent from "./components/GameEditorComponents/LogicCodeEditor/LogicCodeEditorContent";
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";
@@ -30,7 +30,7 @@ import {
   updateOpenedScene,
 } from "./store/slices/projectSlice";
 
-// Интерфейс для данных логики сцены (используется в функции сохранения для Code Editor)
+// Интерфейс для данных логики сцены (используется для сохранения кода)
 interface SceneLogicData {
   logicEvents: any[];
 }
@@ -50,11 +50,11 @@ const createScene = (sceneName: string) => ({
 });
 
 // Функция для создания начального кода для кодового редактора логики.
-// Здесь используется ключ "CodeLogic:{sceneId}"
+// Ключ формируется как "CodeLogic:<projectId>:<sceneId>"
 const createInitialSceneCodeLogic = (projectId: string, sceneId: string) => {
   const initialCode = `// Редактор кода для сцены ${sceneId}\n\nfunction runLogic() {\n  console.log("Hello, World!");\n}\n`;
   try {
-    const key = `CodeLogic:${sceneId}`;
+    const key = `CodeLogic:${projectId}:${sceneId}`;
     localStorage.setItem(key, initialCode);
   } catch (error) {
     console.error(`Ошибка при сохранении CodeLogic для сцены ${sceneId}:`, error);
@@ -62,23 +62,41 @@ const createInitialSceneCodeLogic = (projectId: string, sceneId: string) => {
 };
 
 // Функция для создания начальной логики для визуального редактора.
-// Используется ключ "LogicData:{projectId}:{sceneId}"
+// Ключ формируется как "LogicData:<projectId>:<sceneId>"
 const createInitialSceneVisualLogic = (projectId: string, sceneId: string) => {
   const initialLogic = { logicEvents: [] };
   saveSceneLogic(projectId, sceneId, initialLogic);
 };
 
-// Универсальная функция создания начальной логики, которая в зависимости от режима
-// вызывает нужную функцию – для кода или для визуального редактора.
+// Универсальная функция создания начальной логики для сцены,
+// которая в зависимости от режима вызывает нужную функцию.
 const createInitialSceneLogic = (
-  projectId: string, 
-  sceneId: string, 
+  projectId: string,
+  sceneId: string,
   logicEditorMode: "visual" | "code"
 ) => {
   if (logicEditorMode === "code") {
     createInitialSceneCodeLogic(projectId, sceneId);
   } else {
     createInitialSceneVisualLogic(projectId, sceneId);
+  }
+};
+
+// Функция создания логики для проекта (специальная сцена с id "projectLogic")
+// Ключ формируется как "LogicData:<projectId>:projectLogic" или "CodeLogic:<projectId>:projectLogic"
+const createProjectLogic = (projectId: string, logicEditorMode: "visual" | "code") => {
+  const key =
+    logicEditorMode === "code"
+      ? `CodeLogic:${projectId}:projectLogic`
+      : `LogicData:${projectId}:projectLogic`;
+  if (!localStorage.getItem(key)) {
+    if (logicEditorMode === "code") {
+      const initialCode = `// Редактор кода для проекта\n\nfunction runProjectLogic() {\n  console.log("Project Logic");\n}\n`;
+      localStorage.setItem(key, initialCode);
+    } else {
+      const initialLogic = { logicEvents: [] };
+      saveSceneLogic(projectId, "projectLogic", initialLogic);
+    }
   }
 };
 
@@ -103,15 +121,19 @@ const GameEditor: React.FC<GameEditorProps> = ({
   }));
   
   useEffect(() => {
-    dispatch(loadProject(project.id)).then(() => setIsProjectLoaded(true));
-  }, [dispatch, project.id]);
+    dispatch(loadProject(project.id)).then(() => {
+      setIsProjectLoaded(true);
+      // При загрузке проекта создаём логику для проекта, если она ещё не создана
+      createProjectLogic(project.id, project.logicEditorMode);
+    });
+  }, [dispatch, project.id, project.logicEditorMode]);
 
   const addNewScene = useCallback(
     (sceneName: string) => {
       const newScene = createScene(sceneName);
       dispatch(addScene(newScene));
   
-      // Создаем начальную логику в зависимости от выбранного режима:
+      // Создаем начальную логику для сцены в зависимости от выбранного режима:
       // для кода – создается CodeLogic, для визуала – LogicData.
       createInitialSceneLogic(project.id, newScene.id, project.logicEditorMode);
   
