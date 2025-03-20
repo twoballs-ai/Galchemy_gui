@@ -15,7 +15,6 @@ interface GameObject {
   width?: number;
   height?: number;
   image?: string;
-  // и т.д.
 }
 
 interface SceneCanvasProps {
@@ -34,22 +33,16 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
 
   // Активная сцена из Redux
   const activeScene = useSelector((state: RootState) => state.project.activeScene);
-
   // Все объекты из Redux
   const sceneObjects = useSelector((state: RootState) => state.sceneObjects.objects);
-
   // Текущее выбранное id
   const currentObjectId = useSelector((state: RootState) => state.sceneObjects.currentObjectId);
-  // Для удобства можем найти объект в "сырых" данных Redux:
-  const selectedReduxObject = currentObjectId 
-    ? sceneObjects.find(obj => obj.id === currentObjectId)
-    : null;
 
   // Локальные состояния для перетаскивания
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  // Анимация рендера
+  // Запрос рендера через requestAnimationFrame
   const requestRenderIfNotRequested = useCallback(() => {
     if (animationFrameIdRef.current === null) {
       animationFrameIdRef.current = requestAnimationFrame(() => {
@@ -59,30 +52,26 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     }
   }, [coreInstance]);
 
-  // При выборе объекта на холсте передаём только id
+  // Выбор объекта для редактора
   const handleEditorSelectObject = useCallback((objectId: string | null) => {
     dispatch(setCurrentObjectId(objectId));
   }, [dispatch]);
 
   // Локальное обновление объекта (например, при перетаскивании)
   const handleUpdateObjectLocal = useCallback((updatedObject: GameObject) => {
-    // Обновим локальную карту
     setGameObjectsMap((prevMap) => {
       const newMap = new Map(prevMap);
       const existing = newMap.get(updatedObject.id);
       if (existing) {
         const updatedGameObject = { ...existing, x: updatedObject.x, y: updatedObject.y };
-        // Если нужно обновить image, layer и т.д. — тоже можно
         newMap.set(updatedObject.id, updatedGameObject);
       }
       return newMap;
     });
-
-    // Сохраним изменения в Redux/базе
     dispatch(updateSceneObject({ activeScene, object: updatedObject }));
   }, [dispatch, activeScene]);
 
-  // Инициализация ядра
+  // Инициализация ядра и SceneManager
   useEffect(() => {
     if (!canvasRef.current) {
       console.error('Canvas не найден.');
@@ -101,7 +90,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
       height: canvasRef.current.clientHeight,
     });
 
-    // Вместо целого объекта, EditorMode теперь отдаёт только id:
+    // Режим редактора: передаём callback для выбора объекта
     core.switchMode(EditorMode, (selectedObjId: string | null) => {
       dispatch(setCurrentObjectId(selectedObjId));
     });
@@ -116,37 +105,26 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     };
   }, [activeScene, renderType, dispatch]);
 
-  // Подсветка выбранного объекта в ядре (опционально)
-  // Если нужно, можно найти «живой» объект в gameObjectsMap и вызвать coreInstance.setSelectedObject(...)
+  // Обновление выделенного объекта в ядре и перерисовка
   useEffect(() => {
     if (!coreInstance) return;
-
-    // Найдём "живой" объект в map
     const liveObject = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
     coreInstance.setSelectedObject(liveObject || null);
-
     requestRenderIfNotRequested();
   }, [currentObjectId, gameObjectsMap, coreInstance, requestRenderIfNotRequested]);
 
-  // Локальная логика перетаскивания
+  // Локальная логика перетаскивания: mousedown, mousemove, mouseup
   const handleMouseDown = useCallback((event: MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = (event.clientX - rect.left) * (canvas.width / canvas.clientWidth);
     const y = (event.clientY - rect.top) * (canvas.height / canvas.clientHeight);
-
-    // Можем проверить: какой объект из gameObjectsMap «живой» попадает под курсор?
-    // Или, если ещё используете sceneObjects + containsPoint, нужно синхронизировать
     for (let i = sceneObjects.length - 1; i >= 0; i--) {
       const so = sceneObjects[i];
       if (so.containsPoint && so.containsPoint(x, y)) {
-        // Выбираем этот объект
         dispatch(setCurrentObjectId(so.id));
         setIsDragging(true);
-
-        // Находим «живой» объект в локальной карте
         const liveObj = gameObjectsMap.get(so.id);
         if (liveObj) {
           setDragOffset({ x: x - liveObj.x, y: y - liveObj.y });
@@ -154,28 +132,20 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
         return;
       }
     }
-    // Если не нашли — сбрасываем выбор
     dispatch(setCurrentObjectId(null));
   }, [sceneObjects, dispatch, gameObjectsMap]);
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDragging || !currentObjectId) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = (event.clientX - rect.left) * (canvas.width / canvas.clientWidth);
     const y = (event.clientY - rect.top) * (canvas.height / canvas.clientHeight);
-
     const liveObj = gameObjectsMap.get(currentObjectId);
     if (!liveObj) return;
-
-    // Новые координаты
     const newX = x - dragOffset.x;
     const newY = y - dragOffset.y;
-
-    // Обновим локально + Redux
     handleUpdateObjectLocal({ ...liveObj, x: newX, y: newY });
   }, [isDragging, currentObjectId, gameObjectsMap, dragOffset, handleUpdateObjectLocal]);
 
@@ -186,11 +156,9 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('mousemove', handleMouseMove);
@@ -198,11 +166,35 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     };
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
-  // Запуск/остановка превью
+  // Запуск превью: переключаем режим на PreviewMode
   const handleStartPreview = () => {
-    coreInstance?.switchMode(PreviewMode, activeScene);
+    if (!coreInstance) return;
+  
+    // 1. Загружаем код из LocalStorage
+    const code = localStorage.getItem(`CodeLogic:${activeScene}`);
+    // Пример: "function runLogic(sceneManager) { ... }"
+  
+    // 2. Компилируем
+    let userScriptFn: null | ((sceneManager: SceneManager) => void) = null;
+    if (code) {
+      try {
+        userScriptFn = new Function(code + "\n return runLogic;")();
+      } catch (err) {
+        console.error("Ошибка компиляции пользовательского кода:", err);
+      }
+    }
+  
+    // 3. Если получилось, вызываем userScriptFn(sceneManager) ОДИН РАЗ
+    if (userScriptFn && coreInstance) {
+      const sceneManager = coreInstance.getSceneManager();
+      userScriptFn(sceneManager); 
+      // В этот момент объект normis найден и его update переопределен
+    }
+  
+    // 4. Включаем PreviewMode
+    coreInstance.switchMode(PreviewMode, activeScene);
   };
-
+  // Остановка превью: переключаем режим обратно на EditorMode
   const handleStopPreview = () => {
     coreInstance?.switchMode(EditorMode, (selectedObjId: string | null) => {
       dispatch(setCurrentObjectId(selectedObjId));

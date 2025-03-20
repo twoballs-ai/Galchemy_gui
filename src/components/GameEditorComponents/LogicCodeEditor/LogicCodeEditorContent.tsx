@@ -20,7 +20,7 @@ const saveSceneCode = (sceneId: string, code: string) => {
   localStorage.setItem(getCodeStorageKey(sceneId), code);
 };
 
-const CodeEditorContent: React.FC<CodeEditorContentProps> = ({ activeScene }) => {
+const LogicCodeEditorContent: React.FC<CodeEditorContentProps> = ({ activeScene }) => {
   const [code, setCode] = useState<string>("");
 
   // При смене activeScene загружаем код для данной сцены
@@ -48,4 +48,4 @@ const CodeEditorContent: React.FC<CodeEditorContentProps> = ({ activeScene }) =>
   );
 };
 
-export default CodeEditorContent;
+export default LogicCodeEditorContent;

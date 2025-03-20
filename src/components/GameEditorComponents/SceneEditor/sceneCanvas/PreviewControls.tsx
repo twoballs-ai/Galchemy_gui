@@ -15,13 +15,13 @@ const PreviewControls: React.FC<PreviewControlsProps> = ({
         onClick={onStartPreview}
         style={{ position: 'absolute', top: 10, left: 10 }}
       >
-        Start Preview
+        Запуск уровня
       </button>
       <button
         onClick={onStopPreview}
         style={{ position: 'absolute', top: 10, left: 120 }}
       >
-        Stop Preview
+        Остановка уровня
       </button>
     </div>
   );
