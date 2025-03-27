@@ -77,7 +77,7 @@ const loadSceneLogic = (projectId: string, sceneId: string): SceneLogicData => {
 };
 
 // Основной компонент редактора логики
-const LogicEditor: React.FC<LogicEditorProps> = ({ activeScene }) => {
+const LogicGuiEditorContent: React.FC<LogicEditorProps> = ({ activeScene }) => {
   const dispatch = useDispatch<AppDispatch>();
   const projectId = useSelector(
     (state: RootState) => state.project.currentProjectId
@@ -352,4 +352,4 @@ const LogicEditor: React.FC<LogicEditorProps> = ({ activeScene }) => {
   );
 };
 
-export default LogicEditor;
+export default LogicGuiEditorContent;
