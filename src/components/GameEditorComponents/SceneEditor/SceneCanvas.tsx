@@ -2,10 +2,11 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { setCurrentObjectId, updateSceneObject } from '../../../store/slices/sceneObjectsSlice';
-import { Core, SceneManager, getShape2d, EditorMode, PreviewMode } from 'tette-core';
+import { Core, getShape2d, EditorMode, PreviewMode } from 'tette-core';
 import PreviewControls from './sceneCanvas/PreviewControls';
 import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectManager from './sceneCanvas/GameObjectManager';
+import { useCoreEvents } from './sceneCanvas/hooks/useCoreEvents';
 
 interface GameObject {
   id: string;
@@ -58,7 +59,6 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
       });
     }
   }, [coreInstance]);
-
   // При выборе объекта на холсте передаём только id
   const handleEditorSelectObject = useCallback((objectId: string | null) => {
     dispatch(setCurrentObjectId(objectId));
@@ -66,51 +66,48 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
 
   // Локальное обновление объекта (например, при перетаскивании)
   const handleUpdateObjectLocal = useCallback((updatedObject: GameObject) => {
-    // Обновим локальную карту
     setGameObjectsMap((prevMap) => {
       const newMap = new Map(prevMap);
       const existing = newMap.get(updatedObject.id);
       if (existing) {
-        const updatedGameObject = { ...existing, x: updatedObject.x, y: updatedObject.y };
-        // Если нужно обновить image, layer и т.д. — тоже можно
-        newMap.set(updatedObject.id, updatedGameObject);
+        newMap.set(updatedObject.id, { ...existing, ...updatedObject });
       }
       return newMap;
     });
-
-    // Сохраним изменения в Redux/базе
     dispatch(updateSceneObject({ activeScene, object: updatedObject }));
   }, [dispatch, activeScene]);
 
-  // Инициализация ядра
   useEffect(() => {
     if (!canvasRef.current) {
       console.error('Canvas не найден.');
       return;
     }
-
-    const sceneManager = new SceneManager();
-    sceneManager.createScene(activeScene);
-
+  
     const core = new Core({
       canvasId: canvasRef.current.id,
       renderType: renderType,
       backgroundColor: '#D3D3D3',
-      sceneManager: sceneManager,
       width: canvasRef.current.clientWidth,
       height: canvasRef.current.clientHeight,
     });
-
-    // Вместо целого объекта, EditorMode теперь отдаёт только id:
+  
+    const sceneManager = core.getSceneManager();
+  
+    // Создаём сцену прямо здесь, через экземпляр ядра
+    if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
+      sceneManager.createScene(activeScene);
+      sceneManager.changeScene(activeScene);
+    }
+  
     core.switchMode(EditorMode, (selectedObjId: string | null) => {
       dispatch(setCurrentObjectId(selectedObjId));
     });
-
+  
     setCoreInstance(core);
-
+  
     const shape2dInstance = getShape2d(core.renderType);
     setShape2d(shape2dInstance);
-
+  
     return () => {
       core.stop();
     };
@@ -119,12 +116,10 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
   // Подсветка выбранного объекта в ядре (опционально)
   // Если нужно, можно найти «живой» объект в gameObjectsMap и вызвать coreInstance.setSelectedObject(...)
   useEffect(() => {
-    if (!coreInstance) return;
+    if (!coreInstance || !gameObjectsMap.size) return;
 
-    // Найдём "живой" объект в map
     const liveObject = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
     coreInstance.setSelectedObject(liveObject || null);
-
     requestRenderIfNotRequested();
   }, [currentObjectId, gameObjectsMap, coreInstance, requestRenderIfNotRequested]);
 
@@ -198,9 +193,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     };
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
-  // Запуск/остановка превью
+
+  useCanvasResize(canvasRef, coreInstance);
   const handleStartPreview = () => {
-    coreInstance?.switchMode(PreviewMode, activeScene);
+    const userCodeString = localStorage.getItem(`CodeLogic:${activeScene}`) || "";
+    coreInstance.switchMode(PreviewMode, activeScene, userCodeString);
   };
 
   const handleStopPreview = () => {
@@ -209,8 +206,11 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     });
   };
 
-  useCanvasResize(canvasRef, coreInstance);
-
+  // Подписываемся на события ядра
+  useCoreEvents(coreInstance, {
+    onObjectSelected: ({ object }) => dispatch(setCurrentObjectId(object?.id || null)),
+    onModeChanged: ({ mode }) => console.log(`Mode changed to: ${mode}`),
+  });
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas

@@ -80,25 +80,30 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
   useEffect(() => {
     if (coreInstance && shape2d && sceneData.objects) {
       const sceneManager = coreInstance.getSceneManager();
-      sceneManager.clearScene(activeScene);
-
+  
+      // 👇 Убедись, что сцена существует, прежде чем продолжать
+      if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
+        sceneManager.createScene(activeScene);
+        sceneManager.changeScene(activeScene);
+      } else {
+        sceneManager.clearScene(activeScene);
+      }
+  
       const newGameObjectsMap = new Map<string, GameObject>();
-
+  
       sceneData.objects.forEach((obj: GameObject) => {
         const gameObject = createGameObject(obj);
         if (gameObject) {
-          console.log(gameObject);
           sceneManager.addGameObjectToScene(activeScene, gameObject);
           newGameObjectsMap.set(obj.id, gameObject);
         }
       });
-
+  
       onGameObjectsMapUpdate(newGameObjectsMap);
-      sceneManager.changeScene(activeScene);
       requestRenderIfNotRequested();
     }
   }, [coreInstance, shape2d, sceneData.objects, activeScene, requestRenderIfNotRequested]);
-
+  
   return null;
 };
 

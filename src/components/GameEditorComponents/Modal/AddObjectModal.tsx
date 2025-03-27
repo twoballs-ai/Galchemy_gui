@@ -30,6 +30,7 @@ const availableObjects = [
           height: 100,
           image: '', // Путь к изображению
           enablePhysics: true,
+          rigidBody:false,
           isStatic: false,
           layer: 2,
         },
