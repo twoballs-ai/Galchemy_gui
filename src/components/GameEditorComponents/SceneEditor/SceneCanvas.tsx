@@ -34,6 +34,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
 
   // Активная сцена из Redux
   const activeScene = useSelector((state: RootState) => state.project.activeScene);
+  const projectId = useSelector((state: RootState) => state.project.currentProjectId);
   // Все объекты из Redux
   const sceneObjects = useSelector((state: RootState) => state.sceneObjects.objects);
   // Текущее выбранное id
@@ -169,9 +170,12 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
 
+
   useCanvasResize(canvasRef, coreInstance);
+  
   const handleStartPreview = () => {
-    const userCodeString = localStorage.getItem(`CodeLogic:${activeScene}`) || "";
+
+    const userCodeString = localStorage.getItem(`CodeLogic:${projectId}:${activeScene}`) || "";
     coreInstance.switchMode(PreviewMode, activeScene, userCodeString);
   };
   // Остановка превью: переключаем режим обратно на EditorMode

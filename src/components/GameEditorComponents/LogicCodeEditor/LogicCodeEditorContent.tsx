@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../store/store";
+import { RootState } from "../../../store/store";
 
 interface CodeEditorContentProps {
   activeScene: string;
