@@ -85,9 +85,10 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
       if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
         sceneManager.createScene(activeScene);
         sceneManager.changeScene(activeScene);
-      } else {
-        sceneManager.clearScene(activeScene);
-      }
+      } 
+      // else {
+      //   sceneManager.clearScene(activeScene);
+      // }
   
       const newGameObjectsMap = new Map<string, GameObject>();
   

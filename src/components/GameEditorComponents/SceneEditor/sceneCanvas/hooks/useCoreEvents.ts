@@ -1,7 +1,7 @@
 // useCoreEvents.ts
 import { useEffect } from 'react';
-import { Core } from 'tette-core';
-
+import Galchemy from 'game-alchemy-core';
+const { Core } = Galchemy;
 interface CoreEventHandlers {
   onObjectSelected?: (data: { object: any }) => void;
   onModeChanged?: (data: { mode: string }) => void;

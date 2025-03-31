@@ -2,12 +2,12 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { setCurrentObjectId, updateSceneObject } from '../../../store/slices/sceneObjectsSlice';
-import { Core, getShape2d, EditorMode, PreviewMode } from 'tette-core';
 import PreviewControls from './sceneCanvas/PreviewControls';
 import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectManager from './sceneCanvas/GameObjectManager';
 import { useCoreEvents } from './sceneCanvas/hooks/useCoreEvents';
-
+import Galchemy from 'game-alchemy-core';
+const { Core, EditorMode, PreviewMode, getShape2d } = Galchemy;
 interface GameObject {
   id: string;
   type: string;
@@ -96,7 +96,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     core.switchMode(EditorMode, (selectedObjId: string | null) => {
       dispatch(setCurrentObjectId(selectedObjId));
     });
-  
+    core.start();
     setCoreInstance(core);
   
     const shape2dInstance = getShape2d(core.renderType);
@@ -190,6 +190,24 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
     onObjectSelected: ({ object }) => dispatch(setCurrentObjectId(object?.id || null)),
     onModeChanged: ({ mode }) => console.log(`Mode changed to: ${mode}`),
   });
+  useEffect(() => {
+    if (!coreInstance) return;
+  
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Проверяем, в PreviewMode ли мы
+      // (можно также проверять: coreInstance.currentMode instanceof PreviewMode)
+      if (e.key === "Escape") {
+        // Узнаём, действительно ли сейчас Preview
+        if (coreInstance.currentMode?.constructor?.name === "PreviewMode") {
+          handleStopPreview(); // твоя функция
+        }
+      }
+    };
+  
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [coreInstance, handleStopPreview]);
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas
