@@ -6,7 +6,7 @@ import { setCurrentObjectId, updateSceneObject } from '../../../store/slices/sce
 import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectManager from './sceneCanvas/GameObjectManager';
 
-import Game from 'game-alchemy-core';                   // ← никаких named-импортов
+import { GameAlchemy } from 'game-alchemy-core';                   // ← никаких named-импортов
 
 /* ─────────── типы ─────────── */
 interface GameObject {
@@ -39,7 +39,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
   const requestRenderIfNotRequested = useCallback(() => {
     if (animationFrameIdRef.current === null) {
       animationFrameIdRef.current = requestAnimationFrame(() => {
-        Game.core?.renderer.render(Game.core.scene, Game.core.debug);
+        GameAlchemy.core?.renderer.render(GameAlchemy.core.scene, GameAlchemy.core.debug);
         animationFrameIdRef.current = null;
       });
     }
@@ -60,7 +60,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    Game.init({
+    GameAlchemy.init({
       canvasId : canvasRef.current.id,
       w        : canvasRef.current.clientWidth,
       h        : canvasRef.current.clientHeight,
@@ -68,21 +68,22 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
       debug    : true,
     });
 
-    const { sceneManager } = Game.core;
+    const { sceneManager } = GameAlchemy.core;
     if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
-      sceneManager.createScene(activeScene);
-      sceneManager.changeScene(activeScene);
+       sceneManager.createScene(activeScene);          // если такой ещё нет
+       sceneManager.switchScene(activeScene);          // ← правильный метод
+       GameAlchemy.core.scene = sceneManager.getCurrentScene(); // держим Core в синхроне
     }
 
-    Game.start();
-    return () => Game.core?.sceneManager?.clear && Game.core.stop();
+    GameAlchemy.start();
+    return () => GameAlchemy.core?.sceneManager?.clear && GameAlchemy.core.stop();
   }, [activeScene]);
 
   /* выделение */
   useEffect(() => {
-    if (!Game.core) return;
+    if (!GameAlchemy.core) return;
     const obj = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
-    Game.core.scene.setSelected?.(obj || null);
+    GameAlchemy.core.scene.setSelected?.(obj || null);
     requestRenderIfNotRequested();
   }, [currentObjectId, gameObjectsMap, requestRenderIfNotRequested]);
 
@@ -138,7 +139,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
     };
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
-  useCanvasResize(canvasRef, Game.core);
+  useCanvasResize(canvasRef, GameAlchemy.core);
 
   /* ─────────── render ─────────── */
   return (
@@ -149,7 +150,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
         style={{ border: '1px solid #ccc', width: '100%', height: '100%' }}
       />
       <GameObjectManager
-        coreInstance={Game.core}
+        coreInstance={GameAlchemy.core}
         sceneData={{ activeScene, objects: sceneObjects, settings: {} }}
         activeScene={activeScene}
         onGameObjectsMapUpdate={setGameObjectsMap}
