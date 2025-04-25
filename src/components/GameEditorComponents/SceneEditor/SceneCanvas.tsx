@@ -1,14 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { RootState, AppDispatch } from '../../../store/store';
 import { setCurrentObjectId, updateSceneObject } from '../../../store/slices/sceneObjectsSlice';
+
 import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectManager from './sceneCanvas/GameObjectManager';
-import { AppDispatch } from '../../../store/store'; // Убедитесь, что импортируете AppDispatch
 
-// import { useCoreEvents } from './sceneCanvas/hooks/useCoreEvents';
-import Galchemy from 'game-alchemy-core';
-const { Core, EditorMode,  getShape2d } = Galchemy;
+import Game from 'game-alchemy-core';                   // ← никаких named-импортов
+
+/* ─────────── типы ─────────── */
 interface GameObject {
   id: string;
   type: string;
@@ -19,180 +19,128 @@ interface GameObject {
   image?: string;
 }
 
-interface SceneCanvasProps {
-  renderType: string;
-}
+/* ─────────── пропсы ─────────── */
+interface SceneCanvasProps {}
 
-const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
+const SceneCanvas: React.FC<SceneCanvasProps> = () => {
+  const dispatch = useDispatch<AppDispatch>();
 
-
-  const dispatch = useDispatch<AppDispatch>(); 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* refs / state */
+  const canvasRef           = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-
-  const [coreInstance, setCoreInstance] = useState<Core | null>(null);
-  const [shape2d, setShape2d] = useState<any>(null);
   const [gameObjectsMap, setGameObjectsMap] = useState<Map<string, GameObject>>(new Map());
 
-  // Активная сцена из Redux
-  const activeScene = useSelector((state: RootState) => state.project.activeScene);
-  const projectId = useSelector((state: RootState) => state.project.currentProjectId);
-  // Все объекты из Redux
-  const sceneObjects = useSelector((state: RootState) => state.sceneObjects.objects);
-  // Текущее выбранное id
-  const currentObjectId = useSelector((state: RootState) => state.sceneObjects.currentObjectId);
+  /* redux */
+  const activeScene     = useSelector((s: RootState) => s.project.activeScene);
+  const sceneObjects    = useSelector((s: RootState) => s.sceneObjects.objects);
+  const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
 
-  // Локальные состояния для перетаскивания
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-
-  // Запрос рендера через requestAnimationFrame
+  /* rAF helper */
   const requestRenderIfNotRequested = useCallback(() => {
     if (animationFrameIdRef.current === null) {
       animationFrameIdRef.current = requestAnimationFrame(() => {
-        coreInstance?.render();
+        Game.core?.renderer.render(Game.core.scene, Game.core.debug);
         animationFrameIdRef.current = null;
       });
     }
-  }, [coreInstance]);
-  // При выборе объекта на холсте передаём только id
-  const handleEditorSelectObject = useCallback((objectId: string | null) => {
-    dispatch(setCurrentObjectId(objectId));
-  }, [dispatch]);
+  }, []);
 
-  // Локальное обновление объекта (например, при перетаскивании)
-  const handleUpdateObjectLocal = useCallback((updatedObject: GameObject) => {
-    setGameObjectsMap((prevMap) => {
-      const newMap = new Map(prevMap);
-      const existing = newMap.get(updatedObject.id);
-      if (existing) {
-        newMap.set(updatedObject.id, { ...existing, ...updatedObject });
-      }
-      return newMap;
+  /* обновление объекта */
+  const handleUpdateObjectLocal = useCallback((updated: GameObject) => {
+    setGameObjectsMap((prev) => {
+      const m = new Map(prev);
+      if (m.has(updated.id)) m.set(updated.id, { ...m.get(updated.id)!, ...updated });
+      return m;
     });
-  
-    // Теперь dispatch знает, что это AsyncThunkAction
-    dispatch(updateSceneObject({ activeScene, object: updatedObject }));
-  
-    // После обновления объекта, обновляем рендеринг
-    if (coreInstance) {
-      const gameObject = new Map(gameObjectsMap).get(updatedObject.id);
-      if (gameObject) {
-        coreInstance.render();
-      }
-    }
-  }, [dispatch, activeScene, gameObjectsMap, coreInstance]);
-  
+    dispatch(updateSceneObject({ activeScene, object: updated }));
+    requestRenderIfNotRequested();
+  }, [dispatch, activeScene, requestRenderIfNotRequested]);
+
+  /* ───── init GameFacade ───── */
   useEffect(() => {
-    if (!canvasRef.current) {
-      console.error('Canvas не найден.');
-      return;
-    }
-  
-    const core = new Core({
-      canvasId: canvasRef.current.id,
-      renderType: renderType,
-      backgroundColor: '#D3D3D3',
-      width: canvasRef.current.clientWidth,
-      height: canvasRef.current.clientHeight,
+    if (!canvasRef.current) return;
+
+    Game.init({
+      canvasId : canvasRef.current.id,
+      w        : canvasRef.current.clientWidth,
+      h        : canvasRef.current.clientHeight,
+      bg       : '#D3D3D3',
+      debug    : true,
     });
-  
-    const sceneManager = core.getSceneManager();
-  
-    // Создаём сцену прямо здесь, через экземпляр ядра
+
+    const { sceneManager } = Game.core;
     if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
       sceneManager.createScene(activeScene);
       sceneManager.changeScene(activeScene);
     }
-  
-    core.switchMode(EditorMode, (selectedObjId: string | null) => {
-      dispatch(setCurrentObjectId(selectedObjId));
-    });
-    core.start();
-    setCoreInstance(core);
-  
-    const shape2dInstance = getShape2d(core.renderType);
-    setShape2d(shape2dInstance);
-  
-    return () => {
-      core.stop();
-    };
-  }, [activeScene, renderType, dispatch]);
 
-  // Обновление выделенного объекта в ядре и перерисовка
+    Game.start();
+    return () => Game.core?.sceneManager?.clear && Game.core.stop();
+  }, [activeScene]);
+
+  /* выделение */
   useEffect(() => {
-    if (!coreInstance || !gameObjectsMap.size) return;
-
-    const liveObject = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
-    coreInstance.setSelectedObject(liveObject || null);
+    if (!Game.core) return;
+    const obj = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
+    Game.core.scene.setSelected?.(obj || null);
     requestRenderIfNotRequested();
-  }, [currentObjectId, gameObjectsMap, coreInstance, requestRenderIfNotRequested]);
+  }, [currentObjectId, gameObjectsMap, requestRenderIfNotRequested]);
 
-  // Локальная логика перетаскивания: mousedown, mousemove, mouseup
-  const handleMouseDown = useCallback((event: MouseEvent) => {
+  /* drag’n’drop — оставил без изменений */
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = useCallback((e: MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = (event.clientX - rect.left) * (canvas.width / canvas.clientWidth);
-    const y = (event.clientY - rect.top) * (canvas.height / canvas.clientHeight);
+    const x = (e.clientX - rect.left) * (canvas.width / canvas.clientWidth);
+    const y = (e.clientY - rect.top)  * (canvas.height / canvas.clientHeight);
+
     for (let i = sceneObjects.length - 1; i >= 0; i--) {
       const so = sceneObjects[i];
-      if (so.containsPoint && so.containsPoint(x, y)) {
+      if (so.containsPoint?.(x, y)) {
         dispatch(setCurrentObjectId(so.id));
         setIsDragging(true);
-        const liveObj = gameObjectsMap.get(so.id);
-        if (liveObj) {
-          setDragOffset({ x: x - liveObj.x, y: y - liveObj.y });
-        }
+        const live = gameObjectsMap.get(so.id);
+        if (live) setDragOffset({ x: x - live.x, y: y - live.y });
         return;
       }
     }
     dispatch(setCurrentObjectId(null));
   }, [sceneObjects, dispatch, gameObjectsMap]);
 
-  const handleMouseMove = useCallback((event: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !currentObjectId) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = (event.clientX - rect.left) * (canvas.width / canvas.clientWidth);
-    const y = (event.clientY - rect.top) * (canvas.height / canvas.clientHeight);
-    const liveObj = gameObjectsMap.get(currentObjectId);
-    if (!liveObj) return;
-    const newX = x - dragOffset.x;
-    const newY = y - dragOffset.y;
-    handleUpdateObjectLocal({ ...liveObj, x: newX, y: newY });
+    const x = (e.clientX - rect.left) * (canvas.width / canvas.clientWidth);
+    const y = (e.clientY - rect.top)  * (canvas.height / canvas.clientHeight);
+
+    const live = gameObjectsMap.get(currentObjectId);
+    if (!live) return;
+    handleUpdateObjectLocal({ ...live, x: x - dragOffset.x, y: y - dragOffset.y });
   }, [isDragging, currentObjectId, gameObjectsMap, dragOffset, handleUpdateObjectLocal]);
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+  const handleMouseUp = useCallback(() => setIsDragging(false), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mouseup',   handleMouseUp);
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseup', handleMouseUp);
+      canvas.removeEventListener('mouseup',   handleMouseUp);
     };
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
+  useCanvasResize(canvasRef, Game.core);
 
-
-  useCanvasResize(canvasRef, coreInstance);
-  
-
-  // // Подписываемся на события ядра
-  // useCoreEvents(coreInstance, {
-  //   onObjectSelected: ({ object }) => dispatch(setCurrentObjectId(object?.id || null)),
-  //   onModeChanged: ({ mode }) => console.log(`Mode changed to: ${mode}`),
-  // });
-
-
+  /* ─────────── render ─────────── */
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas
@@ -201,8 +149,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ renderType }) => {
         style={{ border: '1px solid #ccc', width: '100%', height: '100%' }}
       />
       <GameObjectManager
-        coreInstance={coreInstance}
-        shape2d={shape2d}
+        coreInstance={Game.core}
         sceneData={{ activeScene, objects: sceneObjects, settings: {} }}
         activeScene={activeScene}
         onGameObjectsMapUpdate={setGameObjectsMap}

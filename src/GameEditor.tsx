@@ -9,7 +9,6 @@ import {
   MenuOutlined,
 } from "@ant-design/icons";
 import { v4 as uuidv4 } from "uuid";
-import LogicGuiEditorContent from "./components/GameEditorComponents/LogicGuiEditor/LogicGuiEditorContent";
 import LogicCodeEditorContent from "./components/GameEditorComponents/LogicCodeEditor/LogicCodeEditorContent";
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
@@ -49,10 +48,16 @@ const createScene = (sceneName: string) => ({
   settings: {},
 });
 
-// Функция для создания начального кода для кодового редактора логики.
-// Ключ формируется как "CodeLogic:<projectId>:<sceneId>"
+// ────────────────────────────────────────────────────────────
+// Логика инициализации (только CodeLogic — GUI выпилен)
+// ────────────────────────────────────────────────────────────
 const createInitialSceneCodeLogic = (projectId: string, sceneId: string) => {
-  const initialCode = `// Редактор кода для сцены ${sceneId}\n\nfunction runLogic() {\n  console.log("Hello, World!");\n}\n`;
+  const initialCode = `// Редактор кода для сцены ${sceneId}
+
+function runLogic() {
+  console.log("Hello, World!");
+}
+`;
   try {
     const key = `CodeLogic:${projectId}:${sceneId}`;
     localStorage.setItem(key, initialCode);
@@ -61,45 +66,25 @@ const createInitialSceneCodeLogic = (projectId: string, sceneId: string) => {
   }
 };
 
-// Функция для создания начальной логики для визуального редактора.
-// Ключ формируется как "LogicData:<projectId>:<sceneId>"
-const createInitialSceneVisualLogic = (projectId: string, sceneId: string) => {
-  const initialLogic = { logicEvents: [] };
-  saveSceneLogic(projectId, sceneId, initialLogic);
-};
+const createInitialSceneLogic = (projectId: string, sceneId: string) =>
+  createInitialSceneCodeLogic(projectId, sceneId);
 
-// Универсальная функция создания начальной логики для сцены,
-// которая в зависимости от режима вызывает нужную функцию.
-const createInitialSceneLogic = (
-  projectId: string,
-  sceneId: string,
-  logicEditorMode: "visual" | "code"
-) => {
-  if (logicEditorMode === "code") {
-    createInitialSceneCodeLogic(projectId, sceneId);
-  } else {
-    createInitialSceneVisualLogic(projectId, sceneId);
-  }
-};
-
-// Функция создания логики для проекта (специальная сцена с id "projectLogic")
-// Ключ формируется как "LogicData:<projectId>:projectLogic" или "CodeLogic:<projectId>:projectLogic"
-const createProjectLogic = (projectId: string, logicEditorMode: "visual" | "code") => {
-  const key =
-    logicEditorMode === "code"
-      ? `CodeLogic:${projectId}:projectLogic`
-      : `LogicData:${projectId}:projectLogic`;
+const createProjectLogic = (projectId: string) => {
+  const key = `CodeLogic:${projectId}:projectLogic`;
   if (!localStorage.getItem(key)) {
-    if (logicEditorMode === "code") {
-      const initialCode = `// Редактор кода для проекта\n\nfunction runProjectLogic() {\n  console.log("Project Logic");\n}\n`;
-      localStorage.setItem(key, initialCode);
-    } else {
-      const initialLogic = { logicEvents: [] };
-      saveSceneLogic(projectId, "projectLogic", initialLogic);
-    }
+    const initialCode = `// Редактор кода для проекта
+
+function runProjectLogic() {
+  console.log("Project Logic");
+}
+`;
+    localStorage.setItem(key, initialCode);
   }
 };
 
+// ────────────────────────────────────────────────────────────
+// Компонент GameEditor
+// ────────────────────────────────────────────────────────────
 const GameEditor: React.FC<GameEditorProps> = ({
   project,
   onUpdateProject,
@@ -115,61 +100,60 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
 
-  const sceneTabs = openedScenes.map(s => ({
+  const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
     sceneName: s.sceneName,
   }));
-  
+
+  // ───── Загрузка проекта ─────
   useEffect(() => {
     dispatch(loadProject(project.id)).then(() => {
       setIsProjectLoaded(true);
-      // При загрузке проекта создаём логику для проекта, если она ещё не создана
-      createProjectLogic(project.id, project.logicEditorMode);
+      createProjectLogic(project.id);
     });
-  }, [dispatch, project.id, project.logicEditorMode]);
+  }, [dispatch, project.id]);
 
+  // ───── Добавление новой сцены ─────
   const addNewScene = useCallback(
     (sceneName: string) => {
       const newScene = createScene(sceneName);
       dispatch(addScene(newScene));
-  
-      // Создаем начальную логику для сцены в зависимости от выбранного режима:
-      // для кода – создается CodeLogic, для визуала – LogicData.
-      createInitialSceneLogic(project.id, newScene.id, project.logicEditorMode);
-  
+
+      createInitialSceneLogic(project.id, newScene.id);
+
       const newOpenedScene = {
         id: newScene.id,
         sceneName: newScene.sceneName,
         key: newScene.id,
-        state: "levelEditor"
+        state: "levelEditor",
       };
-  
+
       dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
       dispatch(setActiveScene(newScene.id));
       dispatch(saveProject(project.id));
     },
-    [dispatch, project.id, openedScenes, project.logicEditorMode]
+    [dispatch, project.id, openedScenes]
   );
 
+  // ───── Создаём первую сцену при пустом проекте ─────
   useEffect(() => {
     if (isProjectLoaded && scenes.length === 0 && activeScene === "") {
       addNewScene("Scene 1");
     }
   }, [isProjectLoaded, scenes, activeScene, addNewScene]);
 
-  const handleNewScene = useCallback(() => {
-    const index = scenes.length + 1;
-    addNewScene(`Scene ${index}`);
-  }, [scenes.length, addNewScene]);
+  // ───── Обработчики вкладок ─────
+  const handleNewScene = () => addNewScene(`Scene ${scenes.length + 1}`);
 
   const handleRemoveOpenedScene = (tabKey: string) => {
     if (tabKey === "projectLogic") return;
 
-    const updatedOpenedScenes = openedScenes.filter(scene => scene.key !== tabKey);
+    const updatedOpenedScenes = openedScenes.filter((scene) => scene.key !== tabKey);
     dispatch(setOpenedScenes(updatedOpenedScenes));
 
     if (activeScene === tabKey) {
-      const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "projectLogic";
+      const newActive =
+        updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "projectLogic";
       dispatch(setActiveScene(newActive));
     }
 
@@ -182,19 +166,16 @@ const GameEditor: React.FC<GameEditorProps> = ({
   };
 
   const handleEditorTabChange = (mode: string) => {
-    setEditorTabs((prevTabs) => ({
-      ...prevTabs,
-      [activeScene]: mode,
-    }));
+    setEditorTabs((prev) => ({ ...prev, [activeScene]: mode }));
     dispatch(updateOpenedScene({ key: activeScene, newState: mode }));
     dispatch(saveProject(project.id));
   };
 
+  // ───── Запуск игры ─────
   const handleRunGame = () => {
-    if (activeScene === "projectLogic") {
-      return;
+    if (activeScene !== "projectLogic") {
+      globalLogicManager.runLogicForScene(activeScene);
     }
-    globalLogicManager.runLogicForScene(activeScene);
   };
 
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
@@ -217,27 +198,18 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const currentEditorMode =
     openedScenes.find((scene) => scene.key === activeScene)?.state || "levelEditor";
 
-  // Рендер логического редактора: в зависимости от выбранного режима проекта используем
-  // либо GUI-версию, либо кодовую.
-  const renderLogicEditor = () => {
-    if (project.logicEditorMode === "visual") {
-      return <LogicGuiEditorContent activeScene={activeScene} />;
-    } else if (project.logicEditorMode === "code") {
-      return <LogicCodeEditorContent activeScene={activeScene} />;
-    }
-    return <LogicGuiEditorContent activeScene={activeScene} />;
-  };
+  // ───── Логический редактор (только CodeEditor) ─────
+  const renderLogicEditor = () => (
+    <LogicCodeEditorContent activeScene={activeScene} />
+  );
 
+  // ────────────────────────────────────────────────────
+  // JSX
+  // ────────────────────────────────────────────────────
   return (
     <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
-      <Header
-        style={{
-          background: "#1f1f1f",
-          padding: "0 16px",
-          display: "flex",
-          height: "60px",
-        }}
-      >
+      {/* ───── Верхнее меню и вкладки ───── */}
+      <Header style={{ background: "#1f1f1f", padding: "0 16px", display: "flex", height: "60px" }}>
         <Dropdown menu={{ items: projectMenuItems }} trigger={["click"]}>
           <Space>
             <Button type="text" style={{ color: "white" }}>
@@ -275,6 +247,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
         />
       </Header>
 
+      {/* ───── Кнопки управления ───── */}
       <Header
         style={{
           background: "#1f1f1f",
@@ -311,6 +284,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
         <div style={{ width: "48px" }} />
       </Header>
 
+      {/* ───── Контент ───── */}
       <Layout>
         <Content style={{ padding: "16px", background: "#2e2e2e" }}>
           {activeScene !== "projectLogic" && activeScene !== "" && (
@@ -333,18 +307,18 @@ const GameEditor: React.FC<GameEditorProps> = ({
             </div>
           )}
 
-          {activeScene === "projectLogic" || currentEditorMode === "logicEditor"
-            ? renderLogicEditor()
-            : (
-              <SceneEditor
-                activeScene={activeScene}
-                projectName={project.name}
-                renderType={project.renderType}
-              />
-            )}
+          {activeScene === "projectLogic" || currentEditorMode === "logicEditor" ? (
+            renderLogicEditor()
+          ) : (
+            <SceneEditor
+              activeScene={activeScene}
+              projectName={project.name}
+            />
+          )}
         </Content>
       </Layout>
 
+      {/* ───── Настройки проекта ───── */}
       <ProjectSettingsDrawer
         visible={drawerVisible}
         onClose={toggleDrawer}

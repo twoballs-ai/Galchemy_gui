@@ -38,13 +38,10 @@ const App: React.FC = () => {
   const handleCreateProject = () => {
     setIsProjectCreationModalVisible(true);
   };
-
-  const handleCreateProjectConfirm = (gameType: string, logicMode: "visual" | "code") => {
+  const handleCreateProjectConfirm = () => {
     const newProj: ProjectSummary = {
       id: uuidv4(),
       name: `Project ${projects.length + 1}`,
-      renderType: gameType,
-      logicEditorMode: logicMode,
     };
     setProjects([...projects, newProj]);
     setIsProjectCreationModalVisible(false);
@@ -103,11 +100,7 @@ const App: React.FC = () => {
                       </Button>,
                     ]}
                   >
-                    {project.name} – {project.renderType} (
-                    {project.logicEditorMode === "visual"
-                      ? "Визуальный редактор"
-                      : "Кодовый редактор"}
-                    )
+                    {project.name}
                   </List.Item>
                 )}
               />
