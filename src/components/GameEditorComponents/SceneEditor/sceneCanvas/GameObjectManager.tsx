@@ -1,110 +1,80 @@
 import React, { useEffect } from 'react';
 
-// Пример определения типов для GameObject и SceneData:
-interface GameObject {
+/* ---------- типы данных ---------- */
+interface GameObjectRaw {
   id: string;
   type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  image?: string;
-  animations?: { [key: string]: string | string[] };
-  isAnimated?: boolean;
-  [key: string]: any;
+  [k: string]: any;     // остальные поля фабрика примет как есть
 }
 
 interface SceneData {
-  objects: GameObject[];
+  objects: GameObjectRaw[];
 }
 
 interface GameObjectManagerProps {
-  coreInstance: Core | null;
-  shape2d: any;
+  coreInstance: any;                              // тип Core в вашем ядре
+  shapeFactory: Record<string, (opts: any) => any>;
   sceneData: SceneData;
   activeScene: string;
-  onGameObjectsMapUpdate: (map: Map<string, GameObject>) => void;
+  onGameObjectsMapUpdate: (map: Map<string, any>) => void;
   requestRenderIfNotRequested: () => void;
 }
 
 const GameObjectManager: React.FC<GameObjectManagerProps> = ({
   coreInstance,
-  shape2d,
+  shapeFactory,
   sceneData,
   activeScene,
   onGameObjectsMapUpdate,
   requestRenderIfNotRequested,
 }) => {
-  // Функция создания игрового объекта
-  const createGameObject = (obj: GameObject): GameObject | null => {
-    if (!shape2d) return null;
 
-    const shapeFunction = shape2d[obj.type];
-    if (!shapeFunction) {
-        console.warn('Неизвестный тип объекта:', obj.type);
-        return null;
+  /* ---------- создать live-объект через фабрику ---------- */
+  const createGameObject = (obj: GameObjectRaw) => {
+    const builder = shapeFactory[obj.type];
+    if (!builder) {
+      console.warn('Неизвестный тип объекта:', obj.type);
+      return null;
     }
+    const go = builder(obj);     // все параметры (кроме id/type) идут как есть
+    go.id = obj.id;
+    return go;
+  };
 
-    const gameObjectParams = { ...obj };
-    delete gameObjectParams.type;
-
-    // Передаем строку, не создаем new Image
-    if (obj.image) {
-        gameObjectParams.image = obj.image;
-    }
-
-    if ((obj.type === 'character' || obj.type === 'enemy') && obj.isAnimated) {
-        gameObjectParams.animations = {};
-
-        if (obj.animations) {
-            Object.keys(obj.animations).forEach((key) => {
-                gameObjectParams.animations[key] = obj.animations[key];
-            });
-        }
-    }
-
-    if (typeof gameObjectParams.width !== 'number') gameObjectParams.width = 50;
-    if (typeof gameObjectParams.height !== 'number') gameObjectParams.height = 50;
-
-    const gameObject = shapeFunction(gameObjectParams);
-    gameObject.id = obj.id;
-
-    if (gameObject && 'type' in gameObject) {
-        delete gameObject.type;
-    }
-
-    return gameObject;
-};
-
-  // Рендеринг объектов при изменении сцены
+  /* ---------- синхронизация React-состояния с движком ---------- */
   useEffect(() => {
-    if (coreInstance && shape2d && sceneData.objects) {
-      const sceneManager = coreInstance.getSceneManager();
-  
-      // 👇 Убедись, что сцена существует, прежде чем продолжать
-      if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
-        sceneManager.createScene(activeScene);
-        sceneManager.changeScene(activeScene);
-      } 
-      // else {
-      //   sceneManager.clearScene(activeScene);
-      // }
-  
-      const newGameObjectsMap = new Map<string, GameObject>();
-  
-      sceneData.objects.forEach((obj: GameObject) => {
-        const gameObject = createGameObject(obj);
-        if (gameObject) {
-          sceneManager.addGameObjectToScene(activeScene, gameObject);
-          newGameObjectsMap.set(obj.id, gameObject);
-        }
-      });
-  
-      onGameObjectsMapUpdate(newGameObjectsMap);
-      requestRenderIfNotRequested();
+    if (!coreInstance || !shapeFactory) return;
+
+        const sceneManager = coreInstance.getSceneManager?.()
+                       ?? coreInstance.sceneManager;  
+
+    if (!sceneManager.getCurrentScene()
+        || sceneManager.getCurrentScene().name !== activeScene) {
+      sceneManager.createScene(activeScene);
+      sceneManager.changeScene(activeScene);
     }
-  }, [coreInstance, shape2d, sceneData.objects, activeScene, requestRenderIfNotRequested]);
-  
+
+        /* -------- целевая сцена, куда кладём объекты -------- */
+        const scene =
+          sceneManager.scenes?.get?.(activeScene)     // по имени
+          ?? sceneManager.getCurrentScene();          // либо текущая
+    
+        if (!scene) return;                           // safety-check
+    
+        const liveMap = new Map<string, any>();
+    
+        sceneData.objects.forEach(obj => {
+          const go = createGameObject(obj);
+          if (go) {
+            sceneManager.addGameObjectToScene(activeScene, go);                            // теперь scene определена
+            liveMap.set(obj.id, go);
+          }
+        })
+    onGameObjectsMapUpdate(liveMap);
+    requestRenderIfNotRequested();
+  }, [coreInstance, shapeFactory, sceneData.objects, activeScene,
+      requestRenderIfNotRequested]);
+
   return null;
 };
 

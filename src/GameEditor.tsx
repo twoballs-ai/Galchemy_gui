@@ -278,7 +278,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
             icon={<PlayCircleOutlined />}
             onClick={handleRunGame}
           >
-            Run Game
+            Run Scene
           </Button>
         </Space>
         <div style={{ width: "48px" }} />

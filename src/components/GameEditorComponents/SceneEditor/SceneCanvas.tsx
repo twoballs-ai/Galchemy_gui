@@ -1,53 +1,54 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, {
+  useRef, useEffect, useState, useCallback, useMemo
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../../../store/store';
-import { setCurrentObjectId, updateSceneObject } from '../../../store/slices/sceneObjectsSlice';
+import { RootState, AppDispatch }   from '../../../store/store';
+import {
+  setCurrentObjectId,
+  updateSceneObject
+} from '../../../store/slices/sceneObjectsSlice';
 
-import useCanvasResize from './sceneCanvas/hooks/useCanvasResize';
+import useCanvasResize   from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectManager from './sceneCanvas/GameObjectManager';
 
-import { GameAlchemy } from 'game-alchemy-core';                   // ← никаких named-импортов
+import { GameAlchemy } from 'game-alchemy-core';    // ← default-импорт
 
-/* ─────────── типы ─────────── */
-interface GameObject {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  image?: string;
+/* ---------- тип локального live-объекта ---------- */
+interface GameObjectLive {
+  id: string; type: string; x: number; y: number;
+  [k: string]: any;
 }
 
-/* ─────────── пропсы ─────────── */
-interface SceneCanvasProps {}
+const SceneCanvas: React.FC = () => {
+  const dispatch  = useDispatch<AppDispatch>();
 
-const SceneCanvas: React.FC<SceneCanvasProps> = () => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  /* refs / state */
+  /* ---------- refs / state ---------- */
   const canvasRef           = useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const [gameObjectsMap, setGameObjectsMap] = useState<Map<string, GameObject>>(new Map());
+  const [gameObjectsMap, setGameObjectsMap] =
+    useState<Map<string, GameObjectLive>>(new Map());
 
-  /* redux */
+  /* ---------- redux state ---------- */
   const activeScene     = useSelector((s: RootState) => s.project.activeScene);
   const sceneObjects    = useSelector((s: RootState) => s.sceneObjects.objects);
   const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
 
-  /* rAF helper */
+  /* ---------- rAF helper ---------- */
   const requestRenderIfNotRequested = useCallback(() => {
     if (animationFrameIdRef.current === null) {
       animationFrameIdRef.current = requestAnimationFrame(() => {
-        GameAlchemy.core?.renderer.render(GameAlchemy.core.scene, GameAlchemy.core.debug);
+        GameAlchemy.core?.renderer.render(
+          GameAlchemy.core.scene,
+          GameAlchemy.core.debug
+        );
         animationFrameIdRef.current = null;
       });
     }
   }, []);
 
-  /* обновление объекта */
-  const handleUpdateObjectLocal = useCallback((updated: GameObject) => {
-    setGameObjectsMap((prev) => {
+  /* ---------- локальное обновление объекта ---------- */
+  const handleUpdateObjectLocal = useCallback((updated: GameObjectLive) => {
+    setGameObjectsMap(prev => {
       const m = new Map(prev);
       if (m.has(updated.id)) m.set(updated.id, { ...m.get(updated.id)!, ...updated });
       return m;
@@ -56,7 +57,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
     requestRenderIfNotRequested();
   }, [dispatch, activeScene, requestRenderIfNotRequested]);
 
-  /* ───── init GameFacade ───── */
+  /* ---------- init GameAlchemy ---------- */
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -64,30 +65,30 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
       canvasId : canvasRef.current.id,
       w        : canvasRef.current.clientWidth,
       h        : canvasRef.current.clientHeight,
-      bg       : '#D3D3D3',
-      debug    : true,
+      bg       : '#5d8aa8',
     });
+    GameAlchemy.setEditorMode();
 
     const { sceneManager } = GameAlchemy.core;
-    if (!sceneManager.getCurrentScene() || sceneManager.getCurrentScene().name !== activeScene) {
-       sceneManager.createScene(activeScene);          // если такой ещё нет
-       sceneManager.switchScene(activeScene);          // ← правильный метод
-       GameAlchemy.core.scene = sceneManager.getCurrentScene(); // держим Core в синхроне
+    if (!sceneManager.getCurrentScene()
+        || sceneManager.getCurrentScene().name !== activeScene) {
+      sceneManager.createScene(activeScene);
+      sceneManager.switchScene(activeScene);
     }
 
     GameAlchemy.start();
-    return () => GameAlchemy.core?.sceneManager?.clear && GameAlchemy.core.stop();
+    return () => GameAlchemy.core?.stop();
   }, [activeScene]);
 
-  /* выделение */
+  /* ---------- выделение объекта в сцене ---------- */
   useEffect(() => {
     if (!GameAlchemy.core) return;
-    const obj = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
-    GameAlchemy.core.scene.setSelected?.(obj || null);
+    const live = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
+    GameAlchemy.core.scene.setSelected?.(live || null);
     requestRenderIfNotRequested();
   }, [currentObjectId, gameObjectsMap, requestRenderIfNotRequested]);
 
-  /* drag’n’drop — оставил без изменений */
+  /* ---------- drag’n’drop ---------- */
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
@@ -95,8 +96,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / canvas.clientWidth);
-    const y = (e.clientY - rect.top)  * (canvas.height / canvas.clientHeight);
+    const x = (e.clientX - rect.left) * (canvas.width  / canvas.clientWidth);
+    const y = (e.clientY - rect.top ) * (canvas.height / canvas.clientHeight);
 
     for (let i = sceneObjects.length - 1; i >= 0; i--) {
       const so = sceneObjects[i];
@@ -116,8 +117,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / canvas.clientWidth);
-    const y = (e.clientY - rect.top)  * (canvas.height / canvas.clientHeight);
+    const x = (e.clientX - rect.left) * (canvas.width  / canvas.clientWidth);
+    const y = (e.clientY - rect.top ) * (canvas.height / canvas.clientHeight);
 
     const live = gameObjectsMap.get(currentObjectId);
     if (!live) return;
@@ -139,9 +140,22 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
     };
   }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
+  /* ---------- canvas resize ---------- */
   useCanvasResize(canvasRef, GameAlchemy.core);
 
-  /* ─────────── render ─────────── */
+  /* ---------- shape-factory из ядра ---------- */
+  const shapeFactory = useMemo(() => {
+    if (!GameAlchemy.core) return {};
+    const gl = GameAlchemy.core.ctx;
+    return {
+      sphere  : (opts = {}) => GameAlchemy.primitiveFactory.create('sphere',   gl, opts),
+      cube    : (opts = {}) => GameAlchemy.primitiveFactory.create('cube',     gl, opts),
+      cylinder: (opts = {}) => GameAlchemy.primitiveFactory.create('cylinder', gl, opts),
+      /* добавятся другие – фабрика уже знает о них */
+    };
+  }, [GameAlchemy.core]);
+
+  /* ---------- render ---------- */
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas
@@ -151,7 +165,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = () => {
       />
       <GameObjectManager
         coreInstance={GameAlchemy.core}
-        sceneData={{ activeScene, objects: sceneObjects, settings: {} }}
+        shapeFactory={shapeFactory}
+        sceneData={{ activeScene, objects: sceneObjects }}
         activeScene={activeScene}
         onGameObjectsMapUpdate={setGameObjectsMap}
         requestRenderIfNotRequested={requestRenderIfNotRequested}
