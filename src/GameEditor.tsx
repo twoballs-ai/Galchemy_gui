@@ -17,6 +17,7 @@ import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsD
 import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
 
+import { GameAlchemy } from 'game-alchemy-core';  
 import { RootState, AppDispatch } from "./store/store";
 import {
   loadProject,
@@ -174,10 +175,13 @@ const GameEditor: React.FC<GameEditorProps> = ({
   // ───── Запуск игры ─────
   const handleRunGame = () => {
     if (activeScene !== "projectLogic") {
+      const { sceneManager } = GameAlchemy.core;
+      sceneManager.changeScene?.(activeScene);   // 🆕 Переключаем сцену!
+  
       globalLogicManager.runLogicForScene(activeScene);
+      GameAlchemy.setPreviewMode();
     }
   };
-
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
 
   const projectMenuItems = [

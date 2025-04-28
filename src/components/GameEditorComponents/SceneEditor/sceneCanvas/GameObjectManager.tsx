@@ -66,10 +66,18 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
         sceneData.objects.forEach(obj => {
           const go = createGameObject(obj);
           if (go) {
-            sceneManager.addGameObjectToScene(activeScene, go);                            // теперь scene определена
+            sceneManager.addGameObjectToScene(activeScene, go);
             liveMap.set(obj.id, go);
+        
+            // 🔥 Если это камера — делаем её активной!
+            if (obj.type === 'camera') {
+              const scene = sceneManager.scenes.get(activeScene) ?? sceneManager.getCurrentScene();
+              if (scene) {
+                scene.activeCamera = go;
+              }
+            }
           }
-        })
+        });
     onGameObjectsMapUpdate(liveMap);
     requestRenderIfNotRequested();
   }, [coreInstance, shapeFactory, sceneData.objects, activeScene,

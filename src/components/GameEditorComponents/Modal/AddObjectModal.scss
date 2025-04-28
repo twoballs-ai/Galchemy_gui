@@ -1,53 +1,57 @@
-/* AddObjectModal.scss */
-
 .add-object-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* расстояние между категориями */
+
+  .object-group {
     display: flex;
     flex-direction: column;
-    .category {
-      margin-bottom: 20px;
+
+    .group-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .group-items {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap; /* перенос на новую строку если мало места */
+      gap: 12px;
+    }
+
+    .primitive-card {
       display: flex;
       flex-direction: column;
-      h4 {
-        margin-bottom: 10px;
+      align-items: center;
+      justify-content: flex-start;
+      width: 80px;
+      height: 100px;
+      padding: 8px;
+      background: #2f2f2f;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+
+      &:hover {
+        border-color: #007bff;
+        background: #3a3a3a;
       }
-  
-      .object-list {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-  
-        .object-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          width: 80px;
-          margin: 5px;
-          padding: 10px;
-          border: 1px solid transparent;
-          border-radius: 4px;
-          cursor: pointer;
-  
-          &:hover {
-            border-color: #007bff;
-          }
-  
-          &.selected {
-            border-color: #007bff;
-            background-color: #e9f5ff;
-          }
-  
-          .object-icon {
-            width: auto;  // Укажите желаемый размер
-            height: 32px; // Укажите желаемый размер
-            margin-right: 10px; // Отступ между иконкой и текстом
-          }
-  
-          .object-name {
-            font-size: 12px;
-            text-align: center;
-          }
-        }
+
+      .primitive-icon {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
+        object-fit: contain;
+      }
+
+      span {
+        font-size: 12px;
+        color: #ccc;
+        text-align: center;
       }
     }
   }
-  
+}
