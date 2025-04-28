@@ -38,6 +38,10 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
     }
     const go = builder(obj);     // все параметры (кроме id/type) идут как есть
     go.id = obj.id;
+    if (coreInstance.showHelpers) {
+      go.isEditorMode = true;
+    }
+  
     return go;
   };
 
@@ -67,6 +71,8 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
           const go = createGameObject(obj);
           if (go) {
             sceneManager.addGameObjectToScene(activeScene, go);
+             // Если мы в редакторе — помечаем новый объект    if (coreInstance.showHelpers) {      go.isEditorMode = true;
+ 
             liveMap.set(obj.id, go);
         
             // 🔥 Если это камера — делаем её активной!

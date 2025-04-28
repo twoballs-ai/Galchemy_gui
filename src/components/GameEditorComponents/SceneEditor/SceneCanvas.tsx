@@ -151,7 +151,7 @@ const shapeFactory = useMemo(() => {
     sphere  : (opts = {}) => GameAlchemy.primitiveFactory.create('sphere',   gl, opts),
     cube    : (opts = {}) => GameAlchemy.primitiveFactory.create('cube',     gl, opts),
     cylinder: (opts = {}) => GameAlchemy.primitiveFactory.create('cylinder', gl, opts),
-    camera  : (opts = {}) => GameAlchemy.spawnCamera?.(opts),
+    camera: (opts = {}) => GameAlchemy.primitiveFactory.create('camera', GameAlchemy.core.ctx, opts),
     light   : (opts = {}) => GameAlchemy.spawnLight?.(opts),
     terrain : (opts = {}) => GameAlchemy.spawnTerrain?.(opts),
   };
