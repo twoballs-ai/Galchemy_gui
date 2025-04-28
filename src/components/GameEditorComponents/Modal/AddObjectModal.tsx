@@ -1,3 +1,4 @@
+// AddObjectModal.tsx
 "use client";
 
 import React from "react";
@@ -9,24 +10,39 @@ import CubeIcon      from "../../../icons/circle.png";
 import CylinderIcon  from "../../../icons/circle.png";
 import CameraIcon    from "../../../icons/circle.png";
 import LightIcon     from "../../../icons/circle.png";
-import TerrainIcon   from "../../../icons/circle.png";   // подготовь иконку террэйна
+import TerrainIcon   from "../../../icons/circle.png";
 
 import "./AddObjectModal.scss";
 
 interface AddObjectModalProps {
   open: boolean;
-  onAdd: (payload: { id: string; type: ObjectType }) => void;
+  // Теперь payload может содержать дополнительно subtype для света
+  onAdd: (payload: { id: string; type: ObjectType; subtype?: LightSubtype }) => void;
   onClose: () => void;
 }
 
-// ✨ Расширяем типы
-type ObjectType =
-  | "sphere" | "cube" | "cylinder"         // 3D
-  | "camera" | "light"                     // сцена
-  | "terrain"                              // террэйны
-  | "sprite";                              // 2D примитивы (если добавим)
+// Объекты — как раньше, плюс общий "light"
+export type ObjectType =
+  | "sphere"
+  | "cube"
+  | "cylinder"
+  | "camera"
+  | "light"
+  | "terrain"
+  | "sprite";
 
-const groupedObjects = [
+// Подтип для освещений
+export type LightSubtype = "point" | "directional" | "ambient";
+
+interface GroupedItem {
+  title: string;
+  type: ObjectType;
+  icon: string;
+  // subtype указываем только для type === "light"
+  subtype?: LightSubtype;
+}
+
+const groupedObjects: { group: string; items: GroupedItem[] }[] = [
   {
     group: "Камеры",
     items: [
@@ -36,53 +52,59 @@ const groupedObjects = [
   {
     group: "Освещение",
     items: [
-      { title: "Свет", type: "light", icon: LightIcon },
+      { title: "Точечный свет",       type: "light", subtype: "point",       icon: LightIcon },
+      { title: "Направленный свет",   type: "light", subtype: "directional", icon: LightIcon },
+      { title: "Рассеянный свет",     type: "light", subtype: "ambient",     icon: LightIcon },
     ],
   },
   {
     group: "3D Примитивы",
     items: [
-      { title: "Сфера", type: "sphere", icon: SphereIcon },
-      { title: "Куб", type: "cube", icon: CubeIcon },
-      { title: "Цилиндр", type: "cylinder", icon: CylinderIcon },
+      { title: "Сфера",    type: "sphere",   icon: SphereIcon },
+      { title: "Куб",      type: "cube",     icon: CubeIcon },
+      { title: "Цилиндр",  type: "cylinder", icon: CylinderIcon },
     ],
   },
   {
-    group: "Террэйны",
+    group: "Террэйн",
     items: [
       { title: "Террэйн", type: "terrain", icon: TerrainIcon },
     ],
   },
-  // Можно добавить 2D-примитивы потом
 ];
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
-  const handleSelect = (type: ObjectType) => {
-    onAdd({ id: uuidv4(), type });
+  const handleSelect = (item: GroupedItem) => {
+    onAdd({ 
+      id: uuidv4(), 
+      type: item.type, 
+      // прокидываем subtype, если есть
+      ...(item.subtype ? { subtype: item.subtype } : {}) 
+    });
     onClose();
   };
 
   return (
     <CustomModal open={open} onClose={onClose} title="Добавить объект">
-<div className="add-object-modal">
-  {groupedObjects.map((group) => (
-    <div key={group.group} className="object-group">
-      <h3 className="group-title">{group.group}</h3>
-      <div className="group-items">
-        {group.items.map((item) => (
-          <div
-            key={item.type}
-            className="primitive-card"
-            onClick={() => handleSelect(item.type)}
-          >
-            <img className="primitive-icon" src={item.icon} alt={item.title} />
-            <span>{item.title}</span>
+      <div className="add-object-modal">
+        {groupedObjects.map(({ group, items }) => (
+          <div key={group} className="object-group">
+            <h3 className="group-title">{group}</h3>
+            <div className="group-items">
+              {items.map(item => (
+                <div
+                  key={item.title}
+                  className="primitive-card"
+                  onClick={() => handleSelect(item)}
+                >
+                  <img className="primitive-icon" src={item.icon} alt={item.title} />
+                  <span>{item.title}</span>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
-    </div>
-  ))}
-</div>
     </CustomModal>
   );
 };

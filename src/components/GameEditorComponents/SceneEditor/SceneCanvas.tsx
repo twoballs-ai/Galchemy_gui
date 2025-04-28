@@ -154,6 +154,7 @@ const shapeFactory = useMemo(() => {
     camera: (opts = {}) => GameAlchemy.primitiveFactory.create('camera', GameAlchemy.core.ctx, opts),
     light   : (opts = {}) => GameAlchemy.spawnLight?.(opts),
     terrain : (opts = {}) => GameAlchemy.spawnTerrain?.(opts),
+    
   };
 }, [GameAlchemy.core]);
 
