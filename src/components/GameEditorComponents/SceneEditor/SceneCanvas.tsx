@@ -89,56 +89,7 @@ const SceneCanvas: React.FC = () => {
   }, [currentObjectId, gameObjectsMap, requestRenderIfNotRequested]);
 
   /* ---------- drag’n’drop ---------- */
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  const handleMouseDown = useCallback((e: MouseEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width  / canvas.clientWidth);
-    const y = (e.clientY - rect.top ) * (canvas.height / canvas.clientHeight);
-
-    for (let i = sceneObjects.length - 1; i >= 0; i--) {
-      const so = sceneObjects[i];
-      if (so.containsPoint?.(x, y)) {
-        dispatch(setCurrentObjectId(so.id));
-        setIsDragging(true);
-        const live = gameObjectsMap.get(so.id);
-        if (live) setDragOffset({ x: x - live.x, y: y - live.y });
-        return;
-      }
-    }
-    dispatch(setCurrentObjectId(null));
-  }, [sceneObjects, dispatch, gameObjectsMap]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !currentObjectId) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width  / canvas.clientWidth);
-    const y = (e.clientY - rect.top ) * (canvas.height / canvas.clientHeight);
-
-    const live = gameObjectsMap.get(currentObjectId);
-    if (!live) return;
-    handleUpdateObjectLocal({ ...live, x: x - dragOffset.x, y: y - dragOffset.y });
-  }, [isDragging, currentObjectId, gameObjectsMap, dragOffset, handleUpdateObjectLocal]);
-
-  const handleMouseUp = useCallback(() => setIsDragging(false), []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseup',   handleMouseUp);
-    return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseup',   handleMouseUp);
-    };
-  }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
   /* ---------- canvas resize ---------- */
   useCanvasResize(canvasRef, GameAlchemy.core);
