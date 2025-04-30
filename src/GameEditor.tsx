@@ -9,10 +9,8 @@ import {
   MenuOutlined,
 } from "@ant-design/icons";
 import { v4 as uuidv4 } from "uuid";
-import LogicCodeEditorContent from "./components/GameEditorComponents/LogicCodeEditor/LogicCodeEditorContent";
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
-import ProjectSettingsDrawer from "./components/ProjectSettings/ProjectSettingsDrawer";
 
 import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
@@ -49,26 +47,6 @@ const createScene = (sceneName: string) => ({
   settings: {},
 });
 
-// ────────────────────────────────────────────────────────────
-// Логика инициализации (только CodeLogic — GUI выпилен)
-// ────────────────────────────────────────────────────────────
-const createInitialSceneCodeLogic = (projectId: string, sceneId: string) => {
-  const initialCode = `// Редактор кода для сцены ${sceneId}
-
-function runLogic() {
-  console.log("Hello, World!");
-}
-`;
-  try {
-    const key = `CodeLogic:${projectId}:${sceneId}`;
-    localStorage.setItem(key, initialCode);
-  } catch (error) {
-    console.error(`Ошибка при сохранении CodeLogic для сцены ${sceneId}:`, error);
-  }
-};
-
-const createInitialSceneLogic = (projectId: string, sceneId: string) =>
-  createInitialSceneCodeLogic(projectId, sceneId);
 
 
 // ────────────────────────────────────────────────────────────
@@ -106,7 +84,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
       const newScene = createScene(sceneName);
       dispatch(addScene(newScene));
 
-      createInitialSceneLogic(project.id, newScene.id);
 
       const newOpenedScene = {
         id: newScene.id,
@@ -167,7 +144,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
     setIsPreviewing(false);
     // можно восстановить редакторскую камеру, если нужно
   };
-  const toggleDrawer = () => setDrawerVisible(!drawerVisible);
 
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: handleNewScene },
@@ -240,12 +216,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
           height: "48px",
         }}
       >
-        <Button
-          type="text"
-          icon={<MenuOutlined />}
-          onClick={toggleDrawer}
-          style={{ color: "white" }}
-        />
+
         <Space>
           <Button
             type="primary"
@@ -280,13 +251,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
         </Content>
       </Layout>
 
-      {/* ───── Настройки проекта ───── */}
-      <ProjectSettingsDrawer
-        visible={drawerVisible}
-        onClose={toggleDrawer}
-        project={project}
-        onUpdateProject={onUpdateProject}
-      />
     </Layout>
   );
 };
