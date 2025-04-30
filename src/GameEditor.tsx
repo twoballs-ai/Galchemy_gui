@@ -29,7 +29,7 @@ import {
   updateScene,
   updateOpenedScene,
 } from "./store/slices/projectSlice";
-
+import { StopOutlined } from "@ant-design/icons";
 // Интерфейс для данных логики сцены (используется для сохранения кода)
 interface SceneLogicData {
   logicEvents: any[];
@@ -70,18 +70,6 @@ function runLogic() {
 const createInitialSceneLogic = (projectId: string, sceneId: string) =>
   createInitialSceneCodeLogic(projectId, sceneId);
 
-const createProjectLogic = (projectId: string) => {
-  const key = `CodeLogic:${projectId}:projectLogic`;
-  if (!localStorage.getItem(key)) {
-    const initialCode = `// Редактор кода для проекта
-
-function runProjectLogic() {
-  console.log("Project Logic");
-}
-`;
-    localStorage.setItem(key, initialCode);
-  }
-};
 
 // ────────────────────────────────────────────────────────────
 // Компонент GameEditor
@@ -97,10 +85,9 @@ const GameEditor: React.FC<GameEditorProps> = ({
     (state: RootState) => state.project
   );
 
-  const [editorTabs, setEditorTabs] = useState<{ [key: string]: string }>({});
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
     sceneName: s.sceneName,
@@ -110,7 +97,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
   useEffect(() => {
     dispatch(loadProject(project.id)).then(() => {
       setIsProjectLoaded(true);
-      createProjectLogic(project.id);
     });
   }, [dispatch, project.id]);
 
@@ -126,7 +112,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
         id: newScene.id,
         sceneName: newScene.sceneName,
         key: newScene.id,
-        state: "levelEditor",
       };
 
       dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
@@ -147,40 +132,40 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const handleNewScene = () => addNewScene(`Scene ${scenes.length + 1}`);
 
   const handleRemoveOpenedScene = (tabKey: string) => {
-    if (tabKey === "projectLogic") return;
-
     const updatedOpenedScenes = openedScenes.filter((scene) => scene.key !== tabKey);
     dispatch(setOpenedScenes(updatedOpenedScenes));
-
+  
     if (activeScene === tabKey) {
-      const newActive =
-        updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "projectLogic";
+      const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "";
       dispatch(setActiveScene(newActive));
     }
-
+  
     dispatch(saveProject(project.id));
   };
+  
 
   const handleSceneChange = (tabKey: string) => {
     dispatch(setActiveScene(tabKey));
     dispatch(saveProject(project.id));
   };
 
-  const handleEditorTabChange = (mode: string) => {
-    setEditorTabs((prev) => ({ ...prev, [activeScene]: mode }));
-    dispatch(updateOpenedScene({ key: activeScene, newState: mode }));
-    dispatch(saveProject(project.id));
-  };
-
-  // ───── Запуск игры ─────
+ 
   const handleRunGame = () => {
-    if (activeScene !== "projectLogic") {
-      const { sceneManager } = GameAlchemy.core;
-      sceneManager.changeScene?.(activeScene);   // 🆕 Переключаем сцену!
+    if (!activeScene) return; // Защита от пустой сцены
   
-      globalLogicManager.runLogicForScene(activeScene);
-      GameAlchemy.setPreviewMode();
-    }
+    const { sceneManager } = GameAlchemy.core;
+    sceneManager.changeScene?.(activeScene); // Переключаем сцену
+  
+    globalLogicManager.runLogicForScene(activeScene);
+    GameAlchemy.setPreviewMode();
+    setIsPreviewing(true);
+  };
+  
+  // ───── Выход из предпросмотра ─────
+  const handleStopPreview = () => {
+    GameAlchemy.setEditorMode();
+    setIsPreviewing(false);
+    // можно восстановить редакторскую камеру, если нужно
   };
   const toggleDrawer = () => setDrawerVisible(!drawerVisible);
 
@@ -199,13 +184,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
     { label: "Контакты", key: "contact" },
   ];
 
-  const currentEditorMode =
-    openedScenes.find((scene) => scene.key === activeScene)?.state || "levelEditor";
-
-  // ───── Логический редактор (только CodeEditor) ─────
-  const renderLogicEditor = () => (
-    <LogicCodeEditorContent activeScene={activeScene} />
-  );
 
   // ────────────────────────────────────────────────────
   // JSX
@@ -279,11 +257,14 @@ const GameEditor: React.FC<GameEditorProps> = ({
           </Button>
           <Button
             type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={handleRunGame}
-          >
-            Run Scene
-          </Button>
+  
+
+                     icon={isPreviewing ? <StopOutlined /> : <PlayCircleOutlined />}
+                     onClick={isPreviewing ? handleStopPreview : handleRunGame}
+                    >
+
+                    {isPreviewing ? "Stop Preview" : "Run Scene"}
+                    </Button>
         </Space>
         <div style={{ width: "48px" }} />
       </Header>
@@ -291,34 +272,11 @@ const GameEditor: React.FC<GameEditorProps> = ({
       {/* ───── Контент ───── */}
       <Layout>
         <Content style={{ padding: "16px", background: "#2e2e2e" }}>
-          {activeScene !== "projectLogic" && activeScene !== "" && (
-            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-              <Button
-                type={currentEditorMode === "levelEditor" ? "primary" : "default"}
-                onClick={() => handleEditorTabChange("levelEditor")}
-              >
-                Редактор уровня
-              </Button>
-              <Button
-                type={currentEditorMode === "logicEditor" ? "primary" : "default"}
-                onClick={() => handleEditorTabChange("logicEditor")}
-              >
-                Редактор логики
-              </Button>
-              <h2 style={{ color: "white" }}>
-                Active Scene: {scenes.find((s) => s.id === activeScene)?.sceneName || activeScene}
-              </h2>
-            </div>
-          )}
 
-          {activeScene === "projectLogic" || currentEditorMode === "logicEditor" ? (
-            renderLogicEditor()
-          ) : (
-            <SceneEditor
-              activeScene={activeScene}
-              projectName={project.name}
-            />
-          )}
+        <SceneEditor
+  activeScene={activeScene}
+  projectName={project.name}
+/>
         </Content>
       </Layout>
 

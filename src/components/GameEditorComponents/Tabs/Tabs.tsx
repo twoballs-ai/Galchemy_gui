@@ -24,20 +24,14 @@ const Tabs: React.FC<TabsProps> = ({
   const minTabWidth = 90;
   const containerWidth = 1000;
 
-  // Вставляем проектную логику (projectLogic) в самое начало, если её ещё нет
-  const allTabs: Tab[] = [
-    { key: 'projectLogic', sceneName: 'Проектная логика' },
-    ...tabs.filter(tab => tab.key !== 'projectLogic'),
-  ];
-
   const tabWidth = Math.max(
     minTabWidth,
-    Math.min(maxTabWidth, containerWidth / allTabs.length)
+    Math.min(maxTabWidth, containerWidth / tabs.length)
   );
 
   return (
     <div className="tabs-container">
-      {allTabs.map((tab) => (
+      {tabs.map((tab) => (
         <div
           key={tab.key}
           className={`tab ${activeTab === tab.key ? 'tab--active' : ''}`}
@@ -45,15 +39,13 @@ const Tabs: React.FC<TabsProps> = ({
           style={{ width: `${tabWidth}px` }}
         >
           {tab.sceneName}
-          {tab.key !== 'projectLogic' && (
-            <CloseOutlined
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveTab(tab.key);
-              }}
-              className="close-icon"
-            />
-          )}
+          <CloseOutlined
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveTab(tab.key);
+            }}
+            className="close-icon"
+          />
         </div>
       ))}
     </div>

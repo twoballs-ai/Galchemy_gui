@@ -16,7 +16,6 @@ export interface OpenedScene {
   id: string;
   sceneName: string;
   key: string;
-  state: string; // например, "default" или другой статус редактора
 }
 
 export interface ProjectData {

@@ -104,15 +104,7 @@ const projectSlice = createSlice({
       console.log("add_scenes");
       state.scenes.push(action.payload);
     },
-    updateOpenedScene(
-      state,
-      action: PayloadAction<{ key: string; newState: string }>
-    ) {
-      const openedScene = state.openedScenes.find(s => s.key === action.payload.key);
-      if (openedScene) {
-        openedScene.state = action.payload.newState;
-      }
-    },
+
     /** Удаляем сцену по её id */
     removeScene(state, action: PayloadAction<string>) {
       state.scenes = state.scenes.filter(scene => scene.id !== action.payload);

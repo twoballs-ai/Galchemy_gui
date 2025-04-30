@@ -7,11 +7,13 @@ import "./SceneEditor.scss";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../store/store";
 import { loadSceneObjects } from "../../../store/slices/sceneObjectsSlice";
+import TransformToolbar from './TransformToolbar'; // путь зависит от твоей структуры
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480 };
 const cols = { lg: 12, md: 10, sm: 6, xs: 4 };
+
 
 const initialLayouts: Layouts = {
   lg: [
@@ -40,14 +42,14 @@ const initialLayouts: Layouts = {
 interface SceneEditorProps {
   projectName: string;
   activeScene: string;
-  renderType: string;
 }
 
 const SceneEditor: React.FC<SceneEditorProps> = ({
   activeScene,
-  renderType,
+
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const [activeTool, setActiveTool] = useState<'hand' | 'translate' | 'rotate' | 'scale'>('translate');
 
   // Локальное состояние для макетов
   const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
@@ -115,6 +117,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
 
   return (
     <div className="scene-editor">
+      <TransformToolbar activeTool={activeTool} onToolChange={setActiveTool} />
       <ResponsiveGridLayout
         className="layout"
         layouts={layouts}
@@ -134,7 +137,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
         )}
 
         <div key="sceneCanvas" className="panel">
-          <SceneCanvas renderType={renderType} />
+          <SceneCanvas/>
         </div>
 
         {panels.propertiesPanel && (
