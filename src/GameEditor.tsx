@@ -11,7 +11,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
-
+import EditorMenuBar from "./components/GameEditorComponents/MainMenuBar";
 import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
 
@@ -59,9 +59,8 @@ const GameEditor: React.FC<GameEditorProps> = ({
     (state: RootState) => state.project
   );
 
-  const [drawerVisible, setDrawerVisible] = useState(false);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-  const [isPreviewing, setIsPreviewing] = useState(false);
+
   const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
     sceneName: s.sceneName,
@@ -123,20 +122,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
   };
 
  
-  const projectMenuItems = [
-    { label: "Создать сцену", key: "newScene", onClick: handleNewScene },
-    { label: "Закрыть проект", key: "close", onClick: onCloseProject },
-  ];
 
-  const editMenuItems = [
-    { label: "Отменить", key: "undo" },
-    { label: "Повторить", key: "redo" },
-  ];
-
-  const aboutMenuItems = [
-    { label: "Версия", key: "version" },
-    { label: "Контакты", key: "contact" },
-  ];
 
 
   // ────────────────────────────────────────────────────
@@ -146,33 +132,10 @@ const GameEditor: React.FC<GameEditorProps> = ({
     <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
       {/* ───── Верхнее меню и вкладки ───── */}
       <Header style={{ background: "#1f1f1f", padding: "0 16px", display: "flex", height: "60px" }}>
-        <Dropdown menu={{ items: projectMenuItems }} trigger={["click"]}>
-          <Space>
-            <Button type="text" style={{ color: "white" }}>
-              Проект
-            </Button>
-            <DownOutlined />
-          </Space>
-        </Dropdown>
-
-        <Dropdown menu={{ items: editMenuItems }} trigger={["click"]}>
-          <Space>
-            <Button type="text" style={{ color: "white", marginLeft: "16px" }}>
-              Правка
-            </Button>
-            <DownOutlined />
-          </Space>
-        </Dropdown>
-
-        <Dropdown menu={{ items: aboutMenuItems }} trigger={["click"]}>
-          <Space>
-            <Button type="text" style={{ color: "white", marginLeft: "16px" }}>
-              О программе
-            </Button>
-            <DownOutlined />
-          </Space>
-        </Dropdown>
-
+      <EditorMenuBar
+  onNewScene={handleNewScene}
+  onCloseProject={onCloseProject}
+/>
         <Tabs
           tabs={sceneTabs}
           activeTab={activeScene}
