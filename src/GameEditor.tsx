@@ -28,10 +28,6 @@ import {
   updateOpenedScene,
 } from "./store/slices/projectSlice";
 import { StopOutlined } from "@ant-design/icons";
-// Интерфейс для данных логики сцены (используется для сохранения кода)
-interface SceneLogicData {
-  logicEvents: any[];
-}
 
 const { Header, Content } = Layout;
 
@@ -127,24 +123,6 @@ const GameEditor: React.FC<GameEditorProps> = ({
   };
 
  
-  const handleRunGame = () => {
-    if (!activeScene) return; // Защита от пустой сцены
-  
-    const { sceneManager } = GameAlchemy.core;
-    sceneManager.changeScene?.(activeScene); // Переключаем сцену
-  
-    globalLogicManager.runLogicForScene(activeScene);
-    GameAlchemy.setPreviewMode();
-    setIsPreviewing(true);
-  };
-  
-  // ───── Выход из предпросмотра ─────
-  const handleStopPreview = () => {
-    GameAlchemy.setEditorMode();
-    setIsPreviewing(false);
-    // можно восстановить редакторскую камеру, если нужно
-  };
-
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: handleNewScene },
     { label: "Закрыть проект", key: "close", onClick: onCloseProject },
@@ -217,32 +195,13 @@ const GameEditor: React.FC<GameEditorProps> = ({
         }}
       >
 
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleNewScene}
-            style={{ marginRight: "16px" }}
-          >
-            New Scene
-          </Button>
-          <Button
-            type="primary"
-  
 
-                     icon={isPreviewing ? <StopOutlined /> : <PlayCircleOutlined />}
-                     onClick={isPreviewing ? handleStopPreview : handleRunGame}
-                    >
-
-                    {isPreviewing ? "Stop Preview" : "Run Scene"}
-                    </Button>
-        </Space>
         <div style={{ width: "48px" }} />
       </Header>
 
       {/* ───── Контент ───── */}
       <Layout>
-        <Content style={{ padding: "16px", background: "#2e2e2e" }}>
+        <Content style={{ padding: "6px", background: "#2e2e2e" }}>
 
         <SceneEditor
   activeScene={activeScene}

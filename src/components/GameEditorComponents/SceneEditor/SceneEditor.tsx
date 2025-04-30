@@ -7,8 +7,11 @@ import "./SceneEditor.scss";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../store/store";
 import { loadSceneObjects } from "../../../store/slices/sceneObjectsSlice";
-import TransformToolbar from './TransformToolbar'; // путь зависит от твоей структуры
-
+import TransformToolbar from './EditorToolbar'; // путь зависит от твоей структуры
+import { PlayCircle, Square } from "lucide-react";
+import { GameAlchemy } from 'game-alchemy-core';  
+import { globalLogicManager } from "../../../logicManager";
+import EditorToolbar from './EditorToolbar'
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480 };
@@ -114,10 +117,29 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
     });
     setLayouts(newLayouts);
   };
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const handleStartPreview = () => {
+    if (!activeScene) return;
+    GameAlchemy.core.sceneManager.changeScene?.(activeScene);
+    globalLogicManager.runLogicForScene(activeScene);
+    GameAlchemy.setPreviewMode();
+    setIsPreviewing(true);
+  };
 
+  const handleStopPreview = () => {
+    GameAlchemy.setEditorMode();
+    setIsPreviewing(false);
+  };
   return (
     <div className="scene-editor">
-      <TransformToolbar activeTool={activeTool} onToolChange={setActiveTool} />
+ <EditorToolbar
+      activeTool={activeTool}
+      onToolChange={setActiveTool}
+      isPreviewing={isPreviewing}
+      onTogglePreview={() =>
+        isPreviewing ? handleStopPreview() : handleStartPreview()
+      }
+    />
       <ResponsiveGridLayout
         className="layout"
         layouts={layouts}
