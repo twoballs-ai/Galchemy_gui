@@ -46,17 +46,33 @@ const SceneCanvas: React.FC = () => {
     }
   }, []);
 
-  /* ---------- локальное обновление объекта ---------- */
-  const handleUpdateObjectLocal = useCallback((updated: GameObjectLive) => {
-    setGameObjectsMap(prev => {
-      const m = new Map(prev);
-      if (m.has(updated.id)) m.set(updated.id, { ...m.get(updated.id)!, ...updated });
-      return m;
-    });
-    dispatch(updateSceneObject({ activeScene, object: updated }));
-    requestRenderIfNotRequested();
-  }, [dispatch, activeScene, requestRenderIfNotRequested]);
 
+  useEffect(() => {
+    const core = GameAlchemy?.core;
+    if (!core || !core.emitter) return;
+  
+    // Слушаем событие выделения объекта
+    const onObjectSelected = (payload: { id: string } | null) => {
+      if (payload?.id) {
+        dispatch(setCurrentObjectId(payload.id)); // Обновляем выделенный объект в Redux
+      } else {
+        dispatch(setCurrentObjectId(null)); // Если ничего не выбрано
+      }
+    };
+  
+    // Подписка на событие
+    core.emitter.on("objectSelected", onObjectSelected);
+  
+    return () => {
+      core.emitter.off("objectSelected", onObjectSelected); // Отписка от события
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!GameAlchemy.core) return;
+    const live = currentObjectId ? GameAlchemy.core.scene.objects.find(o => o.id === currentObjectId) : null;
+    GameAlchemy.core.scene.setSelected?.(live || null); // ← это метод у вас, скорее всего, не существует
+  }, [currentObjectId]);
   /* ---------- init GameAlchemy ---------- */
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -80,34 +96,32 @@ const SceneCanvas: React.FC = () => {
     return () => GameAlchemy.core?.stop();
   }, [activeScene]);
 
-  /* ---------- выделение объекта в сцене ---------- */
-  useEffect(() => {
-    if (!GameAlchemy.core) return;
-    const live = currentObjectId ? gameObjectsMap.get(currentObjectId) : null;
-    GameAlchemy.core.scene.setSelected?.(live || null);
-    requestRenderIfNotRequested();
-  }, [currentObjectId, gameObjectsMap, requestRenderIfNotRequested]);
-
-  /* ---------- drag’n’drop ---------- */
-
 
   /* ---------- canvas resize ---------- */
   useCanvasResize(canvasRef, GameAlchemy.core);
 
   /* ---------- shape-factory из ядра ---------- */
-const shapeFactory = useMemo(() => {
-  if (!GameAlchemy.core) return {};
-  const gl = GameAlchemy.core.ctx;
-  return {
-    sphere  : (opts = {}) => GameAlchemy.primitiveFactory.create('sphere',   gl, opts),
-    cube    : (opts = {}) => GameAlchemy.primitiveFactory.create('cube',     gl, opts),
-    cylinder: (opts = {}) => GameAlchemy.primitiveFactory.create('cylinder', gl, opts),
-    camera: (opts = {}) => GameAlchemy.primitiveFactory.create('camera', GameAlchemy.core.ctx, opts),
-    light: (opts = {}) => GameAlchemy.primitiveFactory.create('light', gl, opts),
-    terrain : (opts = {}) => GameAlchemy.spawnTerrain?.(opts),
-    
+  const shapeFactory = useMemo(() => {
+    if (!GameAlchemy.core) return {};
+    const gl = GameAlchemy.core.ctx;
+    return {
+      sphere  : (opts = {}) => GameAlchemy.primitiveFactory.create('sphere',   gl, opts),
+      cube    : (opts = {}) => GameAlchemy.primitiveFactory.create('cube',     gl, opts),
+      cylinder: (opts = {}) => GameAlchemy.primitiveFactory.create('cylinder', gl, opts),
+      camera: (opts = {}) => GameAlchemy.primitiveFactory.create('camera', GameAlchemy.core.ctx, opts),
+      light: (opts = {}) => GameAlchemy.primitiveFactory.create('light', gl, opts),
+      terrain : (opts = {}) => GameAlchemy.spawnTerrain?.(opts),
+    };
+  }, [GameAlchemy.core]);
+
+  /* ---------- handle object selection ---------- */
+  const handleObjectSelect = (objectId: string | null) => {
+    // Эмитируем событие, чтобы панель могла обновить свой выбор
+    GameAlchemy.core?.emitter.emit("objectSelected", { id: objectId });
   };
-}, [GameAlchemy.core]);
+
+  // В момент выбора объекта на холсте
+  handleObjectSelect(currentObjectId);
 
   /* ---------- render ---------- */
   return (
