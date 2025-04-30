@@ -26,22 +26,26 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, [activeScene, dispatch]);
 
   useEffect(() => {
-    // Слушаем событие выделения объекта
-    const onObjectSelected = (payload: { id: string } | null) => {
-      if (payload?.id) {
-        dispatch(setCurrentObjectId(payload.id)); // Обновляем выделенный объект в Redux
-      } else {
-        dispatch(setCurrentObjectId(null)); // Если ничего не выбрано
+    const interval = setInterval(() => {
+      if (GameAlchemy.core?.emitter) {
+        const onObjectSelected = (payload: { id: string } | null) => {
+          if (payload?.id) {
+            dispatch(setCurrentObjectId(payload.id));
+          } else {
+            dispatch(setCurrentObjectId(null));
+          }
+        };
+  
+        GameAlchemy.core.emitter.on("objectSelected", onObjectSelected);
+  
+        clearInterval(interval); // всё ок — очистить интервал
+        return () => {
+          GameAlchemy.core?.emitter?.off("objectSelected", onObjectSelected);
+        };
       }
-    };
-
-    // Подписка на событие
-    GameAlchemy.core.emitter.on("objectSelected", onObjectSelected);
-
-    return () => {
-      // Отписка от события при размонтировании компонента
-      GameAlchemy.core.emitter.off("objectSelected", onObjectSelected);
-    };
+    }, 100); // проверяем каждые 100 мс
+  
+    return () => clearInterval(interval);
   }, [dispatch]);
 
 const handleSelectObject = (object: any) => {
