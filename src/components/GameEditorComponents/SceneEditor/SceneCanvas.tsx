@@ -47,36 +47,21 @@ const SceneCanvas: React.FC = () => {
   }, []);
 
 
-  useEffect(() => {
-    const core = GameAlchemy?.core;
-    if (!core || !core.emitter) return;
   
-    // Слушаем событие выделения объекта
-    const onObjectSelected = (payload: { id: string } | null) => {
-      if (payload?.id) {
-        dispatch(setCurrentObjectId(payload.id)); // Обновляем выделенный объект в Redux
-      } else {
-        dispatch(setCurrentObjectId(null)); // Если ничего не выбрано
-      }
-    };
-  
-    // Подписка на событие
-    core.emitter.on("objectSelected", onObjectSelected);
-  
-    return () => {
-      core.emitter.off("objectSelected", onObjectSelected); // Отписка от события
-    };
-  }, [dispatch]);
-
   useEffect(() => {
     if (!GameAlchemy.core) return;
-    const live = currentObjectId ? GameAlchemy.core.scene.objects.find(o => o.id === currentObjectId) : null;
-    GameAlchemy.core.scene.setSelected?.(live || null); // ← это метод у вас, скорее всего, не существует
+  
+    const live = currentObjectId
+      ? GameAlchemy.core.scene.objects.find(o => o.id === currentObjectId)
+      : null;
+  
+    GameAlchemy.core.scene.selectedObject = live;  // Обновляем состояние в ядре
+    GameAlchemy.core.setSelectedObject?.(live);   // Уведомляем рендерер
   }, [currentObjectId]);
   /* ---------- init GameAlchemy ---------- */
   useEffect(() => {
     if (!canvasRef.current) return;
-
+  
     GameAlchemy.init({
       canvasId : canvasRef.current.id,
       w        : canvasRef.current.clientWidth,
@@ -84,18 +69,30 @@ const SceneCanvas: React.FC = () => {
       bg       : '#5d8aa8',
     });
     GameAlchemy.setEditorMode();
-
-    const { sceneManager } = GameAlchemy.core;
+  
+    /* ---------- ПОДПИСЫВАЕМСЯ ЗДЕСЬ, когда core уже есть ---------- */
+    const core = GameAlchemy.core!;
+    const onObjectSelected = (p: { id: string } | null) =>
+      dispatch(setCurrentObjectId(p?.id || null));
+  
+    core.emitter.on('objectSelected', onObjectSelected);
+  
+    /* ---------- сцены, старт, … ---------- */
+    const { sceneManager } = core;
     if (!sceneManager.getCurrentScene()
         || sceneManager.getCurrentScene().name !== activeScene) {
       sceneManager.createScene(activeScene);
       sceneManager.switchScene(activeScene);
     }
-
+  
     GameAlchemy.start();
-    return () => GameAlchemy.core?.stop();
-  }, [activeScene]);
-
+  
+    /* ---------- зачистка ---------- */
+    return () => {
+      core.emitter.off('objectSelected', onObjectSelected);
+      core.stop();
+    };
+  }, [activeScene, dispatch]);      
 
   /* ---------- canvas resize ---------- */
   useCanvasResize(canvasRef, GameAlchemy.core);
@@ -114,14 +111,6 @@ const SceneCanvas: React.FC = () => {
     };
   }, [GameAlchemy.core]);
 
-  /* ---------- handle object selection ---------- */
-  const handleObjectSelect = (objectId: string | null) => {
-    // Эмитируем событие, чтобы панель могла обновить свой выбор
-    GameAlchemy.core?.emitter.emit("objectSelected", { id: objectId });
-  };
-
-  // В момент выбора объекта на холсте
-  handleObjectSelect(currentObjectId);
 
   /* ---------- render ---------- */
   return (
