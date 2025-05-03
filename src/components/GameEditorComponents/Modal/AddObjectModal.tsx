@@ -16,8 +16,8 @@ import "./AddObjectModal.scss";
 
 interface AddObjectModalProps {
   open: boolean;
-  // Теперь payload может содержать дополнительно subtype для света
-  onAdd: (payload: { id: string; type: ObjectType; subtype?: LightSubtype }) => void;
+  // Добавлено поле name
+  onAdd: (payload: { id: string; type: ObjectType; name: string; subtype?: LightSubtype }) => void;
   onClose: () => void;
 }
 
@@ -77,8 +77,8 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
   const handleSelect = (item: GroupedItem) => {
     onAdd({ 
       id: uuidv4(), 
-      type: item.type, 
-      // прокидываем subtype, если есть
+      type: item.type,
+      name: item.title, // <--- добавлено имя
       ...(item.subtype ? { subtype: item.subtype } : {}) 
     });
     onClose();

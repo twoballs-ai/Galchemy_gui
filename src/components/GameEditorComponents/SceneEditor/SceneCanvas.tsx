@@ -77,7 +77,7 @@ const SceneCanvas: React.FC = () => {
   
     core.emitter.on('objectSelected', onObjectSelected);
   
-    /* ---------- сцены, старт, … ---------- */
+    /* ---------- сцены, старт, ---------- */
     const { sceneManager } = core;
     if (!sceneManager.getCurrentScene()
         || sceneManager.getCurrentScene().name !== activeScene) {

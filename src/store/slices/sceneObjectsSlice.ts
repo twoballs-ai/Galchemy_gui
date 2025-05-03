@@ -15,6 +15,7 @@ export interface GameObject {
   title: string;
   x: number;
   y: number;
+  z: number;
   width?: number;
   height?: number;
   radius?: number | null;
