@@ -36,7 +36,12 @@ const GameObjectManager: React.FC<GameObjectManagerProps> = ({
       console.warn('Неизвестный тип объекта:', obj.type);
       return null;
     }
-    const go = builder(obj);     // все параметры (кроме id/type) идут как есть
+    const opts = {
+      ...obj,
+      // важная строка — задаём позицию из Redux-поля (x,y,z)
+      position: [ obj.x, obj.y, obj.z ],
+    };
+    const go = builder(opts);    // все параметры (кроме id/type) идут как есть
     go.id = obj.id;
     if (coreInstance.showHelpers) {
       go.isEditorMode = true;
