@@ -16,8 +16,20 @@ import "./AddObjectModal.scss";
 
 interface AddObjectModalProps {
   open: boolean;
-  // Добавлено поле name
-  onAdd: (payload: { id: string; type: ObjectType; name: string; subtype?: LightSubtype }) => void;
+  onAdd: (payload: { 
+    id: string;
+    type: ObjectType;
+    name: string;
+    x: number;
+    y: number;
+    z: number;
+    radius?: number;
+    segments?: number;
+    width?: number;
+    height?: number;
+    depth?: number;
+    subtype?: LightSubtype;
+  }) => void;
   onClose: () => void;
 }
 
@@ -75,15 +87,27 @@ const groupedObjects: { group: string; items: GroupedItem[] }[] = [
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
   const handleSelect = (item: GroupedItem) => {
-    onAdd({ 
-      id: uuidv4(), 
+    const x = 0, y = 0, z = 0;
+    const base = {
+      id: uuidv4(),
       type: item.type,
-      name: item.title, // <--- добавлено имя
-      ...(item.subtype ? { subtype: item.subtype } : {}) 
-    });
+      name: item.title,
+      x, y, z,
+      ...(item.subtype ? { subtype: item.subtype } : {})
+    };
+
+    if (item.type === "sphere") {
+      onAdd({ ...base, radius: 1, segments: 16 });
+    } else if (item.type === "cube") {
+      onAdd({ ...base, width: 1, height: 1, depth: 1 });
+    } else {
+      onAdd(base);
+    }
+
     onClose();
   };
 
+  
   return (
     <CustomModal open={open} onClose={onClose} title="Добавить объект">
       <div className="add-object-modal">

@@ -81,3 +81,24 @@
     }
   }
 }
+.position-label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  color: white;
+
+  .position-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+
+    input {
+      width: 60px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background-color: #fff;
+      color: #000;
+    }
+  }
+}
