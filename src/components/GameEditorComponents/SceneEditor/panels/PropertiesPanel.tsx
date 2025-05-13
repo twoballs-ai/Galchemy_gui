@@ -58,8 +58,9 @@ const objectPropertiesConfig: Record<string, any[]> = {
   ],
   terrain: [
     ...baseProps,
-    { key: "width",  label: "Ширина", type: "number" },
-    { key: "height", label: "Высота", type: "number" },
+    { key: "width",  label: "Ширина", type: "number", min: 1 },
+    { key: "depth",  label: "Длина",  type: "number", min: 1 },
+    ...materialProps,
   ],
 };
 
@@ -68,6 +69,7 @@ const geometryKeys: Record<string, Set<string>> = {
   sphere:   new Set(["radius", "segments"]),
   cube:     new Set(["width", "height", "depth"]),
   cylinder: new Set(["radius", "height"]),
+  terrain:  new Set(["width", "depth"]),
 };
 
 const needsGeometry = (type: string, key: string) =>
@@ -139,7 +141,8 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </label>
         );
       }
-      if (prop.key === "height" || prop.key === "depth") return null;
+      if ((prop.key === "height" || prop.key === "depth") && selectedObject.type === "cube") return null;
+
 
       if (prop.key === "width" && selectedObject.type === "cube") {
         return (

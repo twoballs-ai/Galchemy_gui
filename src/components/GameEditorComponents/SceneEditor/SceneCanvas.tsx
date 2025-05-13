@@ -102,15 +102,15 @@ const SceneCanvas: React.FC = () => {
     if (!GameAlchemy.core) return {};
     const gl = GameAlchemy.core.ctx;
     return {
-      sphere  : (opts = {}) => GameAlchemy.primitiveFactory.create('sphere',   gl, opts),
-      cube    : (opts = {}) => GameAlchemy.primitiveFactory.create('cube',     gl, opts),
-      cylinder: (opts = {}) => GameAlchemy.primitiveFactory.create('cylinder', gl, opts),
-      camera: (opts = {}) => GameAlchemy.primitiveFactory.create('camera', GameAlchemy.core.ctx, opts),
-      light: (opts = {}) => GameAlchemy.primitiveFactory.create('light', gl, opts),
-      terrain : (opts = {}) => GameAlchemy.spawnTerrain?.(opts),
+      sphere    : (opts = {}) => GameAlchemy.primitiveFactory.create('sphere',   gl, opts),
+      cube      : (opts = {}) => GameAlchemy.primitiveFactory.create('cube',     gl, opts),
+      cylinder  : (opts = {}) => GameAlchemy.primitiveFactory.create('cylinder', gl, opts),
+      camera    : (opts = {}) => GameAlchemy.primitiveFactory.create('camera',   gl, opts),
+      light     : (opts = {}) => GameAlchemy.primitiveFactory.create('light',    gl, opts),
+      terrain   : (opts = {}) => GameAlchemy.primitiveFactory.create('terrain',  gl, opts),
+      character : (opts = {}) => GameAlchemy.primitiveFactory.create('character',gl, opts), // ← добавили
     };
   }, [GameAlchemy.core]);
-
 
   /* ---------- render ---------- */
   return (

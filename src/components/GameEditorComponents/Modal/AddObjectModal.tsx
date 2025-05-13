@@ -11,7 +11,7 @@ import CylinderIcon  from "../../../icons/circle.png";
 import CameraIcon    from "../../../icons/circle.png";
 import LightIcon     from "../../../icons/circle.png";
 import TerrainIcon   from "../../../icons/circle.png";
-
+import CharacterIcon from "../../../icons/circle.png"; 
 import "./AddObjectModal.scss";
 
 interface AddObjectModalProps {
@@ -41,7 +41,8 @@ export type ObjectType =
   | "camera"
   | "light"
   | "terrain"
-  | "sprite";
+  | "sprite"
+  | "character"; // ← добавили
 
 // Подтип для освещений
 export type LightSubtype = "point" | "directional" | "ambient";
@@ -55,6 +56,12 @@ interface GroupedItem {
 }
 
 const groupedObjects: { group: string; items: GroupedItem[] }[] = [
+  {
+    group: "Персонажи",
+    items: [
+      { title: "Персонаж", type: "character", icon: CharacterIcon },
+    ],
+  },
   {
     group: "Камеры",
     items: [
@@ -100,6 +107,8 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
       onAdd({ ...base, radius: 1, segments: 16 });
     } else if (item.type === "cube") {
       onAdd({ ...base, width: 1, height: 1, depth: 1 });
+    } else if (item.type === "character") {
+      onAdd({ ...base }); // пока без специфики
     } else {
       onAdd(base);
     }
