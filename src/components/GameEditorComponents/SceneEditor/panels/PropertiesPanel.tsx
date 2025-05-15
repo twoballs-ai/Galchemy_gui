@@ -62,6 +62,11 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "depth",  label: "Длина",  type: "number", min: 1 },
     ...materialProps,
   ],
+  character: [
+    ...baseProps,
+    { key: "color",      label: "Цвет",           type: "color" },
+    { key: "textureSrc", label: "Текстура (URL)", type: "text"  },
+  ],
 };
 
 /* ---------- util: нужно ли пересчитывать геометрию ---------- */
