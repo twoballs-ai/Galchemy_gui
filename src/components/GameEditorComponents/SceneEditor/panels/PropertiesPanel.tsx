@@ -129,21 +129,23 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
       if (prop.key === "x") {
         return (
-          <label key="position" className="position-label">
-            Позиция
-            <div className="position-row">
-              {["x", "y", "z"].map(axis => (
-                <input
-                  key={axis}
-                  type="number"
-                  value={propsLocal[axis] ?? 0}
-                  onChange={e =>
-                    handleChange(axis, parseFloat(e.target.value) || 0)
-                  }
-                />
-              ))}
-            </div>
-          </label>
+<label key="position" className="position-label">
+  Позиция
+  <div className="position-row">
+    {["x", "y", "z"].map(axis => (
+      <div key={axis} className="position-input">
+        <span className="axis-label">{axis.toUpperCase()}</span>
+        <input
+          type="number"
+          value={propsLocal[axis] ?? 0}
+          onChange={e =>
+            handleChange(axis, parseFloat(e.target.value) || 0)
+          }
+        />
+      </div>
+    ))}
+  </div>
+</label>
         );
       }
       if ((prop.key === "height" || prop.key === "depth") && selectedObject.type === "cube") return null;
