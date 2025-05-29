@@ -39,7 +39,14 @@ const objectPropertiesConfig: Record<string, any[]> = {
   ],
   camera: [
     ...baseProps,
-    { key: "fov", label: "FOV", type: "number" },
+    { key: "fov",        label: "FOV",           type: "number", min: 10, max: 179 },
+    { key: "near",       label: "Near",          type: "number", min: 0.01, step: 0.01 },
+    { key: "far",        label: "Far",           type: "number", min: 1 },
+    { key: "isOrthographic", label: "Ортографическая", type: "checkbox" },
+    { key: "orthoSize",  label: "Ortho Size",    type: "number", min: 1 },
+    { key: "lookAtX",    label: "Смотреть на X", type: "number" },
+    { key: "lookAtY",    label: "Смотреть на Y", type: "number" },
+    { key: "lookAtZ",    label: "Смотреть на Z", type: "number" },
   ],
   light: [
     ...baseProps,
@@ -97,16 +104,33 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleChange = (key: string, value: any) => {
     if (!selectedObject || !activeScene) return;
 
-    const updated = { ...propsLocal, [key]: value };
+    const updated = { ...propsLocal };
+
+    if (key.startsWith("lookAt")) {
+      // Для камеры lookAtX/Y/Z => массив [x, y, z]
+      const idx = { lookAtX: 0, lookAtY: 1, lookAtZ: 2 }[key];
+      updated.lookAt = Array.isArray(updated.lookAt)
+        ? [...updated.lookAt]
+        : [0, 0, 0];
+      updated.lookAt[idx] = Number(value);
+    } else if (key === "isOrthographic") {
+      updated.isOrthographic = Boolean(value);
+    } else {
+      updated[key] = value;
+    }
+
     setPropsLocal(updated);
     dispatch(updateSceneObject({ activeScene, object: updated }));
 
     const { type, id } = selectedObject;
-    const delta = { [key]: value };
+    let delta;
+    if (key.startsWith("lookAt")) {
+      delta = { lookAt: updated.lookAt };
+    } else {
+      delta = { [key]: value };
+    }
 
-    if (needsGeometry(type, key) && GameAlchemy.updateObject) {
-      GameAlchemy.updateObject(id, type, delta);
-    } else if (GameAlchemy.patchObject) {
+    if (GameAlchemy.patchObject) {
       GameAlchemy.patchObject(id, delta);
     }
   };
