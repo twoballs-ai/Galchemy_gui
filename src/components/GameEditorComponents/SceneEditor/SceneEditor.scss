@@ -10,10 +10,11 @@
   }
   
   .panel {
-    background: #1c1c1c;
-    border: 1px solid #333;
-    display: flex;
-    flex-direction: column;
+  background: #1c1c1c;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; 
   }
   .panel .scene-canvas-container {
     flex-grow: 1; /* Позволяет SceneCanvas занимать все доступное пространство */
