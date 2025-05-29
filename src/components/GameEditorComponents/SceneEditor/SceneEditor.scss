@@ -57,4 +57,9 @@
   .panel-controls button {
     margin-left: 8px;
   }
-  
+  .asset-browser-panel {
+    min-height: 100px;
+    background: #232323;
+    border-top: 1px solid #343434;
+    overflow-y: auto;
+  }

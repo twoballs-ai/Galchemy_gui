@@ -1,0 +1,17 @@
+.asset-browser {
+    background: #242424;
+    color: #fafafa;
+    border-top: 1px solid #444;
+    padding: 12px;
+    min-height: 120px;
+  
+    .ant-btn {
+      margin-bottom: 8px;
+    }
+  
+    img {
+      object-fit: cover;
+      border-radius: 2px;
+    }
+  }
+  

@@ -12,6 +12,8 @@ import { PlayCircle, Square } from "lucide-react";
 import { GameAlchemy } from 'game-alchemy-core';  
 import { globalLogicManager } from "../../../logicManager";
 import EditorToolbar from './EditorToolbar'
+import AssetBrowserPanel from "./panels/AssetBrowserPanel"; // ← путь к панели
+
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480 };
@@ -23,24 +25,27 @@ const initialLayouts: Layouts = {
     { i: "objectsPanel", x: 0, y: 0, w: 3, h: 10, minH: 10 },
     { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 20, minH: 15 },
     { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 10, minH: 10 },
+    { i: "assetBrowserPanel", x: 0, y: 20, w: 12, h: 5, minH: 4 }, // <--- ДОБАВИЛИ
   ],
   md: [
     { i: "objectsPanel", x: 0, y: 0, w: 2, h: 10, minH: 10 },
     { i: "sceneCanvas", x: 2, y: 0, w: 6, h: 20, minH: 15 },
     { i: "propertiesPanel", x: 8, y: 0, w: 2, h: 10, minH: 10 },
+    { i: "assetBrowserPanel", x: 0, y: 20, w: 10, h: 4, minH: 3 },
   ],
   sm: [
     { i: "objectsPanel", x: 0, y: 0, w: 3, h: 5, minH: 5 },
     { i: "sceneCanvas", x: 0, y: 5, w: 6, h: 20, minH: 15 },
     { i: "propertiesPanel", x: 0, y: 25, w: 2, h: 5, minH: 5 },
+    { i: "assetBrowserPanel", x: 0, y: 30, w: 6, h: 4, minH: 3 },
   ],
   xs: [
     { i: "objectsPanel", x: 0, y: 0, w: 4, h: 5, minH: 5 },
     { i: "sceneCanvas", x: 0, y: 5, w: 4, h: 20, minH: 15 },
     { i: "propertiesPanel", x: 0, y: 25, w: 4, h: 5, minH: 5 },
+    { i: "assetBrowserPanel", x: 0, y: 30, w: 4, h: 4, minH: 3 },
   ],
 };
-
 
 interface SceneEditorProps {
   projectName: string;
@@ -59,6 +64,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
   const [panels, setPanels] = useState({
     objectsPanel: true,
     propertiesPanel: true,
+    assetBrowserPanel: true, // ← обязательно
   });
 
   // Если нужно хранить выделенный объект локально
@@ -169,6 +175,11 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
             />
           </div>
         )}
+        {panels.assetBrowserPanel && (
+  <div key="assetBrowserPanel" className="panel">
+    <AssetBrowserPanel onClose={() => handleClosePanel("assetBrowserPanel")} />
+  </div>
+)}
       </ResponsiveGridLayout>
 
       <div className="panel-controls">

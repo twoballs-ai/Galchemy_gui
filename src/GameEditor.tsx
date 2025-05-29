@@ -171,6 +171,7 @@ const GameEditor: React.FC<GameEditorProps> = ({
   projectName={project.name}
 />
         </Content>
+        
       </Layout>
 
     </Layout>
