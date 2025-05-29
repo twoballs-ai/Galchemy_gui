@@ -13,7 +13,8 @@ import { GameAlchemy } from 'game-alchemy-core';
 import { globalLogicManager } from "../../../logicManager";
 import EditorToolbar from './EditorToolbar'
 import AssetBrowserPanel from "./panels/AssetBrowserPanel"; // ← путь к панели
-
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480 };
@@ -22,50 +23,132 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4 };
 
 const initialLayouts: Layouts = {
   lg: [
-    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 10, minH: 10 },
-    { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 20, minH: 15 },
-    { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 10, minH: 10 },
-    { i: "assetBrowserPanel", x: 0, y: 20, w: 12, h: 5, minH: 4 }, // <--- ДОБАВИЛИ
+    {
+      i: "objectsPanel",
+      x: 0, y: 0, w: 3, h: 10,
+      minW: 2, minH: 8,
+      maxW: 6, maxH: 20
+    },
+    {
+      i: "sceneCanvas",
+      x: 3, y: 0, w: 6, h: 20,
+      minW: 4, minH: 15,
+      maxW: 8, maxH: 30
+    },
+    {
+      i: "propertiesPanel",
+      x: 9, y: 0, w: 3, h: 10,
+      minW: 2, minH: 8,
+      maxW: 6, maxH: 20
+    },
+    {
+      i: "assetBrowserPanel",
+      x: 0, y: 20, w: 12, h: 5,
+      minW: 4, minH: 3,
+      maxH: 10
+    },
   ],
   md: [
-    { i: "objectsPanel", x: 0, y: 0, w: 2, h: 10, minH: 10 },
-    { i: "sceneCanvas", x: 2, y: 0, w: 6, h: 20, minH: 15 },
-    { i: "propertiesPanel", x: 8, y: 0, w: 2, h: 10, minH: 10 },
-    { i: "assetBrowserPanel", x: 0, y: 20, w: 10, h: 4, minH: 3 },
+    {
+      i: "objectsPanel",
+      x: 0, y: 0, w: 2, h: 10,
+      minW: 2, minH: 8,
+      maxW: 4, maxH: 20
+    },
+    {
+      i: "sceneCanvas",
+      x: 2, y: 0, w: 6, h: 20,
+      minW: 4, minH: 15,
+      maxW: 8, maxH: 30
+    },
+    {
+      i: "propertiesPanel",
+      x: 8, y: 0, w: 2, h: 10,
+      minW: 2, minH: 8,
+      maxW: 4, maxH: 20
+    },
+    {
+      i: "assetBrowserPanel",
+      x: 0, y: 20, w: 10, h: 4,
+      minW: 4, minH: 3,
+      maxH: 10
+    },
   ],
   sm: [
-    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 5, minH: 5 },
-    { i: "sceneCanvas", x: 0, y: 5, w: 6, h: 20, minH: 15 },
-    { i: "propertiesPanel", x: 0, y: 25, w: 2, h: 5, minH: 5 },
-    { i: "assetBrowserPanel", x: 0, y: 30, w: 6, h: 4, minH: 3 },
+    {
+      i: "objectsPanel",
+      x: 0, y: 0, w: 3, h: 5,
+      minW: 2, minH: 4,
+      maxW: 6, maxH: 10
+    },
+    {
+      i: "sceneCanvas",
+      x: 0, y: 5, w: 6, h: 20,
+      minW: 4, minH: 15,
+      maxW: 6, maxH: 30
+    },
+    {
+      i: "propertiesPanel",
+      x: 0, y: 25, w: 2, h: 5,
+      minW: 2, minH: 4,
+      maxW: 4, maxH: 10
+    },
+    {
+      i: "assetBrowserPanel",
+      x: 0, y: 30, w: 6, h: 4,
+      minW: 4, minH: 3,
+      maxH: 10
+    },
   ],
   xs: [
-    { i: "objectsPanel", x: 0, y: 0, w: 4, h: 5, minH: 5 },
-    { i: "sceneCanvas", x: 0, y: 5, w: 4, h: 20, minH: 15 },
-    { i: "propertiesPanel", x: 0, y: 25, w: 4, h: 5, minH: 5 },
-    { i: "assetBrowserPanel", x: 0, y: 30, w: 4, h: 4, minH: 3 },
+    {
+      i: "objectsPanel",
+      x: 0, y: 0, w: 4, h: 5,
+      minW: 2, minH: 4,
+      maxW: 4, maxH: 10
+    },
+    {
+      i: "sceneCanvas",
+      x: 0, y: 5, w: 4, h: 20,
+      minW: 4, minH: 15,
+      maxH: 30
+    },
+    {
+      i: "propertiesPanel",
+      x: 0, y: 25, w: 4, h: 5,
+      minW: 2, minH: 4,
+      maxW: 4, maxH: 10
+    },
+    {
+      i: "assetBrowserPanel",
+      x: 0, y: 30, w: 4, h: 4,
+      minW: 4, minH: 3,
+      maxH: 10
+    },
   ],
 };
 
 interface SceneEditorProps {
   projectName: string;
   activeScene: string;
+    panels: {
+    objectsPanel: boolean;
+    propertiesPanel: boolean;
+    assetBrowserPanel: boolean;
+  };
+  onTogglePanel: (panelKey: keyof typeof panels) => void;
 }
 
 const SceneEditor: React.FC<SceneEditorProps> = ({
   activeScene,
-
+  panels,
+  onTogglePanel,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTool, setActiveTool] = useState<'hand' | 'translate' | 'rotate' | 'scale'>('translate');
 
   // Локальное состояние для макетов
-  const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
-  const [panels, setPanels] = useState({
-    objectsPanel: true,
-    propertiesPanel: true,
-    assetBrowserPanel: true, // ← обязательно
-  });
+const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
 
   // Если нужно хранить выделенный объект локально
 
@@ -89,12 +172,23 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
     setLayouts(allLayouts);
   };
 
-  const handleClosePanel = (panelKey: keyof typeof panels) => {
-    setPanels(prev => ({ ...prev, [panelKey]: false }));
-  };
   // Открытие панели
   const handleOpenPanel = (panelKey: keyof typeof panels) => {
     setPanels(prev => ({ ...prev, [panelKey]: true }));
+    // Добавляем дефолтный layout из initialLayouts
+    setLayouts(prev => {
+      const newLayouts = cloneLayouts(prev);
+      // Если в current layouts нет этой панели — вставляем дефолт
+      (Object.keys(initialLayouts) as (keyof Layouts)[]).forEach(bp => {
+        const exists = prev[bp].some(item => item.i === panelKey);
+        if (!exists) {
+          // найдём дефолтный layout-объект
+          const def = initialLayouts[bp].find(item => item.i === panelKey);
+          if (def) newLayouts[bp].push({ ...def });
+        }
+      });
+      return newLayouts;
+    });
   };
   const [isPreviewing, setIsPreviewing] = useState(false);
   const handleStartPreview = () => {
@@ -119,41 +213,37 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
           isPreviewing ? handleStopPreview() : handleStartPreview()
         }
       />
-      <ResponsiveGridLayout
-        draggableHandle=".panel-header"
-        layouts={layouts}
-        cols={cols}
-        breakpoints={breakpoints}
-        rowHeight={30}
-        onLayoutChange={onLayoutChange}
-        resizeHandles={['se', 'e', 's']} // разрешит менять размеры снизу и справа
-        compactType={null} // позволяет свободно перемещать панели без автоматического уплотнения
-      >
-        {panels.objectsPanel && (
-          <div key="objectsPanel" className="panel">
-            {/* Передаём объекты, а также коллбеки для выбора/закрытия панели */}
-            <SceneObjectsPanel
-              onClose={() => handleClosePanel("objectsPanel")}
-            />
-          </div>
-        )}
+<ResponsiveGridLayout
+  draggableHandle=".panel-header"
+  draggableCancel=".panel-header button"
+  layouts={layouts}
+  cols={cols}
+  breakpoints={breakpoints}
+  rowHeight={30}
+  onLayoutChange={onLayoutChange}
+  resizeHandles={['s', 'w', 'e', 'n', 'se', 'sw', 'ne', 'nw']}
+  compactType="vertical"
+>
+{panels.objectsPanel && (
+    <div key="objectsPanel" className="panel">
+      <SceneObjectsPanel onClose={() => onTogglePanel("objectsPanel")} />
+    </div>
+  )}
 
-        <div key="sceneCanvas" className="panel">
-          <SceneCanvas />
-        </div>
+  <div key="sceneCanvas" className="panel">
+    <SceneCanvas />
+  </div>
 
-        {panels.propertiesPanel && (
-          <div key="propertiesPanel" className="panel">
-            <PropertiesPanel
-              onClose={() => handleClosePanel("propertiesPanel")}
-            />
-          </div>
-        )}
-        {panels.assetBrowserPanel && (
-          <div key="assetBrowserPanel" className="panel">
-            <AssetBrowserPanel onClose={() => handleClosePanel("assetBrowserPanel")} />
-          </div>
-        )}
+  {panels.propertiesPanel && (
+    <div key="propertiesPanel" className="panel">
+      <PropertiesPanel onClose={() => onTogglePanel("propertiesPanel")} />
+    </div>
+  )}
+  {panels.assetBrowserPanel && (
+    <div key="assetBrowserPanel" className="panel">
+      <AssetBrowserPanel onClose={() => onTogglePanel("assetBrowserPanel")} />
+    </div>
+  )}
       </ResponsiveGridLayout>
 
       <div className="panel-controls">

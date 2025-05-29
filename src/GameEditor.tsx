@@ -175,10 +175,14 @@ const [panels, setPanels] = useState({
       <Layout>
         <Content style={{ padding: "6px", background: "#2e2e2e" }}>
 
-          <SceneEditor
-            activeScene={activeScene}
-            projectName={project.name}
-          />
+<SceneEditor
+  activeScene={activeScene}
+  projectName={project.name}
+  panels={panels}                  // <-- сюда
+  onTogglePanel={key =>
+    setPanels(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+/>
         </Content>
 
       </Layout>
