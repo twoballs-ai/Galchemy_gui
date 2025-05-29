@@ -46,6 +46,7 @@ export type ObjectType =
 
 // Подтип для освещений
 export type LightSubtype = "point" | "directional" | "ambient";
+export type CameraSubtype = "game" | "first" | "third" | "topdown";
 
 interface GroupedItem {
   title: string;
@@ -65,7 +66,10 @@ const groupedObjects: { group: string; items: GroupedItem[] }[] = [
   {
     group: "Камеры",
     items: [
-      { title: "Камера", type: "camera", icon: CameraIcon },
+      { title: "Игровая камера",     type: "camera", icon: CameraIcon, subtype: "game" },
+      { title: "От первого лица",    type: "camera", icon: CameraIcon, subtype: "first" },
+      { title: "От третьего лица",   type: "camera", icon: CameraIcon, subtype: "third" },
+      { title: "Top-Down",           type: "camera", icon: CameraIcon, subtype: "topdown" },
     ],
   },
   {
