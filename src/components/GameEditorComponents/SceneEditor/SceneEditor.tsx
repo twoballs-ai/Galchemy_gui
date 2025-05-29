@@ -25,19 +25,19 @@ const initialLayouts: Layouts = {
   lg: [
     {
       i: "objectsPanel",
-      x: 0, y: 0, w: 3, h: 10,
+      x: 0, y: 0, w: 3, h: 13,
       minW: 2, minH: 8,
       maxW: 6, maxH: 20
     },
     {
       i: "sceneCanvas",
-      x: 3, y: 0, w: 6, h: 20,
-      minW: 4, minH: 15,
+      x: 3, y: 0, w: 6, h: 13,
+      minW: 4, minH: 10,
       maxW: 8, maxH: 30
     },
     {
       i: "propertiesPanel",
-      x: 9, y: 0, w: 3, h: 10,
+      x: 9, y: 0, w: 3, h: 13,
       minW: 2, minH: 8,
       maxW: 6, maxH: 20
     },
@@ -58,7 +58,7 @@ const initialLayouts: Layouts = {
     {
       i: "sceneCanvas",
       x: 2, y: 0, w: 6, h: 20,
-      minW: 4, minH: 15,
+      minW: 4, minH: 12,
       maxW: 8, maxH: 30
     },
     {
@@ -84,7 +84,7 @@ const initialLayouts: Layouts = {
     {
       i: "sceneCanvas",
       x: 0, y: 5, w: 6, h: 20,
-      minW: 4, minH: 15,
+      minW: 4, minH: 10,
       maxW: 6, maxH: 30
     },
     {
@@ -110,7 +110,7 @@ const initialLayouts: Layouts = {
     {
       i: "sceneCanvas",
       x: 0, y: 5, w: 4, h: 20,
-      minW: 4, minH: 15,
+      minW: 4, minH: 10,
       maxH: 30
     },
     {

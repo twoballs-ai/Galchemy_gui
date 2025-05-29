@@ -1,17 +1,144 @@
-.asset-browser {
-    background: #242424;
-    color: #fafafa;
-    border-top: 1px solid #444;
-    padding: 12px;
-    min-height: 120px;
-  
-    .ant-btn {
-      margin-bottom: 8px;
-    }
-  
-    img {
-      object-fit: cover;
-      border-radius: 2px;
+.asset-browser-panel {
+  display: flex;
+  flex-direction: column;
+  background: #232323;
+  border-radius: 5px;
+  height: 100%;
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1f1f1f;
+    color: white;
+    padding: 4px 8px;
+    font-weight: bold;
+    button {
+      background: #e74c3c;
+      border: none;
+      border-radius: 3px;
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 8px;
+      &:hover { background: #c0392b; }
     }
   }
-  
+  .panel-body {
+    flex: 1 1 0;
+    overflow: hidden;
+    padding: 0;
+  }
+}
+.asset-browser-flexrow {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  .asset-browser-left {
+    width: 25%; // 3/12
+    min-width: 160px;
+    max-width: 320px;
+    background: #181818;
+    border-right: 1px solid #343434;
+    overflow-y: auto;
+  }
+  .asset-browser-right {
+    width: 75%; // 9/12
+    min-width: 0;
+    flex: 1 1 0;
+    padding: 12px;
+    background: #232323;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+.asset-browser-left {
+  width: 220px;
+  border-right: 1px solid #343434;
+  overflow-y: auto;
+  background: #181818;
+}
+.asset-browser-right {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+.asset-browser-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.breadcrumbs {
+  margin-bottom: 8px;
+}
+.breadcrumb-link {
+  color: #84c0ff;
+  cursor: pointer;
+}
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+.folder-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.folder-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+.folder, .asset {
+  min-width: 160px;
+  max-width: 220px;
+  padding: 8px 12px;
+  background: #232b38;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+.folder:hover, .asset:hover { background: #2d3644; }
+
+.folder-tree-label.selected { background: #223c5c; }
+.folder-tree-label {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  transition: background 0.15s;
+}
+.folder-tree-children { padding-left: 16px; }
+.folder, .asset {
+  padding: 8px 12px;
+  background: #232b38;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.folder:hover, .asset:hover {
+  background: #2d3644;
+}
+.folder-tree-label.selected {
+  background: #223c5c;
+}
+.folder-tree-label {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.folder-tree-children {
+  padding-left: 16px;
+}
+img {
+  display: block;
+  max-width: 32px;
+  max-height: 32px;
+  border-radius: 3px;
+  margin-right: 6px;
+}
