@@ -6,7 +6,9 @@ const AssetBrowserPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     <div className="asset-browser-panel">
       <div className="panel-header">
         <span>Assets</span>
-        <button onClick={onClose}>✕</button>
+        <button onClick={(e) => { e.stopPropagation(); onClose(); }}>
+  ✕
+</button>
       </div>
       <div className="panel-body">
         <AssetBrowser />

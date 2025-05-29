@@ -9,7 +9,7 @@ import { RootState, AppDispatch } from "../../../store/store";
 import { loadSceneObjects } from "../../../store/slices/sceneObjectsSlice";
 import TransformToolbar from './EditorToolbar'; // путь зависит от твоей структуры
 import { PlayCircle, Square } from "lucide-react";
-import { GameAlchemy } from 'game-alchemy-core';  
+import { GameAlchemy } from 'game-alchemy-core';
 import { globalLogicManager } from "../../../logicManager";
 import EditorToolbar from './EditorToolbar'
 import AssetBrowserPanel from "./panels/AssetBrowserPanel"; // ← путь к панели
@@ -89,39 +89,12 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
     setLayouts(allLayouts);
   };
 
-  // Закрытие панели
-  const handleClosePanel = (panelKey: string) => {
-    setPanels((prev) => ({ ...prev, [panelKey]: false }));
-    const newLayouts = cloneLayouts(layouts);
-    Object.keys(newLayouts).forEach((breakpoint) => {
-      newLayouts[breakpoint] = newLayouts[breakpoint].filter(
-        (item) => item.i !== panelKey
-      );
-    });
-    setLayouts(newLayouts);
+  const handleClosePanel = (panelKey: keyof typeof panels) => {
+    setPanels(prev => ({ ...prev, [panelKey]: false }));
   };
-
   // Открытие панели
-  const handleOpenPanel = (panelKey: string) => {
-    if (panels[panelKey]) return;
-    setPanels((prev) => ({ ...prev, [panelKey]: true }));
-    const newLayouts = cloneLayouts(layouts);
-    Object.keys(newLayouts).forEach((breakpoint) => {
-      if (!newLayouts[breakpoint].find((item) => item.i === panelKey)) {
-        newLayouts[breakpoint] = [
-          ...newLayouts[breakpoint],
-          {
-            i: panelKey,
-            x: 0,
-            y: Infinity,
-            w: Math.floor(cols[breakpoint] / 3),
-            h: 10,
-            minH: 5,
-          },
-        ];
-      }
-    });
-    setLayouts(newLayouts);
+  const handleOpenPanel = (panelKey: keyof typeof panels) => {
+    setPanels(prev => ({ ...prev, [panelKey]: true }));
   };
   const [isPreviewing, setIsPreviewing] = useState(false);
   const handleStartPreview = () => {
@@ -138,22 +111,23 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
   };
   return (
     <div className="scene-editor">
- <EditorToolbar
-      activeTool={activeTool}
-      onToolChange={setActiveTool}
-      isPreviewing={isPreviewing}
-      onTogglePreview={() =>
-        isPreviewing ? handleStopPreview() : handleStartPreview()
-      }
-    />
+      <EditorToolbar
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+        isPreviewing={isPreviewing}
+        onTogglePreview={() =>
+          isPreviewing ? handleStopPreview() : handleStartPreview()
+        }
+      />
       <ResponsiveGridLayout
-        className="layout"
+        draggableHandle=".panel-header"
         layouts={layouts}
-        breakpoints={breakpoints}
         cols={cols}
+        breakpoints={breakpoints}
         rowHeight={30}
         onLayoutChange={onLayoutChange}
-        draggableHandle=".panel-header"
+        resizeHandles={['se', 'e', 's']} // разрешит менять размеры снизу и справа
+        compactType={null} // позволяет свободно перемещать панели без автоматического уплотнения
       >
         {panels.objectsPanel && (
           <div key="objectsPanel" className="panel">
@@ -165,7 +139,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
         )}
 
         <div key="sceneCanvas" className="panel">
-          <SceneCanvas/>
+          <SceneCanvas />
         </div>
 
         {panels.propertiesPanel && (
@@ -176,10 +150,10 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
           </div>
         )}
         {panels.assetBrowserPanel && (
-  <div key="assetBrowserPanel" className="panel">
-    <AssetBrowserPanel onClose={() => handleClosePanel("assetBrowserPanel")} />
-  </div>
-)}
+          <div key="assetBrowserPanel" className="panel">
+            <AssetBrowserPanel onClose={() => handleClosePanel("assetBrowserPanel")} />
+          </div>
+        )}
       </ResponsiveGridLayout>
 
       <div className="panel-controls">

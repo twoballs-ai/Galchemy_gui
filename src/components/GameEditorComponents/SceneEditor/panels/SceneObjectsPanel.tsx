@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { 
-  addSceneObject, 
-  loadSceneObjects, 
-  removeSceneObject, 
-  setCurrentObjectId  
+import {
+  addSceneObject,
+  loadSceneObjects,
+  removeSceneObject,
+  setCurrentObjectId
 } from '../../../../store/slices/sceneObjectsSlice';
 import AddObjectModal from '../../Modal/AddObjectModal';
 import './SceneObjectsPanel.scss';
-import { GameAlchemy } from 'game-alchemy-core';    
+import { GameAlchemy } from 'game-alchemy-core';
 
 const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -29,7 +29,7 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleSelectObject = (object) => {
     // Обновляем текущий выбранный объект в Redux
     dispatch(setCurrentObjectId(object.id));
-  
+
     // Уведомляем рендерер об изменении выбранного объекта
     GameAlchemy.core?.scene.setSelectedById(object.id);  // Это теперь корректно обновит selectedObject в core
   };
@@ -47,7 +47,9 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     <div className="scene-objects-panel">
       <div className="panel-header">
         <h3>Объекты на сцене</h3>
-        <button onClick={onClose}>Закрыть</button>
+        <button onClick={(e) => { e.stopPropagation(); onClose(); }}>
+          ✕
+        </button>
       </div>
       <div className="panel-content">
         <ul>
@@ -74,10 +76,10 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </button>
       </div>
 
-      <AddObjectModal 
-        open={isModalOpen} 
-        onAdd={handleAddObject} 
-        onClose={() => setIsModalOpen(false)} 
+      <AddObjectModal
+        open={isModalOpen}
+        onAdd={handleAddObject}
+        onClose={() => setIsModalOpen(false)}
       />
     </div>
   );

@@ -1,22 +1,43 @@
 .asset-browser-panel {
     display: flex;
     flex-direction: column;
+    background-color: rgb(80, 80, 80);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
     height: 100%;
+    max-height: 100%;
+    overflow: hidden;
   
     .panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #2e2e2e;
+      background: #1f1f1f;
       color: white;
-      padding: 4px 8px;
-      font-weight: bold;
+      padding: 8px;
+      cursor: move;
+  
+      button {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 5px 10px;
+  
+        &:hover {
+          background-color: #c0392b;
+        }
+      }
     }
   
     .panel-body {
-      flex: 1;
+      flex-grow: 1;
       overflow-y: auto;
-      background: #1f1f1f;
+      background: #1c1c1c;
+      padding: 8px;
+      color: white;
     }
   }
   

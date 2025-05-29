@@ -15,7 +15,7 @@ import EditorMenuBar from "./components/GameEditorComponents/MainMenuBar";
 import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
 import { globalLogicManager } from "./logicManager";
 
-import { GameAlchemy } from 'game-alchemy-core';  
+import { GameAlchemy } from 'game-alchemy-core';
 import { RootState, AppDispatch } from "./store/store";
 import {
   loadProject,
@@ -60,7 +60,12 @@ const GameEditor: React.FC<GameEditorProps> = ({
   );
 
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-
+// состояние видимости панелей для меню «Вид → Панели»
+const [panels, setPanels] = useState({
+  objectsPanel: true,
+  propertiesPanel: true,
+  assetBrowserPanel: true,
+});
   const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
     sceneName: s.sceneName,
@@ -106,22 +111,22 @@ const GameEditor: React.FC<GameEditorProps> = ({
   const handleRemoveOpenedScene = (tabKey: string) => {
     const updatedOpenedScenes = openedScenes.filter((scene) => scene.key !== tabKey);
     dispatch(setOpenedScenes(updatedOpenedScenes));
-  
+
     if (activeScene === tabKey) {
       const newActive = updatedOpenedScenes.length > 0 ? updatedOpenedScenes[0].key : "";
       dispatch(setActiveScene(newActive));
     }
-  
+
     dispatch(saveProject(project.id));
   };
-  
+
 
   const handleSceneChange = (tabKey: string) => {
     dispatch(setActiveScene(tabKey));
     dispatch(saveProject(project.id));
   };
 
- 
+
 
 
 
@@ -135,6 +140,10 @@ const GameEditor: React.FC<GameEditorProps> = ({
       <EditorMenuBar
   onNewScene={handleNewScene}
   onCloseProject={onCloseProject}
+  panels={panels}
+  onTogglePanel={(panelKey) =>
+    setPanels(prev => ({ ...prev, [panelKey]: !prev[panelKey] }))
+  }
 />
         <Tabs
           tabs={sceneTabs}
@@ -166,12 +175,12 @@ const GameEditor: React.FC<GameEditorProps> = ({
       <Layout>
         <Content style={{ padding: "6px", background: "#2e2e2e" }}>
 
-        <SceneEditor
-  activeScene={activeScene}
-  projectName={project.name}
-/>
+          <SceneEditor
+            activeScene={activeScene}
+            projectName={project.name}
+          />
         </Content>
-        
+
       </Layout>
 
     </Layout>
