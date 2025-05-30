@@ -9,6 +9,7 @@ import {
   getFolderContent,
   getBreadcrumbs
 } from "./assetTree"; // свой путь
+import { DownOutlined, RightOutlined } from "@ant-design/icons";
 
 const ROOT_ID = undefined;
 
@@ -68,9 +69,22 @@ const AssetBrowser: React.FC = () => {
     setAssets(await getAssets());
   };
 
-   const folderTree = buildFolderTree(assets, ROOT_ID);
+   const folderTree = withRoot(buildFolderTree(assets, ROOT_ID));
   const content = getFolderContent(assets, currentFolderId);
   const breadcrumbs = getBreadcrumbs(assets, currentFolderId);
+
+/** Оборачиваем полученный список в «корневую» папку assets */
+function withRoot(folders: AssetItem[]): (AssetItem & { children?: AssetItem[] })[] {
+  return [
+    {
+      id: ROOT_ID,            // оставляем undefined, чтобы вся остальная логика (breadcrumbs и т. д.) не ломалась
+      name: "assets",
+      type: "folder",
+      parentId: undefined,
+      children: folders,
+    } as AssetItem & { children?: AssetItem[] },
+  ];
+}
 
   return (
     <div className="asset-browser-flexrow">
@@ -158,15 +172,26 @@ const FolderTreeNode: React.FC<{
   currentFolderId?: string;
   onSelect: (id?: string) => void;
 }> = ({ node, currentFolderId, onSelect }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(node.id === ROOT_ID);
 
   return (
     <div className="folder-tree-node">
       <div
         className={"folder-tree-label" + (node.id === currentFolderId ? " selected" : "")}
         onClick={() => onSelect(node.id)}
-        onDoubleClick={() => setExpanded(e => !e)}
       >
+        {/* стрелка-раскрывалка  */}
+        {node.children && node.children.length > 0 && (
+          <span
+            onClick={e => {
+              e.stopPropagation();          // не переключаем папку, только раскрываем
+              setExpanded(!expanded);
+            }}
+            style={{ marginRight: 4 }}
+          >
+            {expanded ? <DownOutlined /> : <RightOutlined />}
+          </span>
+        )}
         <FolderOutlined style={{ marginRight: 4 }} />
         {node.name}
       </div>

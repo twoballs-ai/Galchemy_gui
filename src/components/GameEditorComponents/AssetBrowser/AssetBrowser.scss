@@ -107,6 +107,9 @@
 
 .folder-tree-label.selected { background: #223c5c; }
 .folder-tree-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;           // стрелка, папка, текст
   padding: 6px 10px;
   cursor: pointer;
   border-radius: 3px;
