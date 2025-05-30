@@ -43,7 +43,7 @@ const initialLayouts: Layouts = {
     },
     {
       i: "assetBrowserPanel",
-      x: 0, y: 20, w: 12, h: 5,
+      x: 0, y: 20, w: 12, h: 8,
       minW: 4, minH: 3,
       maxH: 10
     },

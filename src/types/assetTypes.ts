@@ -10,4 +10,5 @@ export interface AssetItem {
   url?: string; // objectURL/base64 для preview
   fileData?: ArrayBuffer | string | null; // бинарные данные
   meta?: Record<string, any>;
+  system?: boolean;          // ← НОВОЕ
 }

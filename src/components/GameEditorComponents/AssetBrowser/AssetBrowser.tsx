@@ -10,6 +10,7 @@ import {
   getBreadcrumbs
 } from "./assetTree"; // свой путь
 import { DownOutlined, RightOutlined } from "@ant-design/icons";
+import MaterialTile from "./MaterialTile";
 
 const ROOT_ID = undefined;
 
@@ -69,22 +70,22 @@ const AssetBrowser: React.FC = () => {
     setAssets(await getAssets());
   };
 
-   const folderTree = withRoot(buildFolderTree(assets, ROOT_ID));
+  const folderTree = withRoot(buildFolderTree(assets, ROOT_ID));
   const content = getFolderContent(assets, currentFolderId);
   const breadcrumbs = getBreadcrumbs(assets, currentFolderId);
 
-/** Оборачиваем полученный список в «корневую» папку assets */
-function withRoot(folders: AssetItem[]): (AssetItem & { children?: AssetItem[] })[] {
-  return [
-    {
-      id: ROOT_ID,            // оставляем undefined, чтобы вся остальная логика (breadcrumbs и т. д.) не ломалась
-      name: "assets",
-      type: "folder",
-      parentId: undefined,
-      children: folders,
-    } as AssetItem & { children?: AssetItem[] },
-  ];
-}
+  /** Оборачиваем полученный список в «корневую» папку assets */
+  function withRoot(folders: AssetItem[]): (AssetItem & { children?: AssetItem[] })[] {
+    return [
+      {
+        id: ROOT_ID,            // оставляем undefined, чтобы вся остальная логика (breadcrumbs и т. д.) не ломалась
+        name: "assets",
+        type: "folder",
+        parentId: undefined,
+        children: folders,
+      } as AssetItem & { children?: AssetItem[] },
+    ];
+  }
 
   return (
     <div className="asset-browser-flexrow">
@@ -125,19 +126,27 @@ function withRoot(folders: AssetItem[]): (AssetItem & { children?: AssetItem[] }
               <FolderOutlined /> {folder.name}
             </div>
           ))}
-          {/* Файлы */}
-          {content.filter(i => i.type !== "folder").map(asset => (
+
+          {/* Материалы */}
+          {content.filter(i => i.type === "material").map(asset => (
+            <MaterialTile asset={asset} key={asset.id} />
+          ))}
+
+          {/* Обычные файлы */}
+          {content.filter(i => i.type !== "folder" && i.type !== "material").map(asset => (
             <div className="asset" key={asset.id}>
               {asset.type === "image"
                 ? <img src={asset.url} alt={asset.name} style={{ width: 32, height: 32 }} />
                 : <FileOutlined style={{ fontSize: 32 }} />}
               <span style={{ marginLeft: 8 }}>{asset.name}</span>
-              <Button
-                danger size="small"
-                icon={<DeleteOutlined />}
-                onClick={() => handleDelete(asset.id)}
-                style={{ marginLeft: 8 }}
-              />
+              {!asset.system && (
+                <Button
+                  danger size="small"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDelete(asset.id)}
+                  style={{ marginLeft: 8 }}
+                />
+              )}
             </div>
           ))}
         </div>

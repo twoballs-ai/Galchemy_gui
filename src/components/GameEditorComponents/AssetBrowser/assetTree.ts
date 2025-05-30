@@ -1,4 +1,3 @@
-// helpers/assetTree.ts
 import { AssetItem } from "../../../types/assetTypes";
 
 /** Рекурсивно строим дерево папок */
