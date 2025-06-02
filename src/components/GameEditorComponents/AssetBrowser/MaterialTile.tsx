@@ -58,7 +58,6 @@ const MaterialTile: React.FC<Props> = ({ asset }) => {
           style={{
             width: 96,
             height: 96,
-            borderRadius: "50%",
             background: "#232323",
             boxShadow: "0 0 8px #0006",
             display: "block",
