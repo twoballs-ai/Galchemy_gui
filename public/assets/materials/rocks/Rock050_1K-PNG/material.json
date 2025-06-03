@@ -1,0 +1,12 @@
+{
+  "name": "Rock050_1K-PNG",
+  "type": "material",
+  "preview": "Rock050_1K-PNG_Color.png",
+  "colorMap": "Rock050_1K-PNG_Color.png",
+  "normalMap": "Rock050_1K-PNG_NormalGL.png",
+  "roughnessMap": "Rock050_1K-PNG_Roughness.png",
+  "displacementMap": "Rock050_1K-PNG_Displacement.png",
+  "mtlx": "Rock050_1K-PNG.mtlx",
+  "usdc": "Rock050_1K-PNG.usdc",
+  "parameters": {}
+}

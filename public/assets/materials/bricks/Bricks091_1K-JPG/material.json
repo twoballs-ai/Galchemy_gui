@@ -1,0 +1,12 @@
+{
+  "name": "Bricks091_1K-JPG",
+  "type": "material",
+  "preview": "Bricks091_1K-JPG_Color.jpg",
+  "colorMap": "Bricks091_1K-JPG_Color.jpg",
+  "normalMap": "Bricks091_1K-JPG_NormalGL.jpg",
+  "roughnessMap": "Bricks091_1K-JPG_Roughness.jpg",
+  "displacementMap": "Bricks091_1K-JPG_Displacement.jpg",
+  "mtlx": "Bricks091_1K-JPG.mtlx",
+  "usdc": "Bricks091_1K-JPG.usdc",
+  "parameters": {}
+}

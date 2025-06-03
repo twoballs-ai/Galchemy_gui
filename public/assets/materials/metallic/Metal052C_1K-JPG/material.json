@@ -1,0 +1,15 @@
+{
+  "name": "Metal052C_1K-JPG",
+  "type": "material",
+  "preview": "Metal052C_1K-JPG_Color.jpg",
+  "colorMap": "Metal052C_1K-JPG_Color.jpg",
+  "normalMap": "Metal052C_1K-JPG_NormalGL.jpg",
+  "roughnessMap": "Metal052C_1K-JPG_Roughness.jpg",
+  "metalnessMap": "Metal052C_1K-JPG_Metalness.jpg",
+  "displacementMap": "Metal052C_1K-JPG_Displacement.jpg",
+  "mtlx": "Metal052C_1K-JPG.mtlx",
+  "usdc": "Metal052C_1K-JPG.usdc",
+  "parameters": {
+    "metalness": 1
+  }
+}
