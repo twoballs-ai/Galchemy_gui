@@ -44,8 +44,15 @@ export function buildFolderTree(
 }
 
 /** Содержимое папки: ассеты и папки внутри */
-export function getFolderContent(assets: AssetItem[], folderId?: string): AssetItem[] {
-  return assets.filter(item => item.parentId === folderId);
+export function getFolderContent(
+  assets: AssetItem[],
+  folderId?: string
+): AssetItem[] {
+  return assets.filter(
+    (item) =>
+      item.parentId === folderId &&
+      !(item.type === "folder" && isMaterialFolder(assets, item.id))
+  );
 }
 
 /** Получить массив хлебных крошек (от корня до текущей папки) */

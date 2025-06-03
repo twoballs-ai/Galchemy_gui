@@ -77,29 +77,37 @@ export function buildSystemAssets(): AssetItem[] {
 
   // 2. Затем отдельным слоем добавляем материалы из material.json (PBR-бандлы)
   const materialsParentId = assets.find(a => a.name === "materials" && a.type === "folder")?.id;
-  for (const [absPath, json] of Object.entries(materialJsons)) {
-    const match = absPath.match(/materials\/([^\/]+)\/material\.json$/);
-    if (!match) continue;
-    const matFolder = match[1];
-    // Опционально: вычислить url для превью
-    let previewUrl: string | undefined;
-    if (json.preview) {
-      // Строим правильный путь для превью
-      previewUrl = Object.entries(raw)
-        .find(([k, v]) => k.endsWith(`materials/${matFolder}/${json.preview}`))?.[1];
-    }
+for (const [absPath, json] of Object.entries(materialJsons)) {
+  const m = absPath.match(/materials\/([^\/]+)\/([^\/]+)\/material\.json$/);
+  if (!m) continue;
+  const [ , category , folderName ] = m;          // bricks / Bricks091_1K-JPG
 
-    assets.push({
-      id: crypto.randomUUID(),
-      name: json.name || matFolder,
-      type: "material",
-      parentId: materialsParentId,
-      url: absPath, // путь к material.json
-      preview: previewUrl,
-      system: true,
-      meta: json,
-    } as AssetItem);
+  // id папки-категории (bricks / metallic / rocks)
+  const categoryId = assets.find(
+    (a) => a.type === "folder" && a.name === category && a.parentId === materialsParentId
+  )?.id;
+
+  if (!categoryId) continue; // страхуемся
+
+  // превью, как раньше …
+  let previewUrl: string | undefined = undefined;
+  if (json.preview) {
+    previewUrl = Object.entries(raw).find(
+      ([k]) => k.endsWith(`materials/${category}/${folderName}/${json.preview}`)
+    )?.[1];
   }
+
+  assets.push({
+    id: crypto.randomUUID(),
+    name: json.name || folderName,
+    type: "material",
+    parentId: categoryId,      // ⬅ сюда!
+    url: absPath,
+    preview: previewUrl,
+    system: true,
+    meta: json,
+  } as AssetItem);
+}
 
   CACHE = assets;
   return assets;
