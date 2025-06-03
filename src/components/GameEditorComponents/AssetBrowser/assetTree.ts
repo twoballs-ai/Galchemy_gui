@@ -1,12 +1,45 @@
 import { AssetItem } from "../../../types/assetTypes";
 
-/** Рекурсивно строим дерево папок */
-export function buildFolderTree(assets: AssetItem[], parentId?: string): AssetItem[] {
+/** Расширенный детектор папки-материала */
+function isMaterialFolder(assets: AssetItem[], folderId: string) {
+  // 1) Есть ли внутри stub-файл material.json?
+  const hasMaterialJson = assets.some(
+    (a) => a.parentId === folderId && a.name.toLowerCase() === "material.json"
+  );
+
+  // 2) Или есть «уникальные» для материала файлы .mtlx / .usdc?
+  const hasMaterialBinary = assets.some((a) => {
+    if (a.parentId !== folderId) return false;
+    const ext = a.name.split(".").pop()?.toLowerCase();
+    return ext === "mtlx" || ext === "usdc";
+  });
+
+  // 3) Или существует AssetItem с type:"material" и таким же именем,
+  //    что и сама папка (твой buildSystemAssets именно так и делает).
+  const folder = assets.find((a) => a.id === folderId);
+  const hasMaterialStub = folder
+    ? assets.some(
+        (a) => a.type === "material" && a.name === folder.name
+      )
+    : false;
+
+  return hasMaterialJson || hasMaterialBinary || hasMaterialStub;
+}
+/** Рекурсивно строим дерево папок, исключая папки-материалы */
+export function buildFolderTree(
+  assets: AssetItem[],
+  parentId?: string
+): AssetItem[] {
   return assets
-    .filter(item => item.type === "folder" && item.parentId === parentId)
-    .map(folder => ({
+    .filter(
+      (item) =>
+        item.type === "folder" &&
+        item.parentId === parentId &&
+        !isMaterialFolder(assets, item.id) // ← новый детектор
+    )
+    .map((folder) => ({
       ...folder,
-      children: buildFolderTree(assets, folder.id)
+      children: buildFolderTree(assets, folder.id),
     }));
 }
 

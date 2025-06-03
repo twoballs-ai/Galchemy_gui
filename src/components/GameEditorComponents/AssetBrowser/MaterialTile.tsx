@@ -56,8 +56,8 @@ const MaterialTile: React.FC<Props> = ({ asset }) => {
           width={128}
           height={128}
           style={{
-            width: 96,
-            height: 96,
+            width: 128,
+            height: 128,
             background: "#232323",
             boxShadow: "0 0 8px #0006",
             display: "block",
@@ -70,8 +70,8 @@ const MaterialTile: React.FC<Props> = ({ asset }) => {
           src={previewUrl}
           alt={asset.name}
           style={{
-            width: 96,
-            height: 96,
+            width: 128,
+            height: 128,
             borderRadius: "50%",
             background: "#232323",
             boxShadow: "0 0 8px #0006",
