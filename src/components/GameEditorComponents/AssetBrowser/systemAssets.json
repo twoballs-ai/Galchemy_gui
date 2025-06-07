@@ -1,0 +1,120 @@
+[
+  {
+    "id": "materials",
+    "name": "materials",
+    "type": "folder",
+    "system": true
+  },
+  {
+    "id": "basic",
+    "name": "basic",
+    "type": "folder",
+    "parentId": "materials",
+    "system": true
+  },
+  {
+    "id": "mat-basic-Concrete034_2K-PNG",
+    "name": "Concrete034_2K-PNG",
+    "type": "material",
+    "parentId": "basic",
+    "url": "/assets/materials/basic/Concrete034_2K-PNG/material.json",
+    "preview": "/assets/materials/basic/Concrete034_2K-PNG/Concrete034_2K-PNG_Color.png",
+    "system": true,
+    "meta": {
+      "name": "Concrete034_2K-PNG",
+      "type": "material",
+      "parameters": {},
+      "colorMap": "Concrete034_2K-PNG_Color.png",
+      "normalMap": "Concrete034_2K-PNG_NormalGL.png",
+      "roughnessMap": "Concrete034_2K-PNG_Roughness.png",
+      "displacementMap": "Concrete034_2K-PNG_Displacement.png",
+      "preview": "Concrete034_2K-PNG_Color.png",
+      "mtlx": "Concrete034_2K-PNG.mtlx",
+      "usdc": "Concrete034_2K-PNG.usdc"
+    }
+  },
+  {
+    "id": "bricks",
+    "name": "bricks",
+    "type": "folder",
+    "parentId": "materials",
+    "system": true
+  },
+  {
+    "id": "mat-bricks-Bricks091_1K-JPG",
+    "name": "Bricks091_1K-JPG",
+    "type": "material",
+    "parentId": "bricks",
+    "url": "/assets/materials/bricks/Bricks091_1K-JPG/material.json",
+    "preview": "/assets/materials/bricks/Bricks091_1K-JPG/Bricks091_1K-JPG_Color.jpg",
+    "system": true,
+    "meta": {
+      "name": "Bricks091_1K-JPG",
+      "type": "material",
+      "parameters": {},
+      "colorMap": "Bricks091_1K-JPG_Color.jpg",
+      "normalMap": "Bricks091_1K-JPG_NormalGL.jpg",
+      "roughnessMap": "Bricks091_1K-JPG_Roughness.jpg",
+      "displacementMap": "Bricks091_1K-JPG_Displacement.jpg",
+      "preview": "Bricks091_1K-JPG_Color.jpg",
+      "mtlx": "Bricks091_1K-JPG.mtlx",
+      "usdc": "Bricks091_1K-JPG.usdc"
+    }
+  },
+  {
+    "id": "metallic",
+    "name": "metallic",
+    "type": "folder",
+    "parentId": "materials",
+    "system": true
+  },
+  {
+    "id": "mat-metallic-Metal052C_1K-JPG",
+    "name": "Metal052C_1K-JPG",
+    "type": "material",
+    "parentId": "metallic",
+    "url": "/assets/materials/metallic/Metal052C_1K-JPG/material.json",
+    "preview": "/assets/materials/metallic/Metal052C_1K-JPG/Metal052C_1K-JPG_Color.jpg",
+    "system": true,
+    "meta": {
+      "name": "Metal052C_1K-JPG",
+      "type": "material",
+      "parameters": {},
+      "colorMap": "Metal052C_1K-JPG_Color.jpg",
+      "normalMap": "Metal052C_1K-JPG_NormalGL.jpg",
+      "roughnessMap": "Metal052C_1K-JPG_Roughness.jpg",
+      "displacementMap": "Metal052C_1K-JPG_Displacement.jpg",
+      "preview": "Metal052C_1K-JPG_Color.jpg",
+      "mtlx": "Metal052C_1K-JPG.mtlx",
+      "usdc": "Metal052C_1K-JPG.usdc"
+    }
+  },
+  {
+    "id": "rocks",
+    "name": "rocks",
+    "type": "folder",
+    "parentId": "materials",
+    "system": true
+  },
+  {
+    "id": "mat-rocks-Rock050_1K-PNG",
+    "name": "Rock050_1K-PNG",
+    "type": "material",
+    "parentId": "rocks",
+    "url": "/assets/materials/rocks/Rock050_1K-PNG/material.json",
+    "preview": "/assets/materials/rocks/Rock050_1K-PNG/Rock050_1K-PNG_Color.png",
+    "system": true,
+    "meta": {
+      "name": "Rock050_1K-PNG",
+      "type": "material",
+      "parameters": {},
+      "colorMap": "Rock050_1K-PNG_Color.png",
+      "normalMap": "Rock050_1K-PNG_NormalGL.png",
+      "roughnessMap": "Rock050_1K-PNG_Roughness.png",
+      "displacementMap": "Rock050_1K-PNG_Displacement.png",
+      "preview": "Rock050_1K-PNG_Color.png",
+      "mtlx": "Rock050_1K-PNG.mtlx",
+      "usdc": "Rock050_1K-PNG.usdc"
+    }
+  }
+]

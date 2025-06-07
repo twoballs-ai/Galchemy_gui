@@ -1,20 +1,19 @@
 // src/utils/assetStorage.ts
 import { openDB, DBSchema } from "idb";
 import { AssetItem } from "../types/assetTypes";
-import { buildSystemAssets } from "../components/GameEditorComponents/AssetBrowser/systemAssets";
-
+import systemAssetsJson from "../components/GameEditorComponents/AssetBrowser/systemAssets.json";
 
 /* ---------- IndexedDB schema ---------- */
 interface AssetDB extends DBSchema {
   assets: {
-    key: string;                     // id
+    key: string;
     value: AssetItem;
     indexes: { "by-type": string };
   };
 }
 
 const ASSET_DB_NAME = "AssetDB";
-const ASSET_STORE   = "assets";
+const ASSET_STORE  = "assets";
 
 /* ---------- helper: открыть/создать БД ---------- */
 async function getAssetDB() {
@@ -28,8 +27,8 @@ async function getAssetDB() {
   });
 }
 
-/* ---------- встроенные (движковые) ассеты ---------- */
-const SYS: AssetItem[] = buildSystemAssets();
+/* ---------- системные ассеты (автоимпорт из json) ---------- */
+const SYS: AssetItem[] = systemAssetsJson as AssetItem[];
 
 /* ---------- пользовательский слой ---------- */
 async function getUserAssets(): Promise<AssetItem[]> {
@@ -44,16 +43,14 @@ export async function getAssets(): Promise<AssetItem[]> {
   return [...SYS, ...user];
 }
 
-/** Добавить новый пользовательский ассет */
 export async function addAsset(item: AssetItem) {
-  if (item.system) return;                   // системные не пишем
+  if (item.system) return;
   const db = await getAssetDB();
   await db.put(ASSET_STORE, item);
 }
 
-/** Удалить ассет по id (кроме встроенных) */
 export async function removeAsset(id: string) {
-  if (SYS.some(a => a.id === id)) return;    // встроенные не трогаем
+  if (SYS.some(a => a.id === id)) return;
   const db = await getAssetDB();
   await db.delete(ASSET_STORE, id);
 }
