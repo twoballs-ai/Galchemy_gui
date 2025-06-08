@@ -3,68 +3,90 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../../store/store";
 import { updateSceneObject } from "../../../../store/slices/sceneObjectsSlice";
 import { GameAlchemy } from "game-alchemy-core";
-import "./PropertiesPanel.scss";
 import AssetPickerModal from "../../AssetBrowser/AssetPickerModal";
-const baseProps = [
-  { key: "name", label: "Имя", type: "text" },
+import "./PropertiesPanel.scss";
+
+/* ───────────────────────────────
+ * 1. БАЗОВЫЕ НАБОРЫ ПРОПСОВ
+ * ─────────────────────────────── */
+const positionProps = [
   { key: "x", label: "X", type: "number" },
   { key: "y", label: "Y", type: "number" },
   { key: "z", label: "Z", type: "number" },
 ];
 
+const rotationProps = [
+  { key: "rotX", label: "Rot X (°)", type: "number", step: 1 },
+  { key: "rotY", label: "Rot Y (°)", type: "number", step: 1 },
+  { key: "rotZ", label: "Rot Z (°)", type: "number", step: 1 },
+];
+
+const scaleProps = [
+  { key: "scaleX", label: "Scale X", type: "number", step: 0.01, min: 0.001 },
+  { key: "scaleY", label: "Scale Y", type: "number", step: 0.01, min: 0.001 },
+  { key: "scaleZ", label: "Scale Z", type: "number", step: 0.01, min: 0.001 },
+];
+
 const materialProps = [
   { key: "color", label: "Цвет", type: "color" },
-  {
-    key: "roughness",
-    label: "Шероховатость",
-    type: "number",
-    min: 0,
-    max: 1,
-    step: 0.01,
-  },
-  {
-    key: "metalness",
-    label: "Металличность",
-    type: "number",
-    min: 0,
-    max: 1,
-    step: 0.01,
-  },
+  { key: "roughness", label: "Шероховатость", type: "number", min: 0, max: 1, step: 0.01 },
+  { key: "metalness", label: "Металличность", type: "number", min: 0, max: 1, step: 0.01 },
 ];
-/* ---------- конфиг отображаемых свойств ---------- */
+
+/* ───────────────────────────────
+ * 2. КОНФИГ СВОЙСТВ ДЛЯ ОБЪЕКТОВ
+ * ─────────────────────────────── */
 const objectPropertiesConfig: Record<string, any[]> = {
   sphere: [
-    ...baseProps,
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
     { key: "radius", label: "Радиус", type: "number" },
     { key: "segments", label: "Сегменты", type: "number", min: 3, max: 64 },
     ...materialProps,
   ],
   cube: [
-    ...baseProps,
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
     { key: "width", label: "Ширина", type: "number" },
     { key: "height", label: "Высота", type: "number" },
     { key: "depth", label: "Глубина", type: "number" },
     ...materialProps,
   ],
   cylinder: [
-    ...baseProps,
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
     { key: "radius", label: "Радиус", type: "number" },
     { key: "height", label: "Высота", type: "number" },
     ...materialProps,
   ],
-  camera: [
-    ...baseProps,
-    { key: "fov", label: "FOV", type: "number", min: 10, max: 179 },
-    { key: "near", label: "Near", type: "number", min: 0.01, step: 0.01 },
-    { key: "far", label: "Far", type: "number", min: 1 },
-    { key: "isOrthographic", label: "Ортографическая", type: "checkbox" },
-    { key: "orthoSize", label: "Ortho Size", type: "number", min: 1 },
-    { key: "lookAtX", label: "Смотреть на X", type: "number" },
-    { key: "lookAtY", label: "Смотреть на Y", type: "number" },
-    { key: "lookAtZ", label: "Смотреть на Z", type: "number" },
+  character: [
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+    { key: "color", label: "Цвет", type: "color" },
+    { key: "textureSrc", label: "Текстура (URL)", type: "text" },
+  ],
+  terrain: [
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+    { key: "width", label: "Ширина", type: "number", min: 1 },
+    { key: "depth", label: "Длина", type: "number", min: 1 },
+    ...materialProps,
   ],
   light: [
-    ...baseProps,
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
     { key: "intensity", label: "Интенсивность", type: "number" },
     { key: "color", label: "Цвет", type: "color" },
     {
@@ -78,175 +100,202 @@ const objectPropertiesConfig: Record<string, any[]> = {
       ],
     },
   ],
-  terrain: [
-    ...baseProps,
-    { key: "width", label: "Ширина", type: "number", min: 1 },
-    { key: "depth", label: "Длина", type: "number", min: 1 },
-    ...materialProps,
-  ],
-  character: [
-    ...baseProps,
-    { key: "color", label: "Цвет", type: "color" },
-    { key: "textureSrc", label: "Текстура (URL)", type: "text" },
+  camera: [
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+    { key: "fov", label: "FOV", type: "number", min: 10, max: 179 },
+    { key: "near", label: "Near", type: "number", min: 0.01, step: 0.01 },
+    { key: "far", label: "Far", type: "number", min: 1 },
+    { key: "isOrthographic", label: "Ортографическая", type: "checkbox" },
+    { key: "orthoSize", label: "Ortho Size", type: "number", min: 1 },
+    { key: "lookAtX", label: "Смотреть на X", type: "number" },
+    { key: "lookAtY", label: "Смотреть на Y", type: "number" },
+    { key: "lookAtZ", label: "Смотреть на Z", type: "number" },
   ],
   model: [
     { key: "name", label: "Имя", type: "text" },
-    { key: "x", label: "X", type: "number" },
-    { key: "y", label: "Y", type: "number" },
-    { key: "z", label: "Z", type: "number" },
-    { key: "modelAssetId", label: "Модель", type: "modelPicker" }, // ← новый тип
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+    { key: "modelAssetId", label: "Модель", type: "modelPicker" },
   ],
 };
 
-/* ---------- util: нужно ли пересчитывать геометрию ---------- */
+/* набор ключей, при изменении которых надо пересобрать геометрию */
 const geometryKeys: Record<string, Set<string>> = {
   sphere: new Set(["radius", "segments"]),
   cube: new Set(["width", "height", "depth"]),
   cylinder: new Set(["radius", "height"]),
   terrain: new Set(["width", "depth"]),
 };
-
 const needsGeometry = (type: string, key: string) =>
   geometryKeys[type]?.has(key) ?? false;
 
-/* ---------- компонент ---------- */
+/* ───────────────────────────────
+ * 3. КОМПОНЕНТ
+ * ─────────────────────────────── */
 const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const dispatch = useDispatch();
-  const currentObjectId = useSelector(
-    (s: RootState) => s.sceneObjects.currentObjectId
-  );
-  const objects = useSelector((s: RootState) => s.sceneObjects.objects);
-  const selectedObject = currentObjectId
-    ? objects.find((o) => o.id === currentObjectId)
-    : null;
+  const dispatch    = useDispatch();
   const activeScene = useSelector((s: RootState) => s.project.activeScene);
 
-  const [propsLocal, setPropsLocal] = useState<Record<string, any>>({});
+  const currentId   = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
+  const objects     = useSelector((s: RootState) => s.sceneObjects.objects);
+  const selected    = currentId ? objects.find(o => o.id === currentId) : null;
 
-  useEffect(() => {
-    setPropsLocal(selectedObject ? { ...selectedObject } : {});
-  }, [selectedObject]);
-  const openModelPicker = () => {
-    // Простой пример:
-    alert("Тут откроем Asset Browser или загрузчик модели");
+  const [local, setLocal] = useState<Record<string, any>>({});
+  const [showPicker, setShowPicker] = useState(false);
 
-    // В реальном проекте:
-    // Откроем модалку Asset Browser для выбора ассета типа model (.glb, .gltf)
-    // Или вызовешь AssetBrowserPanel с onSelect
-  };
-  const handleModelSelected = (assetId: string) => {
-    handleChange("modelAssetId", assetId);
-  };
-  const [showModelPicker, setShowModelPicker] = useState(false);
+  /* sync local-state */
+  useEffect(() => setLocal(selected ? { ...selected } : {}), [selected]);
+
+  /* ---------------- handleChange ---------------- */
   const handleChange = (key: string, value: any) => {
-    if (!selectedObject || !activeScene) return;
+    if (!selected || !activeScene) return;
 
-    const updated = { ...propsLocal };
+    const next = { ...local };
 
+    /* --- позиция --- */
+    if (["x", "y", "z"].includes(key)) {
+      next[key] = value;
+      next.position = [next.x ?? 0, next.y ?? 0, next.z ?? 0];
+    }
+
+    /* --- вращение (градусы → радианы) --- */
+    if (["rotX", "rotY", "rotZ"].includes(key)) {
+      next[key] = value;
+      const rx = (next.rotX ?? 0) * Math.PI / 180;
+      const ry = (next.rotY ?? 0) * Math.PI / 180;
+      const rz = (next.rotZ ?? 0) * Math.PI / 180;
+      next.rotation = [rx, ry, rz];
+    }
+
+    /* --- масштаб --- */
+    if (["scaleX", "scaleY", "scaleZ"].includes(key)) {
+      next[key] = value;
+      next.scale = [
+        next.scaleX ?? 1,
+        next.scaleY ?? 1,
+        next.scaleZ ?? 1,
+      ];
+    }
+
+    /* --- lookAt для камеры --- */
     if (key.startsWith("lookAt")) {
-      // Для камеры lookAtX/Y/Z => массив [x, y, z]
       const idx = { lookAtX: 0, lookAtY: 1, lookAtZ: 2 }[key];
-      updated.lookAt = Array.isArray(updated.lookAt)
-        ? [...updated.lookAt]
-        : [0, 0, 0];
-      updated.lookAt[idx] = Number(value);
-    } else if (key === "isOrthographic") {
-      updated.isOrthographic = Boolean(value);
-    } else {
-      updated[key] = value;
+      next.lookAt = Array.isArray(next.lookAt) ? [...next.lookAt] : [0, 0, 0];
+      next.lookAt[idx] = Number(value);
     }
 
-    setPropsLocal(updated);
-    dispatch(updateSceneObject({ activeScene, object: updated }));
-
-    const { type, id } = selectedObject;
-    let delta;
-    if (key.startsWith("lookAt")) {
-      delta = { lookAt: updated.lookAt };
-    } else {
-      delta = { [key]: value };
+    /* остальные поля */
+    if (
+      ![
+        "x","y","z",
+        "rotX","rotY","rotZ",
+        "scaleX","scaleY","scaleZ"
+      ].includes(key) && !key.startsWith("lookAt")
+    ) {
+      next[key] = value;
     }
 
-    if (GameAlchemy.patchObject) {
-      GameAlchemy.patchObject(id, delta);
+    setLocal(next);
+    dispatch(updateSceneObject({ activeScene, object: next }));
+
+    /* готовим дельту для движка */
+    const delta: any = {};
+    if (next.position) delta.position = next.position;
+    if (next.rotation) delta.rotation = next.rotation;
+    if (next.scale)    delta.scale    = next.scale;
+    if (key.startsWith("lookAt"))     delta.lookAt = next.lookAt;
+    if (!Object.keys(delta).length)   delta[key]   = value;
+
+    /* geometry rebuild или обычный patch */
+    if (needsGeometry(selected.type, key)) {
+      GameAlchemy.updateObject(selected.id, selected.type, delta);
+    } else {
+      GameAlchemy.patchObject(selected.id, delta);
     }
   };
 
-  const config = selectedObject
-    ? objectPropertiesConfig[selectedObject.type]
-    : null;
+  const cfg = selected ? objectPropertiesConfig[selected.type] : null;
 
   return (
     <div className="properties-panel">
       <div className="panel-header">
         <h3>
-          Свойства{" "}
-          {selectedObject
-            ? `- ${selectedObject.name || selectedObject.type}`
-            : ""}
+          Свойства {selected ? `– ${selected.name || selected.type}` : ""}
         </h3>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-        >
-          ✕
-        </button>
+        <button onClick={(e) => { e.stopPropagation(); onClose(); }}>✕</button>
       </div>
 
       <div className="panel-body">
-        {selectedObject && config ? (
-          config.map((prop, idx) => {
-            if (prop.key === "y" || prop.key === "z") return null; // исключаем y, z — они идут с x в одной строке
-
+        {!selected || !cfg ? (
+          <p>Выберите объект</p>
+        ) : (
+          cfg.map(prop => {
+            /* групповые блоки */
             if (prop.key === "x") {
               return (
-                <label key="position" className="position-label">
+                <label key="position" className="triple">
                   Позиция
-                  <div className="position-row">
-                    {["x", "y", "z"].map((axis) => (
-                      <div key={axis} className="position-input">
-                        <span className="axis-label">{axis.toUpperCase()}</span>
-                        <input
-                          type="number"
-                          value={propsLocal[axis] ?? 0}
-                          onChange={(e) =>
-                            handleChange(axis, parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </label>
-              );
-            }
-            if (
-              (prop.key === "height" || prop.key === "depth") &&
-              selectedObject.type === "cube"
-            )
-              return null;
-
-            if (prop.key === "width" && selectedObject.type === "cube") {
-              return (
-                <label key="dimensions" className="position-label">
-                  Размеры (Ш×В×Г)
-                  <div className="position-row">
-                    {["width", "height", "depth"].map((dim) => (
-                      <input
-                        key={dim}
+                  <div className="triple-row">
+                    {["x","y","z"].map(axis => (
+                      <input key={axis}
                         type="number"
-                        value={propsLocal[dim] ?? 1}
-                        onChange={(e) =>
-                          handleChange(dim, parseFloat(e.target.value) || 0)
-                        }
+                        value={local[axis] ?? 0}
+                        onChange={e => handleChange(axis, parseFloat(e.target.value) || 0)}
                       />
                     ))}
                   </div>
                 </label>
               );
             }
-            const value = propsLocal[prop.key] ?? "";
+            if (prop.key === "rotX") {
+              return (
+                <label key="rotation" className="triple">
+                  Вращение (°)
+                  <div className="triple-row">
+                    {["rotX","rotY","rotZ"].map(axis => (
+                      <input key={axis}
+                        type="number"
+                        value={local[axis] ?? 0}
+                        step={1}
+                        onChange={e => handleChange(axis, parseFloat(e.target.value) || 0)}
+                      />
+                    ))}
+                  </div>
+                </label>
+              );
+            }
+            if (prop.key === "scaleX") {
+              return (
+                <label key="scale" className="triple">
+                  Масштаб
+                  <div className="triple-row">
+                    {["scaleX","scaleY","scaleZ"].map(axis => (
+                      <input key={axis}
+                        type="number"
+                        min={0.001} step={0.01}
+                        value={local[axis] ?? 1}
+                        onChange={e => handleChange(axis, parseFloat(e.target.value) || 1)}
+                      />
+                    ))}
+                  </div>
+                </label>
+              );
+            }
+
+            /* скрываем пропы, попавшие в группы */
+            if (
+              [...positionProps.map(p=>p.key).slice(1),
+               ...rotationProps.map(p=>p.key).slice(1),
+               ...scaleProps.map(p=>p.key).slice(1)
+              ].includes(prop.key)
+            ) return null;
+
+            /* отдельные поля */
+            const value = local[prop.key] ?? "";
             let inputEl: JSX.Element;
 
             switch (prop.type) {
@@ -258,14 +307,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     min={prop.min}
                     max={prop.max}
                     step={prop.step || 1}
-                    onChange={(e) => {
-                      let num = parseFloat(e.target.value) || 0;
-                      if (typeof prop.min === "number")
-                        num = Math.max(prop.min, num);
-                      if (typeof prop.max === "number")
-                        num = Math.min(prop.max, num);
-                      handleChange(prop.key, num);
-                    }}
+                    onChange={e => handleChange(prop.key, parseFloat(e.target.value) || 0)}
                   />
                 );
                 break;
@@ -274,7 +316,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <input
                     type="color"
                     value={value}
-                    onChange={(e) => handleChange(prop.key, e.target.value)}
+                    onChange={e => handleChange(prop.key, e.target.value)}
                   />
                 );
                 break;
@@ -282,9 +324,21 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 inputEl = (
                   <input
                     type="checkbox"
-                    checked={value}
-                    onChange={(e) => handleChange(prop.key, e.target.checked)}
+                    checked={!!value}
+                    onChange={e => handleChange(prop.key, e.target.checked)}
                   />
+                );
+                break;
+              case "select":
+                inputEl = (
+                  <select
+                    value={value}
+                    onChange={e => handleChange(prop.key, e.target.value)}
+                  >
+                    {prop.options.map((opt:any) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 );
                 break;
               case "modelPicker":
@@ -292,48 +346,20 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <>
                     <button
                       type="button"
-                      onClick={() => setShowModelPicker(true)}
-                      style={{
-                        padding: "8px 12px",
-                        background: "#eee",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
+                      onClick={() => setShowPicker(true)}
                     >
-                      {propsLocal.modelAssetId
-                        ? "Выбрать другую модель"
-                        : "Выбрать модель"}
+                      {local.modelAssetId ? "Выбрать другую модель" : "Выбрать модель"}
                     </button>
-                    {propsLocal.modelAssetId && (
-                      <span style={{ marginLeft: 8, color: "#84c0ff" }}>
-                        ID: {propsLocal.modelAssetId}
-                      </span>
+                    {local.modelAssetId && (
+                      <span className="asset-id">ID: {local.modelAssetId}</span>
                     )}
-                    {/* Модалка выбора модели */}
                     <AssetPickerModal
-                      open={showModelPicker}
+                      open={showPicker}
                       acceptTypes={["modelAsset"]}
-                      onSelect={(assetId) => {
-                        handleChange("modelAssetId", assetId);
-                      }}
-                      onClose={() => setShowModelPicker(false)}
+                      onSelect={assetId => handleChange("modelAssetId", assetId)}
+                      onClose={() => setShowPicker(false)}
                     />
                   </>
-                );
-                break;
-              case "select":
-                inputEl = (
-                  <select
-                    value={value}
-                    onChange={(e) => handleChange(prop.key, e.target.value)}
-                  >
-                    {prop.options.map((opt: any) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
                 );
                 break;
               default:
@@ -341,7 +367,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <input
                     type="text"
                     value={value}
-                    onChange={(e) => handleChange(prop.key, e.target.value)}
+                    onChange={e => handleChange(prop.key, e.target.value)}
                   />
                 );
             }
@@ -353,8 +379,6 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </label>
             );
           })
-        ) : (
-          <p>Выберите объект</p>
         )}
       </div>
     </div>

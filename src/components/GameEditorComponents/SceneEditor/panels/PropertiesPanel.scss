@@ -1,7 +1,10 @@
+/* ─────────────────────────────────────────
+ *  P R O P E R T I E S   P A N E L
+ * ───────────────────────────────────────── */
 .properties-panel {
   display: flex;
   flex-direction: column;
-  background-color: rgb(80, 80, 80);
+  background-color: #505050;
   border: 1px solid #ccc;
   border-radius: 5px;
   padding: 5px;
@@ -9,6 +12,7 @@
   max-height: 100vh;
   overflow: hidden;
 
+  /* ---------- header ---------- */
   .panel-header {
     display: flex;
     justify-content: space-between;
@@ -17,25 +21,24 @@
     h3 {
       margin: 0;
       font-size: 18px;
-      color: white;
+      color: #fff;
     }
-
     button {
-      background-color: #e74c3c;
-      color: white;
+      background: #e74c3c;
+      color: #fff;
       border: none;
       border-radius: 3px;
       cursor: pointer;
-      padding: 0 2px;
+      padding: 2px 6px;
+      font-size: 16px;
 
-      &:hover {
-        background-color: #c0392b;
-      }
+      &:hover { background: #c0392b; }
     }
   }
 
+  /* ---------- body ---------- */
   .panel-body {
-    flex-grow: 1;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -43,50 +46,45 @@
     overscroll-behavior: contain;
     max-height: calc(100vh - 100px);
 
-    /* Настройка скроллбара для Firefox */
+    /* кастом-скролл */
     scrollbar-width: thin;
     scrollbar-color: #0b3d91 #2e2e2e;
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-thumb { background: #0b3d91; border-radius: 4px; }
+    &::-webkit-scrollbar-track { background: #2e2e2e; border-radius: 4px; }
 
-    /* Настройка скроллбара для WebKit (Chrome, Edge, Safari) */
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: #0b3d91;
-      border-radius: 4px;
-    }
-    &::-webkit-scrollbar-track {
-      background: #2e2e2e;
-      border-radius: 4px;
-    }
-
+    /* общее для одиночных label-ов */
     label {
       display: flex;
       flex-direction: column;
       margin-bottom: 10px;
-      color: white;
+      color: #fff;
 
       input,
-      select,
-      textarea {
+      select {
         margin-top: 5px;
         padding: 5px;
         border: 1px solid #ccc;
         border-radius: 3px;
+        background: #fff;
+        color: #000;
       }
     }
-
-    p {
-      color: white;
-    }
+    p { color: #fff; }
   }
 }
-.position-label {
+
+/* ─────────────────────────────────────────
+ *  Т Р О Й Н Ы Е   Б Л О К И  (pos/rot/scale)
+ * ───────────────────────────────────────── */
+.triple,
+.position-label {          /* оба варианта используют одинаковый стиль */
   display: flex;
   flex-direction: column;
   margin-bottom: 12px;
-  color: white;
+  color: #fff;
 
+  .triple-row,
   .position-row {
     display: flex;
     gap: 8px;
@@ -97,8 +95,28 @@
       padding: 5px;
       border: 1px solid #ccc;
       border-radius: 3px;
-      background-color: #fff;
+      background: #fff;
       color: #000;
     }
   }
+}
+
+/* ─────────────────────────────────────────
+ *  К Н О П К А   «В Ы Б Р А Т Ь  М О Д Е Л Ь»
+ * ───────────────────────────────────────── */
+.properties-panel .panel-body button {
+  padding: 6px 12px;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover { background: #d7d7d7; }
+}
+
+/*  подпись с ID выбранного ассета */
+.asset-id {
+  margin-left: 8px;
+  color: #84c0ff;
+  font-size: 12px;
 }
