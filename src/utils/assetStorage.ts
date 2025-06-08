@@ -54,3 +54,7 @@ export async function removeAsset(id: string) {
   const db = await getAssetDB();
   await db.delete(ASSET_STORE, id);
 }
+export async function findAssetById(id: string): Promise<AssetItem | undefined> {
+  const all = await getAssets();
+  return all.find(a => a.id === id);
+}

@@ -4,6 +4,7 @@ import { RootState } from "../../../../store/store";
 import { updateSceneObject } from "../../../../store/slices/sceneObjectsSlice";
 import { GameAlchemy } from "game-alchemy-core";
 import "./PropertiesPanel.scss";
+import AssetPickerModal from "../../AssetBrowser/AssetPickerModal";
 const baseProps = [
   { key: "name", label: "Имя", type: "text" },
   { key: "x", label: "X", type: "number" },
@@ -13,8 +14,22 @@ const baseProps = [
 
 const materialProps = [
   { key: "color", label: "Цвет", type: "color" },
-  { key: "roughness", label: "Шероховатость", type: "number", min: 0, max: 1, step: 0.01 },
-  { key: "metalness", label: "Металличность", type: "number", min: 0, max: 1, step: 0.01 },
+  {
+    key: "roughness",
+    label: "Шероховатость",
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.01,
+  },
+  {
+    key: "metalness",
+    label: "Металличность",
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.01,
+  },
 ];
 /* ---------- конфиг отображаемых свойств ---------- */
 const objectPropertiesConfig: Record<string, any[]> = {
@@ -74,6 +89,13 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "color", label: "Цвет", type: "color" },
     { key: "textureSrc", label: "Текстура (URL)", type: "text" },
   ],
+  model: [
+    { key: "name", label: "Имя", type: "text" },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "z", label: "Z", type: "number" },
+    { key: "modelAssetId", label: "Модель", type: "modelPicker" }, // ← новый тип
+  ],
 };
 
 /* ---------- util: нужно ли пересчитывать геометрию ---------- */
@@ -90,9 +112,13 @@ const needsGeometry = (type: string, key: string) =>
 /* ---------- компонент ---------- */
 const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const dispatch = useDispatch();
-  const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
+  const currentObjectId = useSelector(
+    (s: RootState) => s.sceneObjects.currentObjectId
+  );
   const objects = useSelector((s: RootState) => s.sceneObjects.objects);
-  const selectedObject = currentObjectId ? objects.find(o => o.id === currentObjectId) : null;
+  const selectedObject = currentObjectId
+    ? objects.find((o) => o.id === currentObjectId)
+    : null;
   const activeScene = useSelector((s: RootState) => s.project.activeScene);
 
   const [propsLocal, setPropsLocal] = useState<Record<string, any>>({});
@@ -100,7 +126,18 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   useEffect(() => {
     setPropsLocal(selectedObject ? { ...selectedObject } : {});
   }, [selectedObject]);
+  const openModelPicker = () => {
+    // Простой пример:
+    alert("Тут откроем Asset Browser или загрузчик модели");
 
+    // В реальном проекте:
+    // Откроем модалку Asset Browser для выбора ассета типа model (.glb, .gltf)
+    // Или вызовешь AssetBrowserPanel с onSelect
+  };
+  const handleModelSelected = (assetId: string) => {
+    handleChange("modelAssetId", assetId);
+  };
+  const [showModelPicker, setShowModelPicker] = useState(false);
   const handleChange = (key: string, value: any) => {
     if (!selectedObject || !activeScene) return;
 
@@ -135,15 +172,25 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   };
 
-  const config = selectedObject ? objectPropertiesConfig[selectedObject.type] : null;
+  const config = selectedObject
+    ? objectPropertiesConfig[selectedObject.type]
+    : null;
 
   return (
     <div className="properties-panel">
       <div className="panel-header">
         <h3>
-          Свойства {selectedObject ? `- ${selectedObject.name || selectedObject.type}` : ""}
+          Свойства{" "}
+          {selectedObject
+            ? `- ${selectedObject.name || selectedObject.type}`
+            : ""}
         </h3>
-        <button onClick={(e) => { e.stopPropagation(); onClose(); }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+        >
           ✕
         </button>
       </div>
@@ -158,13 +205,13 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <label key="position" className="position-label">
                   Позиция
                   <div className="position-row">
-                    {["x", "y", "z"].map(axis => (
+                    {["x", "y", "z"].map((axis) => (
                       <div key={axis} className="position-input">
                         <span className="axis-label">{axis.toUpperCase()}</span>
                         <input
                           type="number"
                           value={propsLocal[axis] ?? 0}
-                          onChange={e =>
+                          onChange={(e) =>
                             handleChange(axis, parseFloat(e.target.value) || 0)
                           }
                         />
@@ -174,20 +221,23 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </label>
               );
             }
-            if ((prop.key === "height" || prop.key === "depth") && selectedObject.type === "cube") return null;
-
+            if (
+              (prop.key === "height" || prop.key === "depth") &&
+              selectedObject.type === "cube"
+            )
+              return null;
 
             if (prop.key === "width" && selectedObject.type === "cube") {
               return (
                 <label key="dimensions" className="position-label">
                   Размеры (Ш×В×Г)
                   <div className="position-row">
-                    {["width", "height", "depth"].map(dim => (
+                    {["width", "height", "depth"].map((dim) => (
                       <input
                         key={dim}
                         type="number"
                         value={propsLocal[dim] ?? 1}
-                        onChange={e =>
+                        onChange={(e) =>
                           handleChange(dim, parseFloat(e.target.value) || 0)
                         }
                       />
@@ -208,10 +258,12 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     min={prop.min}
                     max={prop.max}
                     step={prop.step || 1}
-                    onChange={e => {
+                    onChange={(e) => {
                       let num = parseFloat(e.target.value) || 0;
-                      if (typeof prop.min === "number") num = Math.max(prop.min, num);
-                      if (typeof prop.max === "number") num = Math.min(prop.max, num);
+                      if (typeof prop.min === "number")
+                        num = Math.max(prop.min, num);
+                      if (typeof prop.max === "number")
+                        num = Math.min(prop.max, num);
                       handleChange(prop.key, num);
                     }}
                   />
@@ -222,7 +274,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <input
                     type="color"
                     value={value}
-                    onChange={e => handleChange(prop.key, e.target.value)}
+                    onChange={(e) => handleChange(prop.key, e.target.value)}
                   />
                 );
                 break;
@@ -231,15 +283,50 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <input
                     type="checkbox"
                     checked={value}
-                    onChange={e => handleChange(prop.key, e.target.checked)}
+                    onChange={(e) => handleChange(prop.key, e.target.checked)}
                   />
+                );
+                break;
+              case "modelPicker":
+                inputEl = (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowModelPicker(true)}
+                      style={{
+                        padding: "8px 12px",
+                        background: "#eee",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {propsLocal.modelAssetId
+                        ? "Выбрать другую модель"
+                        : "Выбрать модель"}
+                    </button>
+                    {propsLocal.modelAssetId && (
+                      <span style={{ marginLeft: 8, color: "#84c0ff" }}>
+                        ID: {propsLocal.modelAssetId}
+                      </span>
+                    )}
+                    {/* Модалка выбора модели */}
+                    <AssetPickerModal
+                      open={showModelPicker}
+                      acceptTypes={["model"]}
+                      onSelect={(assetId) => {
+                        handleChange("modelAssetId", assetId);
+                      }}
+                      onClose={() => setShowModelPicker(false)}
+                    />
+                  </>
                 );
                 break;
               case "select":
                 inputEl = (
                   <select
                     value={value}
-                    onChange={e => handleChange(prop.key, e.target.value)}
+                    onChange={(e) => handleChange(prop.key, e.target.value)}
                   >
                     {prop.options.map((opt: any) => (
                       <option key={opt.value} value={opt.value}>
@@ -254,7 +341,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <input
                     type="text"
                     value={value}
-                    onChange={e => handleChange(prop.key, e.target.value)}
+                    onChange={(e) => handleChange(prop.key, e.target.value)}
                   />
                 );
             }

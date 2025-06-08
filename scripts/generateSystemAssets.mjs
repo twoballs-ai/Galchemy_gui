@@ -2,7 +2,6 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Настраиваем путь, чтобы работало из любого места
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -14,7 +13,7 @@ function makeId(...parts) {
   return "mat-" + parts.join("-").replace(/[^\w\-]/g, "");
 }
 
-// Map расширений к полям material.json
+// Map расширений к полям meta
 const textureMap = {
   colorMap:   ["_Color", "_BaseColor"],
   normalMap:  ["_NormalGL", "_Normal", "_NormalDX"],
@@ -24,11 +23,10 @@ const textureMap = {
   usdc:      [".usdc"]
 };
 
-// 1. Получаем список категорий (каталогов)
 const categories = await fs.readdir(ROOT, { withFileTypes: true });
 let items = [];
 
-// Добавляем "materials" как виртуальный корень
+// Добавляем виртуальный корень
 items.push({
   id: "materials",
   name: "materials",
@@ -41,7 +39,6 @@ for (const categoryDir of categories) {
   if (!categoryDir.isDirectory()) continue;
   const category = categoryDir.name;
   const categoryId = category;
-  // Добавляем папку категории
   items.push({
     id: categoryId,
     name: category,
@@ -57,30 +54,21 @@ for (const categoryDir of categories) {
     const mat = matDir.name;
     const matPath = path.join(categoryPath, mat);
 
-    // Собираем список файлов в папке материала
+    // Файлы материала
     const files = await fs.readdir(matPath);
-    // Определяем имя превью
     const previewFile = files.find(f => f.includes("_Color")) ||
                         files.find(f => f.includes("_BaseColor")) ||
                         files.find(f => /\.(jpg|png)$/i.test(f));
-    // Генерируем material.json если нет
-    const materialJsonPath = path.join(matPath, "material.json");
-    let meta;
-    let metaExists = false;
-    try {
-      meta = JSON.parse(await fs.readFile(materialJsonPath, "utf-8"));
-      metaExists = true;
-    } catch {
-      meta = {
-        name: mat,
-        type: "material",
-        parameters: {}
-      };
-    }
-    // Собираем текстурные карты и вспомогательные файлы
+
+    // Собираем meta, как бы мы сгенерировали material.json, но не пишем на диск!
+    let meta = {
+      name: mat,
+      type: "material",
+      parameters: {}
+    };
+    // Собираем текстурные карты
     for (const [key, patterns] of Object.entries(textureMap)) {
       if (!meta[key]) {
-        // Поиск по суффиксам/расширениям
         const found = files.find(f =>
           patterns.some(p => p.startsWith(".")
             ? f.endsWith(p)
@@ -91,13 +79,7 @@ for (const categoryDir of categories) {
     }
     if (!meta.preview && previewFile) meta.preview = previewFile;
 
-    // Сохраняем material.json если сгенерировали
-    if (!metaExists) {
-      await fs.writeFile(materialJsonPath, JSON.stringify(meta, null, 2), "utf-8");
-      console.log(`Generated ${materialJsonPath}`);
-    }
-
-    // Абсолютные пути (от public)
+    // Добавляем в итоговый список
     const urlPrefix = `/assets/materials/${category}/${mat}`;
     const id = makeId(category, mat);
     items.push({
@@ -113,6 +95,6 @@ for (const categoryDir of categories) {
   }
 }
 
-// Записываем итоговый индекс ассетов
+// Записываем общий индекс ассетов
 await fs.writeFile(OUTPUT, JSON.stringify(items, null, 2), "utf-8");
 console.log("System assets index written to", OUTPUT);

@@ -42,7 +42,10 @@ export type ObjectType =
   | "light"
   | "terrain"
   | "sprite"
-  | "character"; // ← добавили
+  | "character"
+  | "model";  // ← добавили
+
+
 
 // Подтип для освещений
 export type LightSubtype = "point" | "directional" | "ambient";
@@ -52,8 +55,8 @@ interface GroupedItem {
   title: string;
   type: ObjectType;
   icon: string;
-  // subtype указываем только для type === "light"
   subtype?: LightSubtype;
+  modelPath?: string; // ← путь до модели (если нужно конкретная модель)
 }
 
 const groupedObjects: { group: string; items: GroupedItem[] }[] = [
@@ -61,6 +64,12 @@ const groupedObjects: { group: string; items: GroupedItem[] }[] = [
     group: "Персонажи",
     items: [
       { title: "Персонаж", type: "character", icon: CharacterIcon },
+    ],
+  },
+    {
+    group: "Модели / Объекты сцены",
+    items: [
+      { title: "3D Модель", type: "model", icon: CharacterIcon },
     ],
   },
   {
@@ -107,15 +116,18 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
       ...(item.subtype ? { subtype: item.subtype } : {})
     };
 
-    if (item.type === "sphere") {
-      onAdd({ ...base, radius: 1, segments: 16 });
-    } else if (item.type === "cube") {
-      onAdd({ ...base, width: 1, height: 1, depth: 1 });
-    } else if (item.type === "character") {
-      onAdd({ ...base }); // пока без специфики
-    } else {
-      onAdd(base);
-    }
+  if (item.type === "sphere") {
+    onAdd({ ...base, radius: 1, segments: 16 });
+  } else if (item.type === "cube") {
+    onAdd({ ...base, width: 1, height: 1, depth: 1 });
+  } else if (item.type === "model") {
+    // Здесь можно потом добавить выбор модели (например, всплывающее окно выбора ассета)
+    onAdd({ ...base }); 
+  } else if (item.type === "character") {
+    onAdd({ ...base });
+  } else {
+    onAdd(base);
+  }
 
     onClose();
   };
