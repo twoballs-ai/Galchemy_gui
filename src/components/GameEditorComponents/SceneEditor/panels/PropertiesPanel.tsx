@@ -313,7 +313,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     {/* Модалка выбора модели */}
                     <AssetPickerModal
                       open={showModelPicker}
-                      acceptTypes={["model"]}
+                      acceptTypes={["modelAsset"]}
                       onSelect={(assetId) => {
                         handleChange("modelAssetId", assetId);
                       }}

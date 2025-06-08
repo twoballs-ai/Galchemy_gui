@@ -1,6 +1,6 @@
 // src/types/assetTypes.ts
 
-export type AssetType = "model" | "image" | "audio" | "text" | "folder" | "file";
+export type AssetType = "modelAsset" | "image" | "audio" | "text" | "folder" | "file";
 
 export interface AssetItem {
   id: string;

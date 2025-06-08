@@ -22,7 +22,11 @@ const AssetBrowser: React.FC = () => {
     getAssets().then(setAssets);
   }, []);
 
-
+useEffect(() => {
+  getAssets().then(list => {
+    console.log('Список ассетов-моделей:', list.filter(a => a.type === "modelAsset"));
+  });
+}, []);
   // -------- Загрузка ассета
   const handleUpload = (file: File) => {
     const reader = new FileReader();
@@ -32,7 +36,7 @@ const AssetBrowser: React.FC = () => {
       let type: AssetItem["type"] = "file";
       if (["png", "jpg", "jpeg", "bmp", "gif"].includes(ext!)) type = "image";
       else if (["mp3", "ogg", "wav"].includes(ext!)) type = "audio";
-      else if (["glb", "gltf"].includes(ext!)) type = "model";
+      else if (["glb", "gltf"].includes(ext!)) type = "modelAsset";
       else if (["txt", "md"].includes(ext!)) type = "text";
 
       const asset: AssetItem = {

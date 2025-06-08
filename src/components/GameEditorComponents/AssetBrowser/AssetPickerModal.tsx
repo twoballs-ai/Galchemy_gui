@@ -7,7 +7,7 @@ interface AssetPickerModalProps {
   open: boolean;
   onSelect: (assetId: string) => void;
   onClose: () => void;
-  acceptTypes?: string[]; // например ["model"]
+  acceptTypes?: string[]; // например ["modelAsset"]
 }
 
 const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
@@ -62,8 +62,8 @@ const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
             }}
           >
             <div style={{ marginBottom: 6 }}>
-              {asset.type === "model" ? (
-                <span role="img" aria-label="model" style={{ fontSize: 36 }}>🗿</span>
+              {asset.type === "modelAsset" ? (
+                <span role="img" aria-label="modelAsset" style={{ fontSize: 36 }}>🗿</span>
               ) : (
                 <span role="img" aria-label="file" style={{ fontSize: 36 }}>📄</span>
               )}

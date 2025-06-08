@@ -9,7 +9,8 @@ import useCanvasResize    from './sceneCanvas/hooks/useCanvasResize';
 import GameObjectListener from './sceneCanvas/GameObjectListener';
 import { GameAlchemy }    from 'game-alchemy-core';
 import { DaylightBoxPaths } from "../../../../public/assets/skyBoxes/DaylightBox";
-import { findAssetById } from '../../../utils/assetStorage';
+import { findAssetById, getAssets } from '../../../utils/assetStorage';
+import { getSceneObjects } from '../../../utils/dbUtils';
 interface GameObjectLive {
   id: string; type: string; x: number; y: number;
   [k: string]: any;
@@ -46,12 +47,12 @@ const SceneCanvas: React.FC = () => {
       character : make('character'),
       camera    : (opts = {}) => GameAlchemy.primitiveFactory.create('camera', gl, opts),
       light     : (opts = {}) => GameAlchemy.primitiveFactory.create('light',  gl, opts),
-       model     : async (opts = {}) => {
-      if (!opts.modelAssetId) throw new Error("Model Asset ID is missing");
+    model: async (opts = {}) => {
+      // opts.modelAssetId должен приходить из объекта сцены!
       const asset = await findAssetById(opts.modelAssetId);
-      if (!asset) throw new Error("Asset not found");
+      if (!asset || !asset.fileData) throw new Error("Asset not found or no file data");
       const blobUrl = URL.createObjectURL(new Blob([asset.fileData]));
-      return GameAlchemy.spawn3DModel(blobUrl, [opts.x ?? 0, opts.y ?? 0, opts.z ?? 0]);
+      return GameAlchemy.spawn3DModel(blobUrl, [opts.x ?? 0, opts.y ?? 0, opts.z ?? 0], asset.name, asset.id);
     },
     };
   }, [GameAlchemy.core]);
@@ -95,7 +96,24 @@ const SceneCanvas: React.FC = () => {
     if (!GameAlchemy.core) return;
     GameAlchemy.core.scene.setSelectedById?.(currentObjectId ?? null);
   }, [currentObjectId]);
+useEffect(() => {
+  const sceneId = "scene_180f97e0-49f8-4ffd-8da0-5c3e6da747fc";
+  const modelId = "f1befe82-eb7e-4f1b-a4d9-21dd8a6386d8";
 
+  getAssets().then(list => {
+    console.log("=== ASSETS (AssetDB) ===");
+    list.filter(a => a.type === "modelAsset").forEach(a => console.log(a));
+  });
+
+  getSceneObjects(sceneId).then(list => {
+    console.log("=== SCENE OBJECTS (ProjectDB) ===");
+    list.filter(o => o.type === "model").forEach(o => console.log(o));
+  });
+
+  findAssetById(modelId).then(asset => {
+    console.log(`Asset by id ${modelId}:`, asset);
+  });
+}, []);
   useCanvasResize(canvasRef, GameAlchemy.core);
 
   return (
