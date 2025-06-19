@@ -1,14 +1,18 @@
-// src/types/assetTypes.ts
-
-export type AssetType = "modelAsset" | "image" | "audio" | "text" | "folder" | "file";
+export type AssetType =  | 'folder'
+    | 'image'
+    | 'audio'
+    | 'modelAsset'
+    | 'material'
+    | 'text'
+    | 'script'   // 👈 НОВОЕ
+    | 'file';
 
 export interface AssetItem {
   id: string;
   name: string;
   type: AssetType;
   parentId?: string;
-  url?: string; // objectURL/base64 для preview
-  fileData?: ArrayBuffer | string | null; // бинарные данные
-  meta?: Record<string, any>;
-  system?: boolean;          // ← НОВОЕ
+  url?: string;
+  fileData?: ArrayBuffer | string;
+  system?: boolean;
 }

@@ -58,3 +58,76 @@ export async function findAssetById(id: string): Promise<AssetItem | undefined> 
   const all = await getAssets();
   return all.find(a => a.id === id);
 }
+
+const SCRIPTS_FOLDER_NAME = 'scripts';
+
+/** Гарантированно возвращает id папки scripts (создаёт, если нет). */
+export async function getOrCreateScriptsFolder(): Promise<AssetItem> {
+  let assets = await getAssets();
+  let folder = assets.find(
+    a => a.type === 'folder' && a.name === SCRIPTS_FOLDER_NAME && a.parentId === undefined
+  );
+
+  if (!folder) {
+    folder = { id: crypto.randomUUID(), name: SCRIPTS_FOLDER_NAME, type: 'folder' };
+    await addAsset(folder);
+  }
+  return folder;
+}
+export async function createScriptAsset(
+  name: string,
+  parentId: string,
+  initialContent = ""
+): Promise<AssetItem> {
+  const asset: AssetItem = {
+    id: crypto.randomUUID(),
+    name,
+    type: "script",
+    parentId,
+    fileData: initialContent,
+  };
+  await addAsset(asset);
+  return asset;
+}
+/** Создаёт (или возвращает) script-ассет внутри scripts-папки */
+export async function getOrCreateScriptFile(
+  fileName: string,
+  defaultContent: string
+): Promise<AssetItem> {
+  const scriptsFolder = await getOrCreateScriptsFolder();
+  let assets = await getAssets();
+
+  let script = assets.find(
+    a =>
+      a.type === 'script' &&
+      a.name === fileName &&
+      a.parentId === scriptsFolder.id
+  );
+
+  if (!script) {
+    script = {
+      id: crypto.randomUUID(),
+      name: fileName,
+      type: 'script',
+      parentId: scriptsFolder.id,
+      fileData: defaultContent,
+    };
+    await addAsset(script);
+  }
+  return script;
+}
+
+/** Безопасное обновление содержимого скрипта */
+export async function patchScript(
+  assetId: string,
+  patch: (code: string) => string
+) {
+  const script = await findAssetById(assetId);
+  if (!script || script.type !== 'script') return;
+
+  const current = typeof script.fileData === 'string'
+    ? script.fileData
+    : new TextDecoder().decode(script.fileData as ArrayBuffer);
+
+  await addAsset({ ...script, fileData: patch(current) });
+}

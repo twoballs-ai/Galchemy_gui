@@ -5,6 +5,7 @@ import {
   dbUpdateSceneObject, 
   dbRemoveSceneObject 
 } from '../../utils/dbUtils';
+import { loadScript, saveScript } from '../../utils/scriptStorage';
 
 // "Сырые" данные объекта из базы / Redux
 export interface GameObject {
@@ -63,6 +64,14 @@ export const addSceneObject = createAsyncThunk(
   ) => {
     try {
       const newObject = await dbAddSceneObject(activeScene, object);
+       const projectName = "название_текущего_проекта"; // достать из state
+    const scriptKey = `SceneScript:${projectName}:${activeScene}`;
+    const script = loadScript(scriptKey);
+    if (script) {
+      script.content += `\nGameAlchemy.spawnGameObject(${JSON.stringify(newObject)});`;
+      saveScript(scriptKey, script);
+    }
+
       return newObject;
     } catch (error) {
       return rejectWithValue('Ошибка добавления объекта');

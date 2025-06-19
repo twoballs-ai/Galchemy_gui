@@ -28,6 +28,7 @@ import {
   updateOpenedScene,
 } from "./store/slices/projectSlice";
 import { StopOutlined } from "@ant-design/icons";
+import { initProjectScript, initSceneScript } from "./utils/scriptStorage";
 
 const { Header, Content } = Layout;
 
@@ -94,8 +95,12 @@ const [panels, setPanels] = useState({
       dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
       dispatch(setActiveScene(newScene.id));
       dispatch(saveProject(project.id));
+        await initSceneScript(newScene.sceneName);
+  await initProjectScript(project.name); 
+          initProjectScript(project.name);
+    initSceneScript(project.name, newScene.sceneName);
     },
-    [dispatch, project.id, openedScenes]
+    [dispatch, project.id, openedScenes,isProjectLoaded]
   );
 
   // ───── Создаём первую сцену при пустом проекте ─────

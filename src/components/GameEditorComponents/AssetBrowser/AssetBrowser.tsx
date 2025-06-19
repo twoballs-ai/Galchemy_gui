@@ -13,20 +13,55 @@ import { DownOutlined, RightOutlined } from "@ant-design/icons";
 import MaterialTile from "./MaterialTile";
 
 const ROOT_ID = undefined;
-
+const SCRIPTS_FOLDER_NAME = "scripts";
 const AssetBrowser: React.FC = () => {
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(ROOT_ID);
-
   useEffect(() => {
     getAssets().then(setAssets);
   }, []);
-
+  const [scriptAssets, setScriptAssets] = useState<AssetItem[]>([]);
 useEffect(() => {
-  getAssets().then(list => {
-    console.log('Список ассетов-моделей:', list.filter(a => a.type === "modelAsset"));
-  });
-}, []);
+  const loadScripts = async () => {
+    const assetsList = await getAssets();
+    const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
+    if (!scriptsFolder) return;
+
+    const scripts = Object.entries(localStorage)
+      .filter(([key]) => key.startsWith("ProjectScript:") || key.startsWith("SceneScript:"))
+      .map(([key, value]) => {
+        const script = JSON.parse(value);
+        return {
+          id: key,
+          name: script.name,
+          type: "script",
+          parentId: scriptsFolder.id,
+          fileData: script.content,
+        };
+      });
+
+    setScriptAssets(scripts);
+  };
+
+  loadScripts();
+}, [assets]);
+useEffect(() => {
+  const createScriptsFolder = async () => {
+    const assetsList = await getAssets();
+    const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
+    if (!scriptsFolder) {
+      const folder: AssetItem = {
+        id: crypto.randomUUID(),
+        name: SCRIPTS_FOLDER_NAME,
+        type: "folder",
+      };
+      await addAsset(folder);
+      setAssets(await getAssets());
+    }
+  };
+  createScriptsFolder();
+}, []); 
+
   // -------- Загрузка ассета
   const handleUpload = (file: File) => {
     const reader = new FileReader();

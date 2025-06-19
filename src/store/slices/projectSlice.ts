@@ -7,6 +7,7 @@ import {
   OpenedScene,
   setCurrentProjectToLS
 } from '../../utils/storageUtils';
+import { loadScript, saveScript } from '../../utils/scriptStorage';
 
 /**
  * Если объекты не нужны в проектном срезе,
@@ -35,7 +36,14 @@ const initialState: ProjectState = {
   openedScenes: [],
   activeScene: ''
 };
-
+// helper-функция для обновления списка сцен в файле
+const updateProjectScriptContent = (content: string, scenes: SceneData[]): string => {
+  const scenesList = scenes.map(scene => `"${scene.sceneName}"`).join(", ");
+  return content.replace(
+    /export const scenes = \[.*?\];/,
+    `export const scenes = [${scenesList}];`
+  );
+};
 /**
  * Thunk для сохранения данных проекта в localStorage.
  * Здесь сохраняем только scenes (без объектов), openedScenes и activeScene.
@@ -100,19 +108,30 @@ const projectSlice = createSlice({
       setCurrentProjectToLS(action.payload);
     },
     /** Добавляем новую сцену (объекты не используем) */
-    addScene(state, action: PayloadAction<SceneData>) {
-      console.log("add_scenes");
-      state.scenes.push(action.payload);
-    },
+addScene(state, action: PayloadAction<SceneData>) {
+  state.scenes.push(action.payload);
 
-    /** Удаляем сцену по её id */
-    removeScene(state, action: PayloadAction<string>) {
-      state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
-      // Если удаляем активную сцену, сбросим activeScene
-      if (state.activeScene === action.payload) {
-        state.activeScene = state.scenes.length > 0 ? state.scenes[0].id : '';
-      }
-    },
+  const projectName = "название_текущего_проекта"; // достать из state
+  const scriptKey = "ProjectScript:" + projectName;
+  const script = loadScript(scriptKey);
+  if (script) {
+    script.content = updateProjectScriptContent(script.content, state.scenes);
+    saveScript(scriptKey, script);
+  }
+},
+
+removeScene(state, action: PayloadAction<string>) {
+  state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
+  const projectName = "название_текущего_проекта"; // достать из state
+  const scriptKey = "ProjectScript:" + projectName;
+  const script = loadScript(scriptKey);
+  if (script) {
+    script.content = updateProjectScriptContent(script.content, state.scenes);
+    saveScript(scriptKey, script);
+  }
+},
+
+
     /** Устанавливаем активную сцену */
     setActiveScene(state, action: PayloadAction<string>) {
       state.activeScene = action.payload;
