@@ -81,7 +81,7 @@ const [panels, setPanels] = useState({
 
   // ───── Добавление новой сцены ─────
   const addNewScene = useCallback(
-    (sceneName: string) => {
+    async (sceneName: string) => {
       const newScene = createScene(sceneName);
       dispatch(addScene(newScene));
 

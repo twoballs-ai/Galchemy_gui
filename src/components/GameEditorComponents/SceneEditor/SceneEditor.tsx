@@ -10,7 +10,6 @@ import { loadSceneObjects } from "../../../store/slices/sceneObjectsSlice";
 import TransformToolbar from './EditorToolbar'; // путь зависит от твоей структуры
 import { PlayCircle, Square } from "lucide-react";
 import { GameAlchemy } from 'game-alchemy-core';
-import { globalLogicManager } from "../../../logicManager";
 import EditorToolbar from './EditorToolbar'
 import AssetBrowserPanel from "./panels/AssetBrowserPanel"; // ← путь к панели
 import "react-grid-layout/css/styles.css";
@@ -194,7 +193,7 @@ const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
   const handleStartPreview = () => {
     if (!activeScene) return;
     GameAlchemy.core.sceneManager.changeScene?.(activeScene);
-    globalLogicManager.runLogicForScene(activeScene);
+
     GameAlchemy.setPreviewMode();
     setIsPreviewing(true);
   };

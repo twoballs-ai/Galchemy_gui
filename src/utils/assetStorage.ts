@@ -116,7 +116,21 @@ export async function getOrCreateScriptFile(
   }
   return script;
 }
+// Создать (или вернуть) script-ассет проекта
+export async function getOrCreateProjectScriptAsset(projectName: string): Promise<AssetItem> {
+  return getOrCreateScriptFile(
+    `${projectName}.js`,
+    `// Скрипт проекта ${projectName}\nexport const scenes = [];\n`
+  );
+}
 
+// Создать (или вернуть) script-ассет сцены
+export async function getOrCreateSceneScriptAsset(sceneName: string): Promise<AssetItem> {
+  return getOrCreateScriptFile(
+    `${sceneName}.js`,
+    `// Скрипт сцены ${sceneName}\nexport const initScene = () => {};\n`
+  );
+}
 /** Безопасное обновление содержимого скрипта */
 export async function patchScript(
   assetId: string,
