@@ -7,6 +7,8 @@ import {
   OpenedScene,
   setCurrentProjectToLS
 } from '../../utils/storageUtils';
+import { getOrCreateProjectScriptAsset, getOrCreateSceneScriptAsset } from '../../utils/assetStorage';
+import { initializeDefaultSceneObjects } from '../../utils/initScene';
 /**
  * Если объекты не нужны в проектном срезе,
  * то SceneData будет выглядеть без поля objects.
@@ -47,28 +49,28 @@ const updateProjectScriptContent = (content: string, scenes: SceneData[]): strin
  * Здесь сохраняем только scenes (без объектов), openedScenes и activeScene.
  */
 export const saveProject = createAsyncThunk(
-    'project/saveProject',
-    async (_, { getState }) => {
-        const state = getState() as { project: ProjectState };
-        const projectId = state.project.currentProjectId;
+  'project/saveProject',
+  async (_, { getState }) => {
+    const state = getState() as { project: ProjectState };
+    const projectId = state.project.currentProjectId;
 
-        if (!projectId) {
-            console.warn('saveProject: Нет текущего проекта');
-            return;
-        }
-
-        const projectData: ProjectData = {
-            scenes: state.project.scenes.map(scene => ({
-                id: scene.id,
-                sceneName: scene.sceneName,
-                settings: scene.settings
-            })),
-            openedScenes: state.project.openedScenes,
-            activeScene: state.project.activeScene
-        };
-
-        saveProjectData(projectId, projectData);
+    if (!projectId) {
+      console.warn('saveProject: Нет текущего проекта');
+      return;
     }
+
+    const projectData: ProjectData = {
+      scenes: state.project.scenes.map(scene => ({
+        id: scene.id,
+        sceneName: scene.sceneName,
+        settings: scene.settings
+      })),
+      openedScenes: state.project.openedScenes,
+      activeScene: state.project.activeScene
+    };
+
+    saveProjectData(projectId, projectData);
+  }
 );
 
 
@@ -78,29 +80,60 @@ export const saveProject = createAsyncThunk(
 export const loadProject = createAsyncThunk(
   'project/loadProject',
   async (projectId: string, { dispatch }) => {
-      const data = loadProjectData(projectId);
-      if (data) {
-          dispatch(loadProjectState(data));
-          dispatch(setCurrentProjectId(projectId));  // Запоминаем текущий проект
-      }
+    const data = loadProjectData(projectId);
+    if (data) {
+      dispatch(loadProjectState(data));
+      dispatch(setCurrentProjectId(projectId));  // Запоминаем текущий проект
+    }
   }
 );
-// Добавить новую сцену с созданием script-ассета
 export const addSceneWithScript = createAsyncThunk(
   'project/addSceneWithScript',
   async (scene: SceneData, { dispatch, getState }) => {
-    // 1. Добавляем сцену в Redux
     dispatch(addScene(scene));
     // 2. Создаём script-ассет для сцены
-    await getOrCreateSceneScriptAsset(scene.sceneName);
-    // 3. (опционально) Добавить дефолтные объекты на сцену
-    // ... (см. блок ниже)
-    // 4. Сохраняем проект
     const state = getState() as { project: ProjectState };
+    const projectId = state.project.currentProjectId;
+    await getOrCreateSceneScriptAsset(scene.sceneName, projectId); // ← вот так!
+    // ...
     dispatch(saveProject(state.project.currentProjectId));
   }
 );
+export const initializeProject = createAsyncThunk(
+  "project/initializeProject",
+  async (project: ProjectSummary, { dispatch }) => {
+    // Установим текущий проект
+    dispatch(setCurrentProjectId(project.id));
 
+    // Создадим главный скрипт проекта
+    await getOrCreateProjectScriptAsset(project.id);
+
+    // Создадим первую сцену
+    const startScene = {
+      id: `scene_${uuidv4()}`,
+      sceneName: "Scene 1",
+      settings: {},
+    };
+    dispatch(addScene(startScene));
+
+    // Создадим script-ассет для сцены
+    await getOrCreateSceneScriptAsset(startScene.sceneName, project.id);
+
+    // Откроем сцену во вкладках и сделаем активной
+    dispatch(setOpenedScenes([{
+      id: startScene.id,
+      sceneName: startScene.sceneName,
+      key: startScene.id,
+    }]));
+    dispatch(setActiveScene(startScene.id));
+
+    // Добавим дефолтные объекты
+    await dispatch(initializeDefaultSceneObjects(startScene.id));
+
+    // Сохраним проект
+    await dispatch(saveProject());
+  }
+);
 // Удалить сцену с удалением script-ассета
 export const removeSceneWithScript = createAsyncThunk(
   'project/removeSceneWithScript',
@@ -133,19 +166,19 @@ const projectSlice = createSlice({
       state.activeScene = action.payload.activeScene;
     },
     /** Новый экшен для установки currentProjectId */
-    setCurrentProjectId(state, action: PayloadAction<string>) {
+    setCurrentProjectId(state, action: PayloadAction<string | null>) {
       state.currentProjectId = action.payload;
-      setCurrentProjectToLS(action.payload);
+      setCurrentProjectToLS(action.payload ?? "");
     },
     /** Добавляем новую сцену (объекты не используем) */
-addScene(state, action: PayloadAction<SceneData>) {
-  state.scenes.push(action.payload);
+    addScene(state, action: PayloadAction<SceneData>) {
+      state.scenes.push(action.payload);
 
-},
+    },
 
-removeScene(state, action: PayloadAction<string>) {
-  state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
-},
+    removeScene(state, action: PayloadAction<string>) {
+      state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
+    },
 
 
     /** Устанавливаем активную сцену */

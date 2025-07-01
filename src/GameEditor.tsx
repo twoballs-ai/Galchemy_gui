@@ -72,11 +72,14 @@ useEffect(()=> {
 },[dispatch]);
 
   // ───── Загрузка проекта ─────
-  useEffect(() => {
-    dispatch(loadProject(project.id)).then(() => {
-      setIsProjectLoaded(true);
+useEffect(() => {
+  dispatch(loadProject(project.id))
+    .then(() => setIsProjectLoaded(true))
+    .finally(() => {
+      // даже если SceneCanvas не смонтируется – бут будет снят
+      dispatch(finishBoot());
     });
-  }, [dispatch, project.id]);
+}, [dispatch, project.id]);
 
   // ───── Добавление новой сцены ─────
   const addNewScene = useCallback(
@@ -125,16 +128,7 @@ useEffect(()=> {
     dispatch(saveProject(project.id));
   };
 
-  // При инициализации проекта
-  const initializeProject = async (projectName: string, firstSceneName: string) => {
-    // Создать скрипт проекта
-    await getOrCreateProjectScriptAsset(projectName);
-    // Создать скрипт первой сцены
-    await getOrCreateSceneScriptAsset(firstSceneName);
-    // Можно добавить логику "init" для первой сцены
-  };
-
-
+  
   // ────────────────────────────────────────────────────
   // JSX
   // ────────────────────────────────────────────────────

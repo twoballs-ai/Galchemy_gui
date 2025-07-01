@@ -11,10 +11,10 @@ import {
   loadAllProjects,
 } from "./utils/storageUtils";
 import { useDispatch } from "react-redux";
-import { setCurrentProjectId } from "./store/slices/projectSlice";
+import { initializeProject, setCurrentProjectId } from "./store/slices/projectSlice";
 import ProjectCreationModal from "./ProjectCreationModal";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import { getOrCreateProjectScriptAsset } from "./utils/assetStorage";
+import { AppDispatch } from "./store/store"; // путь может отличаться в твоем проекте
 const { Header, Content } = Layout;
 
 const App: React.FC = () => {
@@ -23,7 +23,8 @@ const App: React.FC = () => {
   const [isProjectCreationModalVisible, setIsProjectCreationModalVisible] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  const dispatch = useDispatch();
+
+const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     const storedProjects = loadAllProjects();
@@ -45,12 +46,19 @@ const handleCreateProjectConfirm = async (projectName: string) => {
     name: projectName,
   };
 
-  // 1. Создать скрипт-проект в assets
-  await getOrCreateProjectScriptAsset(newProj.id);
+  // 1) Централизованная инициализация (создаст ассеты, сцену, объекты)
+  await dispatch(initializeProject(newProj));
 
-  // 2. Сохранить проект
-  setProjects([...projects, newProj]);
+  // 2) Обновляем список проектов в App
+  setProjects(prev => [...prev, newProj]);
+
+  // 3) Закрываем модальное окно
   setIsProjectCreationModalVisible(false);
+
+  // 4) Открываем редактор для нового проекта
+  dispatch(setCurrentProjectId(newProj.id));
+  setSelectedProject(newProj);
+  setIsEditorOpen(true);
 };
   const handleRenameProject = (project: ProjectSummary) => {
     const newName = prompt("Введите новое имя проекта:", project.name);
