@@ -9,12 +9,12 @@ export type AssetType =  | 'folder'
 
 export interface AssetItem {
   id: string;
-  name: string;
-  displayName?: string;
-  type: AssetType;
+  name: string;           // внутреннее имя   (main_<pid>.js)
+  displayName?: string;   // то, что видит пользователь (main.js)
+  type: "folder" | "script" | "image" | "audio" | "modelAsset" | "material" | "file" | "text";
   parentId?: string;
-  url?: string;
   fileData?: ArrayBuffer | string;
-  system?: boolean;
-  protected: true,
+  url?: string;
+  system?: boolean;       // не удаляемое «из коробки»
+  protected?: boolean;    // не удаляемое из UI, но можно снести программно
 }

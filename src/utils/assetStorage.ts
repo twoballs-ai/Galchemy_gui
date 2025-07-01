@@ -152,7 +152,33 @@ export async function getOrCreateSceneScriptAsset(sceneName: string): Promise<As
     `// Скрипт сцены ${sceneName}\nexport const initScene = () => {};\n`
   );
 }
+// src/utils/assetStorage.ts   (добавляем в самый конец файла)
 
+export async function deleteProjectAssets(projectId: string) {
+  const db      = await getAssetDB();
+  const assets  = await getUserAssets();
+  const scriptsFolder = assets.find(
+    a => a.type === "folder" && a.name === SCRIPTS_FOLDER_NAME && !a.parentId
+  );
+
+  /* ---------- 1. чистим скрипты проекта ---------- */
+  const projectScripts = assets.filter(
+    a => a.type === "script" && a.name === `main_${projectId}.js`
+  );
+  for (const s of projectScripts) await db.delete(ASSET_STORE, s.id);
+
+  /* ---------- 2. если папка осталась пустой — удаляем её ---------- */
+  if (scriptsFolder) {
+    const remains = await db.getAllFromIndex(
+      ASSET_STORE,
+      "by-type",
+      "script"
+    );
+
+    const nothingLeft = remains.every(s => s.parentId !== scriptsFolder.id);
+    if (nothingLeft) await db.delete(ASSET_STORE, scriptsFolder.id);
+  }
+}
 
 // Удалить скрипт сцены
 export async function deleteSceneScriptAsset(sceneName: string) {

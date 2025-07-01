@@ -1,3 +1,5 @@
+import { deleteProjectAssets } from "./assetStorage";
+
 const ALL_PROJECTS_KEY = 'allProjects';
 const CURRENT_PROJECT_KEY = 'currentProjectId';
 
@@ -100,7 +102,7 @@ export const deleteProjectData = (projectId: string) => {
 
     // --- если удаляемый проект был текущим → очищаем флаг
     if (getCurrentProject() === projectId) clearCurrentProject();
-
+deleteProjectAssets(projectId); 
   } catch (err) {
     console.error(`Ошибка при удалении проекта ${projectId}:`, err);
   }
