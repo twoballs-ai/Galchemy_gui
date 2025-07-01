@@ -21,46 +21,46 @@ const AssetBrowser: React.FC = () => {
     getAssets().then(setAssets);
   }, []);
   const [scriptAssets, setScriptAssets] = useState<AssetItem[]>([]);
-useEffect(() => {
-  const loadScripts = async () => {
-    const assetsList = await getAssets();
-    const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
-    if (!scriptsFolder) return;
+  useEffect(() => {
+    const loadScripts = async () => {
+      const assetsList = await getAssets();
+      const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
+      if (!scriptsFolder) return;
 
-    const scripts = Object.entries(localStorage)
-      .filter(([key]) => key.startsWith("ProjectScript:") || key.startsWith("SceneScript:"))
-      .map(([key, value]) => {
-        const script = JSON.parse(value);
-        return {
-          id: key,
-          name: script.name,
-          type: "script",
-          parentId: scriptsFolder.id,
-          fileData: script.content,
+      const scripts = Object.entries(localStorage)
+        .filter(([key]) => key.startsWith("ProjectScript:") || key.startsWith("SceneScript:"))
+        .map(([key, value]) => {
+          const script = JSON.parse(value);
+          return {
+            id: key,
+            name: script.name,
+            type: "script",
+            parentId: scriptsFolder.id,
+            fileData: script.content,
+          };
+        });
+
+      setScriptAssets(scripts);
+    };
+
+    loadScripts();
+  }, [assets]);
+  useEffect(() => {
+    const createScriptsFolder = async () => {
+      const assetsList = await getAssets();
+      const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
+      if (!scriptsFolder) {
+        const folder: AssetItem = {
+          id: crypto.randomUUID(),
+          name: SCRIPTS_FOLDER_NAME,
+          type: "folder",
         };
-      });
-
-    setScriptAssets(scripts);
-  };
-
-  loadScripts();
-}, [assets]);
-useEffect(() => {
-  const createScriptsFolder = async () => {
-    const assetsList = await getAssets();
-    const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
-    if (!scriptsFolder) {
-      const folder: AssetItem = {
-        id: crypto.randomUUID(),
-        name: SCRIPTS_FOLDER_NAME,
-        type: "folder",
-      };
-      await addAsset(folder);
-      setAssets(await getAssets());
-    }
-  };
-  createScriptsFolder();
-}, []); 
+        await addAsset(folder);
+        setAssets(await getAssets());
+      }
+    };
+    createScriptsFolder();
+  }, []);
 
   // -------- Загрузка ассета
   const handleUpload = (file: File) => {
@@ -175,10 +175,12 @@ useEffect(() => {
           {content.filter(i => i.type !== "folder" && i.type !== "material").map(asset => (
             <div className="asset" key={asset.id}>
               {asset.type === "image"
-                ? <img src={asset.url} alt={asset.name} style={{ width: 32, height: 32 }} />
+                ? <img src={asset.url} alt={asset.displayName || asset.name} style={{ width: 32, height: 32 }} />
                 : <FileOutlined style={{ fontSize: 32 }} />}
-              <span style={{ marginLeft: 8 }}>{asset.name}</span>
-              {!asset.system && (
+              <span style={{ marginLeft: 8 }}>
+                {asset.displayName || asset.name}
+              </span>
+              {!asset.system && !asset.protected && (
                 <Button
                   danger size="small"
                   icon={<DeleteOutlined />}

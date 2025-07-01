@@ -2,20 +2,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout, Button, Dropdown, Space } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  DownOutlined,
-  PlusOutlined,
-  PlayCircleOutlined,
-  MenuOutlined,
-} from "@ant-design/icons";
+
 import { v4 as uuidv4 } from "uuid";
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import EditorMenuBar from "./components/GameEditorComponents/MainMenuBar";
 import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
-import { globalLogicManager } from "./logicManager";
+import { startBoot, finishBoot } from "./store/slices/bootSlice";
 
-import { GameAlchemy } from 'game-alchemy-core';
 import { RootState, AppDispatch } from "./store/store";
 import {
   loadProject,
@@ -26,9 +20,10 @@ import {
   setOpenedScenes,
   updateScene,
   updateOpenedScene,
+  addSceneWithScript,
 } from "./store/slices/projectSlice";
-import { StopOutlined } from "@ant-design/icons";
-import { initProjectScript, initSceneScript } from "./utils/scriptStorage";
+import SplashScreen from "./components/SplashScreen";
+
 
 const { Header, Content } = Layout;
 
@@ -56,21 +51,25 @@ const GameEditor: React.FC<GameEditorProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
+  const boot = useSelector((s: RootState) => s.boot);
   const { scenes, openedScenes, activeScene } = useSelector(
     (state: RootState) => state.project
   );
 
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-// состояние видимости панелей для меню «Вид → Панели»
-const [panels, setPanels] = useState({
-  objectsPanel: true,
-  propertiesPanel: true,
-  assetBrowserPanel: true,
-});
+  // состояние видимости панелей для меню «Вид → Панели»
+  const [panels, setPanels] = useState({
+    objectsPanel: true,
+    propertiesPanel: true,
+    assetBrowserPanel: true,
+  });
   const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
     sceneName: s.sceneName,
   }));
+useEffect(()=> {
+  dispatch(startBoot("Компиляция сцены…"));
+},[dispatch]);
 
   // ───── Загрузка проекта ─────
   useEffect(() => {
@@ -83,8 +82,7 @@ const [panels, setPanels] = useState({
   const addNewScene = useCallback(
     async (sceneName: string) => {
       const newScene = createScene(sceneName);
-      dispatch(addScene(newScene));
-
+      await dispatch(addSceneWithScript(newScene)); // <--- thunk
 
       const newOpenedScene = {
         id: newScene.id,
@@ -95,12 +93,8 @@ const [panels, setPanels] = useState({
       dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
       dispatch(setActiveScene(newScene.id));
       dispatch(saveProject(project.id));
-        await initSceneScript(newScene.sceneName);
-  await initProjectScript(project.name); 
-          initProjectScript(project.name);
-    initSceneScript(project.name, newScene.sceneName);
     },
-    [dispatch, project.id, openedScenes,isProjectLoaded]
+    [dispatch, project.id, openedScenes]
   );
 
   // ───── Создаём первую сцену при пустом проекте ─────
@@ -131,25 +125,32 @@ const [panels, setPanels] = useState({
     dispatch(saveProject(project.id));
   };
 
-
-
+  // При инициализации проекта
+  const initializeProject = async (projectName: string, firstSceneName: string) => {
+    // Создать скрипт проекта
+    await getOrCreateProjectScriptAsset(projectName);
+    // Создать скрипт первой сцены
+    await getOrCreateSceneScriptAsset(firstSceneName);
+    // Можно добавить логику "init" для первой сцены
+  };
 
 
   // ────────────────────────────────────────────────────
   // JSX
   // ────────────────────────────────────────────────────
   return (
-    <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
+    <> {boot.isBooting && <SplashScreen msg={boot.message} />}
+       <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
       {/* ───── Верхнее меню и вкладки ───── */}
       <Header style={{ background: "#1f1f1f", padding: "0 16px", display: "flex", height: "60px" }}>
-      <EditorMenuBar
-  onNewScene={handleNewScene}
-  onCloseProject={onCloseProject}
-  panels={panels}
-  onTogglePanel={(panelKey) =>
-    setPanels(prev => ({ ...prev, [panelKey]: !prev[panelKey] }))
-  }
-/>
+        <EditorMenuBar
+          onNewScene={handleNewScene}
+          onCloseProject={onCloseProject}
+          panels={panels}
+          onTogglePanel={(panelKey) =>
+            setPanels(prev => ({ ...prev, [panelKey]: !prev[panelKey] }))
+          }
+        />
         <Tabs
           tabs={sceneTabs}
           activeTab={activeScene}
@@ -180,19 +181,20 @@ const [panels, setPanels] = useState({
       <Layout>
         <Content style={{ padding: "6px", background: "#2e2e2e" }}>
 
-<SceneEditor
-  activeScene={activeScene}
-  projectName={project.name}
-  panels={panels}                  // <-- сюда
-  onTogglePanel={key =>
-    setPanels(prev => ({ ...prev, [key]: !prev[key] }))
-  }
-/>
+          <SceneEditor
+            activeScene={activeScene}
+            projectName={project.name}
+            panels={panels}                  // <-- сюда
+            onTogglePanel={key =>
+              setPanels(prev => ({ ...prev, [key]: !prev[key] }))
+            }
+          />
         </Content>
 
       </Layout>
 
-    </Layout>
+    </Layout></>
+ 
   );
 };
 

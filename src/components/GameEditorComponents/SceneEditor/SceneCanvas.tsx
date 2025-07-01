@@ -9,6 +9,7 @@ import GameObjectListener from './sceneCanvas/GameObjectListener';
 import { GameAlchemy }    from 'game-alchemy-core';
 import { DaylightBoxPaths } from "../../../../public/assets/skyBoxes/DaylightBox";
 import { findAssetById } from '../../../utils/assetStorage';
+import { finishBoot } from '../../../store/slices/bootSlice';
 interface GameObjectLive {
   id: string; type: string; x: number; y: number;
   [k: string]: any;
@@ -78,7 +79,7 @@ const SceneCanvas: React.FC = () => {
     }
 
     GameAlchemy.start();
-
+dispatch(finishBoot()); 
     return () => {
       core.emitter.off('objectSelected', onObjectSelected);
       core.stop();

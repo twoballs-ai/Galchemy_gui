@@ -117,20 +117,52 @@ export async function getOrCreateScriptFile(
   return script;
 }
 // Создать (или вернуть) script-ассет проекта
-export async function getOrCreateProjectScriptAsset(projectName: string): Promise<AssetItem> {
-  return getOrCreateScriptFile(
-    `${projectName}.js`,
-    `// Скрипт проекта ${projectName}\nexport const scenes = [];\n`
-  );
-}
+export async function getOrCreateProjectScriptAsset(projectId: string): Promise<AssetItem> {
+  const internalName = `main_${projectId}.js`; // уникальное имя в БД
+  const displayName  = "main.js";             // показываем пользователю
 
-// Создать (или вернуть) script-ассет сцены
+  const scriptsFolder = await getOrCreateScriptsFolder();
+  const assets        = await getAssets();
+
+  let script = assets.find(
+    a =>
+      a.type     === "script" &&
+      a.name     === internalName &&
+      a.parentId === scriptsFolder.id
+  );
+
+  if (!script) {
+    script = {
+      id          : crypto.randomUUID(),
+      name        : internalName,   // хранится в БД
+      displayName : displayName,    // видно в UI
+      type        : "script",
+      parentId    : scriptsFolder.id,
+      protected   : true,           // <── защищён от удаления
+      fileData    : `// Главный скрипт проекта\nexport const scenes = [];\n`,
+    };
+    await addAsset(script);
+  }
+  return script;
+}
+// Создать или вернуть script-ассет для сцены
 export async function getOrCreateSceneScriptAsset(sceneName: string): Promise<AssetItem> {
   return getOrCreateScriptFile(
     `${sceneName}.js`,
     `// Скрипт сцены ${sceneName}\nexport const initScene = () => {};\n`
   );
 }
+
+
+// Удалить скрипт сцены
+export async function deleteSceneScriptAsset(sceneName: string) {
+  const scriptsFolder = await getOrCreateScriptsFolder();
+  const assets = await getAssets();
+  const script = assets.find(a => a.type === 'script' && a.name === `${sceneName}.js` && a.parentId === scriptsFolder.id);
+  if (script) await removeAsset(script.id);
+}
+
+
 /** Безопасное обновление содержимого скрипта */
 export async function patchScript(
   assetId: string,
@@ -144,4 +176,12 @@ export async function patchScript(
     : new TextDecoder().decode(script.fileData as ArrayBuffer);
 
   await addAsset({ ...script, fileData: patch(current) });
+}
+
+// Удалить скрипт проекта
+export async function deleteProjectScriptAsset(projectName: string) {
+  const scriptsFolder = await getOrCreateScriptsFolder();
+  const assets = await getAssets();
+  const script = assets.find(a => a.type === 'script' && a.name === `${projectName}.js` && a.parentId === scriptsFolder.id);
+  if (script) await removeAsset(script.id);
 }

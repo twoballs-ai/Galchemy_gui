@@ -5,7 +5,6 @@ import {
   dbUpdateSceneObject, 
   dbRemoveSceneObject 
 } from '../../utils/dbUtils';
-import { loadScript, saveScript } from '../../utils/scriptStorage';
 
 // "Сырые" данные объекта из базы / Redux
 export interface GameObject {

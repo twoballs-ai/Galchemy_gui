@@ -7,8 +7,6 @@ import {
   OpenedScene,
   setCurrentProjectToLS
 } from '../../utils/storageUtils';
-import { loadScript, saveScript } from '../../utils/scriptStorage';
-
 /**
  * Если объекты не нужны в проектном срезе,
  * то SceneData будет выглядеть без поля objects.
@@ -87,7 +85,39 @@ export const loadProject = createAsyncThunk(
       }
   }
 );
+// Добавить новую сцену с созданием script-ассета
+export const addSceneWithScript = createAsyncThunk(
+  'project/addSceneWithScript',
+  async (scene: SceneData, { dispatch, getState }) => {
+    // 1. Добавляем сцену в Redux
+    dispatch(addScene(scene));
+    // 2. Создаём script-ассет для сцены
+    await getOrCreateSceneScriptAsset(scene.sceneName);
+    // 3. (опционально) Добавить дефолтные объекты на сцену
+    // ... (см. блок ниже)
+    // 4. Сохраняем проект
+    const state = getState() as { project: ProjectState };
+    dispatch(saveProject(state.project.currentProjectId));
+  }
+);
 
+// Удалить сцену с удалением script-ассета
+export const removeSceneWithScript = createAsyncThunk(
+  'project/removeSceneWithScript',
+  async (sceneId: string, { dispatch, getState }) => {
+    // Найти сцену по id
+    const state = getState() as { project: ProjectState };
+    const scene = state.project.scenes.find(s => s.id === sceneId);
+    if (scene) {
+      // 1. Удаляем сцену из Redux
+      dispatch(removeScene(sceneId));
+      // 2. Удаляем script-ассет сцены
+      await deleteSceneScriptAsset(scene.sceneName);
+      // 3. Сохраняем проект
+      dispatch(saveProject(state.project.currentProjectId));
+    }
+  }
+);
 const projectSlice = createSlice({
   name: 'project',
   initialState,
@@ -111,24 +141,10 @@ const projectSlice = createSlice({
 addScene(state, action: PayloadAction<SceneData>) {
   state.scenes.push(action.payload);
 
-  const projectName = "название_текущего_проекта"; // достать из state
-  const scriptKey = "ProjectScript:" + projectName;
-  const script = loadScript(scriptKey);
-  if (script) {
-    script.content = updateProjectScriptContent(script.content, state.scenes);
-    saveScript(scriptKey, script);
-  }
 },
 
 removeScene(state, action: PayloadAction<string>) {
   state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
-  const projectName = "название_текущего_проекта"; // достать из state
-  const scriptKey = "ProjectScript:" + projectName;
-  const script = loadScript(scriptKey);
-  if (script) {
-    script.content = updateProjectScriptContent(script.content, state.scenes);
-    saveScript(scriptKey, script);
-  }
 },
 
 
@@ -153,6 +169,5 @@ export const {
   removeScene,
   setActiveScene,
   setOpenedScenes,
-  updateOpenedScene
 } = projectSlice.actions;
 export default projectSlice.reducer;

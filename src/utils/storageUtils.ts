@@ -93,10 +93,16 @@ export const deleteProjectData = (projectId: string) => {
   try {
     const key = `ProjectData:${projectId}`;
     localStorage.removeItem(key);
-    const projects = loadAllProjects().filter((project) => project.id !== projectId);
+
+    // --- удаляем из списка проектов
+    const projects = loadAllProjects().filter(p => p.id !== projectId);
     saveAllProjects(projects);
-  } catch (error) {
-    console.error(`Ошибка при удалении данных проекта ${projectId}:`, error);
+
+    // --- если удаляемый проект был текущим → очищаем флаг
+    if (getCurrentProject() === projectId) clearCurrentProject();
+
+  } catch (err) {
+    console.error(`Ошибка при удалении проекта ${projectId}:`, err);
   }
 };
 

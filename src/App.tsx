@@ -13,7 +13,8 @@ import {
 import { useDispatch } from "react-redux";
 import { setCurrentProjectId } from "./store/slices/projectSlice";
 import ProjectCreationModal from "./ProjectCreationModal";
-
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { getOrCreateProjectScriptAsset } from "./utils/assetStorage";
 const { Header, Content } = Layout;
 
 const App: React.FC = () => {
@@ -38,25 +39,39 @@ const App: React.FC = () => {
   const handleCreateProject = () => {
     setIsProjectCreationModalVisible(true);
   };
-  const handleCreateProjectConfirm = () => {
-    const newProj: ProjectSummary = {
-      id: uuidv4(),
-      name: `Project ${projects.length + 1}`,
-    };
-    setProjects([...projects, newProj]);
-    setIsProjectCreationModalVisible(false);
+const handleCreateProjectConfirm = async (projectName: string) => {
+  const newProj: ProjectSummary = {
+    id: uuidv4(),
+    name: projectName,
   };
 
+  // 1. Создать скрипт-проект в assets
+  await getOrCreateProjectScriptAsset(newProj.id);
+
+  // 2. Сохранить проект
+  setProjects([...projects, newProj]);
+  setIsProjectCreationModalVisible(false);
+};
+  const handleRenameProject = (project: ProjectSummary) => {
+    const newName = prompt("Введите новое имя проекта:", project.name);
+    if (newName && newName.trim() !== "") {
+      const updatedProject = { ...project, name: newName.trim() };
+      handleUpdateProject(updatedProject); // уже есть этот метод
+    }
+  };
   const handleEditProject = (project: ProjectSummary) => {
     dispatch(setCurrentProjectId(project.id));
     setSelectedProject(project);
     setIsEditorOpen(true);
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    deleteProjectData(projectId);
-    setProjects(projects.filter((project) => project.id !== projectId));
-  };
+const handleDeleteProject = (projectId: string) => {
+  deleteProjectData(projectId);
+
+  // убираем из Redux, а заодно сбрасываем currentProjectId, если нужно
+  setProjects(prev => prev.filter(p => p.id !== projectId));
+  dispatch(setCurrentProjectId(null));        // <-- добавили
+};
 
   const handleCloseEditor = () => {
     setIsEditorOpen(false);
@@ -92,15 +107,31 @@ const App: React.FC = () => {
                 renderItem={(project) => (
                   <List.Item
                     actions={[
-                      <Button type="link" onClick={() => handleEditProject(project)}>
-                        Редактировать
+                      <Button
+                        type="link"
+                        onClick={() => handleEditProject(project)}
+                        title="Редактировать"
+                      >
+                        Открыть редактор
                       </Button>,
-                      <Button type="link" danger onClick={() => handleDeleteProject(project.id)}>
-                        Удалить
-                      </Button>,
+                      <Button
+                        type="link"
+                        icon={<EditOutlined />}
+                        onClick={() => handleRenameProject(project)}
+                        title="Переименовать"
+                      />,
+                      <Button
+                        type="link"
+                        icon={<DeleteOutlined />}
+                        danger
+                        onClick={() => handleDeleteProject(project.id)}
+                        title="Удалить"
+                      />,
                     ]}
                   >
-                    {project.name}
+                    <Typography.Text style={{ color: '#40a9ff', fontWeight: 600 }}>
+                      {project.name}
+                    </Typography.Text>
                   </List.Item>
                 )}
               />
