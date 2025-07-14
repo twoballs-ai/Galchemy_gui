@@ -11,6 +11,7 @@ export interface ProjectSummary {
 export interface SceneData {
   id: string;           // Уникальный идентификатор сцены
   sceneName: string;
+  visible: boolean;
   settings: object;
 }
 
@@ -18,11 +19,13 @@ export interface OpenedScene {
   id: string;
   sceneName: string;
   key: string;
+  visible: boolean; // Индивидуальная видимость сцены
 }
 
 export interface ProjectData {
   scenes: SceneData[];
   openedScenes: OpenedScene[];
+  visible: boolean; 
   activeScene: string;
 }
 

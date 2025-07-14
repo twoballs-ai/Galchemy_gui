@@ -29,6 +29,14 @@ const Tabs: React.FC<TabsProps> = ({
     Math.min(maxTabWidth, containerWidth / tabs.length)
   );
 
+  const handleRemoveTab = (tabKey: string) => {
+    // Если это последняя вкладка, не даём её закрыть
+    if (tabs.length === 1) {
+      return; // Не выполняем удаление
+    }
+    onRemoveTab(tabKey); // Удаляем вкладку, если она не последняя
+  };
+
   return (
     <div className="tabs-container">
       {tabs.map((tab) => (
@@ -42,7 +50,7 @@ const Tabs: React.FC<TabsProps> = ({
           <CloseOutlined
             onClick={(e) => {
               e.stopPropagation();
-              onRemoveTab(tab.key);
+              handleRemoveTab(tab.key); // Используем новую функцию для удаления вкладки
             }}
             className="close-icon"
           />

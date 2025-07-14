@@ -90,13 +90,26 @@ export const loadProject = createAsyncThunk(
 export const addSceneWithScript = createAsyncThunk(
   'project/addSceneWithScript',
   async (scene: SceneData, { dispatch, getState }) => {
+    // 1. добавляем сцену в Redux-стор
     dispatch(addScene(scene));
-    // 2. Создаём script-ассет для сцены
-    const state = getState() as { project: ProjectState };
-    const projectId = state.project.currentProjectId;
-    await getOrCreateSceneScriptAsset(scene.sceneName, projectId); // ← вот так!
-    // ...
-    dispatch(saveProject(state.project.currentProjectId));
+
+    // 2. создаём script-ассет для новой сцены
+    const { currentProjectId, openedScenes } =
+      (getState() as { project: ProjectState }).project;
+    await getOrCreateSceneScriptAsset(scene.sceneName, currentProjectId!);
+
+    // 3. кладём на сцену дефолтные объекты
+    await dispatch(initializeDefaultSceneObjects(scene.id));
+
+    // 4. открываем вкладку и делаем сцену активной (по желанию)
+    dispatch(setOpenedScenes([
+      ...openedScenes,
+      { id: scene.id, sceneName: scene.sceneName, key: scene.id },
+    ]));
+    dispatch(setActiveScene(scene.id));
+
+    // 5. сохраняем проект
+    await dispatch(saveProject());
   }
 );
 export const initializeProject = createAsyncThunk(
@@ -165,6 +178,7 @@ const projectSlice = createSlice({
       state.openedScenes = action.payload.openedScenes;
       state.activeScene = action.payload.activeScene;
     },
+    
     /** Новый экшен для установки currentProjectId */
     setCurrentProjectId(state, action: PayloadAction<string | null>) {
       state.currentProjectId = action.payload;
@@ -179,16 +193,18 @@ const projectSlice = createSlice({
     removeScene(state, action: PayloadAction<string>) {
       state.scenes = state.scenes.filter(scene => scene.id !== action.payload);
     },
-
-
-    /** Устанавливаем активную сцену */
+    toggleSceneVisibility(state, action: PayloadAction<string>) {
+      const scene = state.openedScenes.find(scene => scene.id === action.payload);
+      if (scene) {
+        scene.visible = !scene.visible; // Переключаем видимость сцены
+      }
+    },
     setActiveScene(state, action: PayloadAction<string>) {
       state.activeScene = action.payload;
     },
-    /** Обновляем массив открытых вкладок */
     setOpenedScenes(state, action: PayloadAction<OpenedScene[]>) {
       state.openedScenes = action.payload;
-    }
+    },
   },
   extraReducers: builder => {
     // Опционально: обработка fulfilled/rejected для saveProject, loadProject
@@ -202,5 +218,6 @@ export const {
   removeScene,
   setActiveScene,
   setOpenedScenes,
+  toggleSceneVisibility,
 } = projectSlice.actions;
 export default projectSlice.reducer;
