@@ -176,26 +176,41 @@ private resizeObs: ResizeObserver | null = null;
     this.resizeObs?.disconnect();
   }
 
-  addSceneObjects(sceneName: string, objs: any[], shapeFactory: Record<string, (options: any) => IGameObject>): void {
-    const createdObjs = objs.map(obj => {
-      const builder = shapeFactory[obj.type];
-      if (!builder) {
-        console.warn('Неизвестный тип объекта:', obj.type);
-        return null;
-      }
-      const go = builder({
-        ...obj,
-        position: [obj.x, obj.y, obj.z],
-      });
-      go.id = obj.id;
-      if (this.showHelpers) go.isEditorMode = true;
+  async addSceneObjects(
+    sceneName: string,
+    objs: any[],
+    shapeFactory: Record<string, (options: any) => IGameObject | Promise<IGameObject>>
+  ): Promise<void> {
+    const createdObjs = (
+      await Promise.all(
+        objs.map(async (obj) => {
+          const builder = shapeFactory[obj.type];
+          if (!builder) {
+            console.warn('Неизвестный тип объекта:', obj.type);
+            return null;
+          }
 
-      if (go.isCamera && !this.showHelpers) {
-        this.setActiveCamera(go as unknown as ICamera); // Приведение, потому что IGameObject не всегда ICamera
-      }
+          const go = await builder({
+            ...obj,
+            x: obj.x ?? 0,
+            y: obj.y ?? 0,
+            z: obj.z ?? 0,
+            position: obj.position ?? [obj.x ?? 0, obj.y ?? 0, obj.z ?? 0],
+            rotation: obj.rotation ?? [obj.rotX ?? 0, obj.rotY ?? 0, obj.rotZ ?? 0],
+            scale: obj.scale ?? [obj.scaleX ?? 1, obj.scaleY ?? 1, obj.scaleZ ?? 1],
+          });
 
-      return go;
-    }).filter(Boolean) as IGameObject[];
+          go.id = obj.id;
+          if (this.showHelpers) go.isEditorMode = true;
+
+          if (go.isCamera && !this.showHelpers) {
+            this.setActiveCamera(go as unknown as ICamera);
+          }
+
+          return go;
+        })
+      )
+    ).filter(Boolean) as IGameObject[];
 
     this.clearScene(sceneName);
     this.addObjectsToScene(sceneName, createdObjs);

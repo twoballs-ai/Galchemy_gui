@@ -12,7 +12,7 @@ import { findAssetById } from "../../../utils/assetStorage";
 const DEFAULT_TEXTURE =
   "/assets/materials/basic/Concrete034_2K-PNG/Concrete034_2K-PNG_Color.png";
 
-type ShapeBuilder = (options?: Record<string, unknown>) => unknown;
+type ShapeBuilder = (options?: Record<string, unknown>) => unknown | Promise<unknown>;
 
 const SceneCanvas: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,15 +23,31 @@ const SceneCanvas: React.FC = () => {
   const sceneObjects = useSelector((s: RootState) => s.sceneObjects.objects);
   const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
 
+
+  const resolveTexture = async (opts: Record<string, unknown>) => {
+    if (typeof opts.texture === 'string' && opts.texture) return opts.texture;
+    if (typeof opts.textureSrc === 'string' && opts.textureSrc) return opts.textureSrc;
+    if (!opts.textureAssetId) return DEFAULT_TEXTURE;
+
+    const asset = await findAssetById(String(opts.textureAssetId));
+    if (!asset) return DEFAULT_TEXTURE;
+    if (typeof asset.url === 'string' && asset.url) return asset.url;
+    if (typeof asset.fileData === 'string' && asset.fileData) return asset.fileData;
+    if (asset.fileData) {
+      return URL.createObjectURL(new Blob([asset.fileData]));
+    }
+    return DEFAULT_TEXTURE;
+  };
+
   const createShapeFactory = (): Record<string, ShapeBuilder> | null => {
     const core = GameAlchemy.core;
     if (!core) return null;
 
     const gl = core.ctx;
-    const withMat = (type: string) => (opts: Record<string, unknown> = {}) =>
+    const withMat = (type: string) => async (opts: Record<string, unknown> = {}) =>
       GameAlchemy.primitiveFactory.create(type, gl, {
         ...opts,
-        texture: opts.texture || DEFAULT_TEXTURE,
+        texture: await resolveTexture(opts),
       });
 
     return {
@@ -39,7 +55,20 @@ const SceneCanvas: React.FC = () => {
       cube: withMat("cube"),
       cylinder: withMat("cylinder"),
       terrain: withMat("terrain"),
+      plane: withMat("plane"),
+      water: withMat("plane"),
       character: withMat("character"),
+      spawnPoint: (opts: Record<string, unknown> = {}) =>
+        GameAlchemy.primitiveFactory.create("spawnPoint", gl, opts),
+      sprite: async (opts: Record<string, unknown> = {}) =>
+        GameAlchemy.primitiveFactory.create("sprite", gl, {
+          ...opts,
+          imageSrc: await resolveTexture(opts),
+          x: Number(opts.x ?? 0),
+          y: Number(opts.y ?? 0),
+          width: Number(opts.width ?? 128),
+          height: Number(opts.height ?? 128),
+        }),
       camera: (opts: Record<string, unknown> = {}) =>
         GameAlchemy.primitiveFactory.create("camera", gl, opts),
       light: (opts: Record<string, unknown> = {}) =>
@@ -126,8 +155,19 @@ const SceneCanvas: React.FC = () => {
     if (!activeScene) return;
     const shapeFactory = createShapeFactory();
     if (!GameAlchemy.core || !shapeFactory) return;
-    GameAlchemy.core.addSceneObjects(activeScene, sceneObjects, shapeFactory);
-  }, [activeScene, sceneObjects]);
+
+    let cancelled = false;
+    (async () => {
+      await GameAlchemy.core.addSceneObjects(activeScene, sceneObjects, shapeFactory);
+      if (!cancelled && currentObjectId) {
+        GameAlchemy.core?.scene.setSelectedById?.(currentObjectId);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeScene, sceneObjects, currentObjectId]);
 
   useEffect(() => {
     if (!GameAlchemy.core) return;

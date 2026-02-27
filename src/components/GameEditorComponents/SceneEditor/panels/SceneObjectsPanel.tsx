@@ -22,6 +22,7 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const quickObjects = [
     { label: 'Сфера', type: 'sphere' },
     { label: 'Куб', type: 'cube' },
+    { label: 'Спавн', type: 'spawnPoint' },
     { label: 'Свет', type: 'light', subtype: 'point' },
     { label: 'Камера', type: 'camera', subtype: 'game' },
   ];
@@ -64,6 +65,11 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       scaleY: newObject.scaleY ?? 1,
       scaleZ: newObject.scaleZ ?? 1,
       scale: newObject.scale ?? [1, 1, 1],
+      width: newObject.width,
+      height: newObject.height,
+      depth: newObject.depth,
+      radius: newObject.radius,
+      subtype: newObject.subtype,
     };
     dispatch(addSceneObject({ activeScene, object: preparedObject }));
   };
