@@ -4,28 +4,29 @@ import { AssetItem } from "../../../types/assetTypes";
 import { Button, Upload } from "antd";
 import { UploadOutlined, DeleteOutlined, FolderOutlined, FileOutlined } from "@ant-design/icons";
 import "./AssetBrowser.scss";
-import {
-  buildFolderTree,
-  getFolderContent,
-  getBreadcrumbs
-} from "./assetTree"; // свой путь
+import { buildFolderTree, getFolderContent, getBreadcrumbs } from "./assetTree";
 import { DownOutlined, RightOutlined } from "@ant-design/icons";
 import MaterialTile from "./MaterialTile";
+import ScriptEditorModal from "../Modal/ScriptEditorModal";
 
 const ROOT_ID: string | undefined = undefined;
 const ROOT_NODE_ID = "__root__";
 const SCRIPTS_FOLDER_NAME = "scripts";
+
 const AssetBrowser: React.FC = () => {
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(ROOT_ID);
+  const [scriptAssets, setScriptAssets] = useState<AssetItem[]>([]);
+  const [openedScript, setOpenedScript] = useState<{ id: string; name: string; content: string } | null>(null);
+
   useEffect(() => {
     getAssets().then(setAssets);
   }, []);
-  const [scriptAssets, setScriptAssets] = useState<AssetItem[]>([]);
+
   useEffect(() => {
     const loadScripts = async () => {
       const assetsList = await getAssets();
-      const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
+      const scriptsFolder = assetsList.find((a) => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
       if (!scriptsFolder) return;
 
       const scripts = Object.entries(localStorage)
@@ -46,10 +47,11 @@ const AssetBrowser: React.FC = () => {
 
     loadScripts();
   }, [assets]);
+
   useEffect(() => {
     const createScriptsFolder = async () => {
       const assetsList = await getAssets();
-      const scriptsFolder = assetsList.find(a => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
+      const scriptsFolder = assetsList.find((a) => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
       if (!scriptsFolder) {
         const folder: AssetItem = {
           id: crypto.randomUUID(),
@@ -63,12 +65,10 @@ const AssetBrowser: React.FC = () => {
     createScriptsFolder();
   }, []);
 
-  // -------- Загрузка ассета
   const handleUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = async () => {
-      // simple ext->type detect
-      const ext = file.name.split('.').pop()?.toLowerCase();
+      const ext = file.name.split(".").pop()?.toLowerCase();
       let type: AssetItem["type"] = "file";
       if (["png", "jpg", "jpeg", "bmp", "gif"].includes(ext!)) type = "image";
       else if (["mp3", "ogg", "wav"].includes(ext!)) type = "audio";
@@ -90,13 +90,11 @@ const AssetBrowser: React.FC = () => {
     return false;
   };
 
-  // -------- Удаление ассета
   const handleDelete = async (id: string) => {
     await removeAsset(id);
     setAssets(await getAssets());
   };
 
-  // --------- Добавить папку
   const handleCreateFolder = async () => {
     const folderName = prompt("Имя папки?");
     if (!folderName) return;
@@ -110,11 +108,34 @@ const AssetBrowser: React.FC = () => {
     setAssets(await getAssets());
   };
 
-  const folderTree = withRoot(buildFolderTree(assets, ROOT_ID));
-  const content = getFolderContent(assets, currentFolderId);
-  const breadcrumbs = getBreadcrumbs(assets, currentFolderId);
+  const allAssets = [...assets, ...scriptAssets];
+  const folderTree = withRoot(buildFolderTree(allAssets, ROOT_ID));
+  const content = getFolderContent(allAssets, currentFolderId);
+  const breadcrumbs = getBreadcrumbs(allAssets, currentFolderId);
 
-  /** Оборачиваем полученный список в «корневую» папку assets */
+  const openScriptEditor = (asset: AssetItem) => {
+    setOpenedScript({
+      id: asset.id,
+      name: asset.name,
+      content: String(asset.fileData ?? ""),
+    });
+  };
+
+  const saveScript = (content: string) => {
+    if (!openedScript) return;
+
+    const raw = localStorage.getItem(openedScript.id);
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    localStorage.setItem(openedScript.id, JSON.stringify({ ...parsed, content }));
+
+    setScriptAssets((prev) =>
+      prev.map((item) => (item.id === openedScript.id ? { ...item, fileData: content } : item))
+    );
+    setOpenedScript((prev) => (prev ? { ...prev, content } : prev));
+  };
+
   function withRoot(folders: AssetItem[]): (AssetItem & { children?: AssetItem[] })[] {
     return [
       {
@@ -130,11 +151,7 @@ const AssetBrowser: React.FC = () => {
   return (
     <div className="asset-browser-flexrow">
       <div className="asset-browser-left">
-        <FolderTree
-          folders={folderTree}
-          currentFolderId={currentFolderId}
-          onSelect={setCurrentFolderId}
-        />
+        <FolderTree folders={folderTree} currentFolderId={currentFolderId} onSelect={setCurrentFolderId} />
       </div>
       <div className="asset-browser-right">
         <div className="asset-browser-toolbar">
@@ -145,75 +162,87 @@ const AssetBrowser: React.FC = () => {
             Новая папка
           </Button>
         </div>
+
         <div className="breadcrumbs">
           <span className="breadcrumb-link" onClick={() => setCurrentFolderId(ROOT_ID)}>
             assets
           </span>
-          {breadcrumbs.map(bc => (
+          {breadcrumbs.map((bc) => (
             <span key={bc.id} className="breadcrumb-link" onClick={() => setCurrentFolderId(bc.id)}>
               / {bc.name}
             </span>
           ))}
         </div>
+
         <div className="folder-content">
-          {/* Папки */}
-          {content.filter(i => i.type === "folder").map(folder => (
-            <div
-              className="folder"
-              key={folder.id}
-              onDoubleClick={() => setCurrentFolderId(folder.id)}
-            >
-              <FolderOutlined /> {folder.name}
-            </div>
-          ))}
+          {content
+            .filter((i) => i.type === "folder")
+            .map((folder) => (
+              <div className="folder" key={folder.id} onDoubleClick={() => setCurrentFolderId(folder.id)}>
+                <FolderOutlined /> {folder.name}
+              </div>
+            ))}
 
-          {/* Материалы */}
-          {content.filter(i => i.type === "material").map(asset => (
-            <MaterialTile asset={asset} key={asset.id} />
-          ))}
+          {content
+            .filter((i) => i.type === "material")
+            .map((asset) => (
+              <MaterialTile asset={asset} key={asset.id} />
+            ))}
 
-          {/* Обычные файлы */}
-          {content.filter(i => i.type !== "folder" && i.type !== "material").map(asset => (
-            <div className="asset" key={asset.id}>
-              {asset.type === "image"
-                ? <img src={asset.url} alt={asset.displayName || asset.name} style={{ width: 32, height: 32 }} />
-                : <FileOutlined style={{ fontSize: 32 }} />}
-              <span style={{ marginLeft: 8 }}>
-                {asset.displayName || asset.name}
-              </span>
-              {!asset.system && !asset.protected && (
-                <Button
-                  danger size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(asset.id)}
-                  style={{ marginLeft: 8 }}
-                />
-              )}
-            </div>
-          ))}
+          {content
+            .filter((i) => i.type !== "folder" && i.type !== "material")
+            .map((asset) => (
+              <div
+                className="asset"
+                key={asset.id}
+                onDoubleClick={() => asset.type === "script" && openScriptEditor(asset)}
+              >
+                {asset.type === "image" ? (
+                  <img
+                    src={asset.url}
+                    alt={asset.displayName || asset.name}
+                    style={{ width: 32, height: 32 }}
+                  />
+                ) : (
+                  <FileOutlined style={{ fontSize: 32 }} />
+                )}
+                <span style={{ marginLeft: 8 }}>{asset.displayName || asset.name}</span>
+                {asset.type === "script" && <span style={{ marginLeft: 8, opacity: 0.7 }}>(dblclick)</span>}
+                {!asset.system && !asset.protected && (
+                  <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDelete(asset.id)}
+                    style={{ marginLeft: 8 }}
+                  />
+                )}
+              </div>
+            ))}
         </div>
       </div>
+
+      <ScriptEditorModal
+        visible={!!openedScript}
+        title={openedScript?.name}
+        script={{ content: openedScript?.content ?? "" }}
+        onChange={saveScript}
+        onClose={() => setOpenedScript(null)}
+      />
     </div>
   );
 };
 
 export default AssetBrowser;
 
-
-// ------------------ FolderTree Component ---------------------
 const FolderTree: React.FC<{
   folders: AssetItem[];
   currentFolderId?: string;
   onSelect: (id?: string) => void;
 }> = ({ folders, currentFolderId, onSelect }) => (
   <div className="folder-tree">
-    {folders.map(folder => (
-      <FolderTreeNode
-        key={folder.id}
-        node={folder}
-        currentFolderId={currentFolderId}
-        onSelect={onSelect}
-      />
+    {folders.map((folder) => (
+      <FolderTreeNode key={folder.id} node={folder} currentFolderId={currentFolderId} onSelect={onSelect} />
     ))}
   </div>
 );
@@ -231,11 +260,10 @@ const FolderTreeNode: React.FC<{
         className={"folder-tree-label" + (node.id === currentFolderId ? " selected" : "")}
         onClick={() => onSelect(node.id === ROOT_NODE_ID ? undefined : node.id)}
       >
-        {/* стрелка-раскрывалка  */}
         {node.children && node.children.length > 0 && (
           <span
-            onClick={e => {
-              e.stopPropagation();          // не переключаем папку, только раскрываем
+            onClick={(e) => {
+              e.stopPropagation();
               setExpanded(!expanded);
             }}
             style={{ marginRight: 4 }}
@@ -248,9 +276,9 @@ const FolderTreeNode: React.FC<{
       </div>
       {expanded && node.children && (
         <div className="folder-tree-children">
-          {node.children.map(child =>
+          {node.children.map((child) => (
             <FolderTreeNode key={child.id} node={child} currentFolderId={currentFolderId} onSelect={onSelect} />
-          )}
+          ))}
         </div>
       )}
     </div>

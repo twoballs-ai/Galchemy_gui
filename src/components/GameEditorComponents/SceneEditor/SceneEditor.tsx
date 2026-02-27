@@ -86,6 +86,15 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene, panels, onToggle
     setIsPreviewing(false);
   };
 
+  useEffect(() => {
+    const core = GameAlchemy.core;
+    if (!core) return;
+
+    core.setToolMode?.(activeTool);
+    core.setTransformMode?.(activeTool);
+    core.setGizmoMode?.(activeTool);
+  }, [activeTool]);
+
   return (
     <div className="scene-editor">
       <EditorToolbar

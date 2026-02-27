@@ -2,8 +2,7 @@ import React from "react";
 import { Dropdown, Button, Checkbox } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleSceneVisibility, setOpenedScenes } from "../../store/slices/projectSlice"; // Экшен для переключения видимости сцены
-import { getCurrentProject, saveProjectData } from "../../utils/storageUtils";
+import { setOpenedScenes, setActiveScene, saveProject } from "../../store/slices/projectSlice";
 
 interface EditorMenuBarProps {
   onNewScene: () => void;
@@ -18,11 +17,11 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
   panels,
   onTogglePanel,
 }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
 
-  // Получаем данные о сценах и открытых сценах из Redux
-  const scenes = useSelector((state: any) => state.project.scenes); // сцены - список всех сцен
-  const openedScenes = useSelector((state: any) => state.project.openedScenes); // открытые сцены
+  const scenes = useSelector((state: any) => state.project.scenes);
+  const openedScenes = useSelector((state: any) => state.project.openedScenes);
+  const activeScene = useSelector((state: any) => state.project.activeScene);
 
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: onNewScene },
@@ -34,7 +33,6 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
     { label: "Повторить", key: "redo" },
   ];
 
-  // Меню для переключения видимости панелей
   const viewMenuItems = Object.entries(panels).map(([key, visible]) => ({
     label: (
       <Checkbox
@@ -42,65 +40,81 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
         onClick={(e) => e.stopPropagation()}
         onChange={() => onTogglePanel(key)}
       >
-        {key === 'objectsPanel' ? 'Объекты' :
-          key === 'propertiesPanel' ? 'Свойства' :
-            key === 'assetBrowserPanel' ? 'Ассеты' : key}
+        {key === "objectsPanel"
+          ? "Объекты"
+          : key === "propertiesPanel"
+            ? "Свойства"
+            : key === "assetBrowserPanel"
+              ? "Ассеты"
+              : key}
       </Checkbox>
     ),
     key,
   }));
 
-  // Меню для "Сцены" (второстепенное меню)
-  const scenesMenuItems = scenes.map((scene: any) => ({
-    label: (
-      <Checkbox
-        checked={openedScenes.some((openedScene: any) => openedScene.id === scene.id && openedScene.visible)}
-        onChange={() => handleSceneVisibilityChange(scene.id)}
-      >
-        {scene.sceneName}
-      </Checkbox>
-    ),
-    key: scene.id,
-  }));
+  const handleToggleSceneOpen = (scene: any) => {
+    const isOpened = openedScenes.some((s: any) => s.id === scene.id);
 
-  // Функция для переключения видимости сцены
-  const handleSceneVisibilityChange = (sceneId: string) => {
-  // Переключаем видимость сцены в Redux
-  dispatch(toggleSceneVisibility(sceneId));
+    let nextOpenedScenes;
+    if (isOpened) {
+      if (openedScenes.length === 1) return;
+      nextOpenedScenes = openedScenes.filter((s: any) => s.id !== scene.id);
+    } else {
+      nextOpenedScenes = [
+        ...openedScenes,
+        { id: scene.id, sceneName: scene.sceneName, key: scene.id, visible: true },
+      ];
+    }
 
-  // Обновляем список открытых сцен с новой видимостью
-  const updatedOpenedScenes = openedScenes.map(scene => 
-    scene.id === sceneId
-      ? { ...scene, visible: !scene.visible }  // Переключаем видимость сцены
-      : scene
-  );
+    dispatch(setOpenedScenes(nextOpenedScenes));
 
-  dispatch(setOpenedScenes(updatedOpenedScenes));  // Обновляем состояние
+    if (activeScene === scene.id && !nextOpenedScenes.some((s: any) => s.id === scene.id)) {
+      dispatch(setActiveScene(nextOpenedScenes[0]?.id ?? ""));
+    }
 
-  // Сохраняем данные проекта в локальном хранилище
-  const projectId = getCurrentProject();  // Получаем текущий ID проекта
-  if (projectId) {
-    const projectData = {
-      scenes: updatedOpenedScenes.map(scene => ({
-        id: scene.id,
-        sceneName: scene.sceneName,
-        settings: scene.settings,
-        visible: scene.visible  // Учитываем видимость сцены
-      })),
-      openedScenes: updatedOpenedScenes,
-      activeScene: sceneId,  // Обновляем активную сцену
-      visible: true,  // Можно адаптировать
+    if (!isOpened) {
+      dispatch(setActiveScene(scene.id));
+    }
+
+    dispatch(saveProject());
+  };
+
+  const scenesMenuItems = scenes.map((scene: any) => {
+    const isOpened = openedScenes.some((openedScene: any) => openedScene.id === scene.id);
+
+    return {
+      key: scene.id,
+      label: (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <Checkbox
+            checked={isOpened}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => handleToggleSceneOpen(scene)}
+          >
+            {scene.sceneName}
+          </Checkbox>
+          <Button
+            type="link"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isOpened) handleToggleSceneOpen(scene);
+              dispatch(setActiveScene(scene.id));
+              dispatch(saveProject());
+            }}
+          >
+            Открыть
+          </Button>
+        </div>
+      ),
     };
+  });
 
-    saveProjectData(projectId, projectData);  // Сохраняем обновленный проект
-  }
-};
   const helpMenuItems = [
     { label: "Версия", key: "version" },
     { label: "Контакты", key: "contact" },
   ];
 
-  // Функция для генерации кнопки с текстом и стрелкой вниз
   const renderButton = (text: string) => (
     <Button
       type="text"
@@ -123,47 +137,35 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
   return (
     <>
       <Dropdown menu={{ items: projectMenuItems }} trigger={["click"]}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          {renderButton("Проект")}
-        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>{renderButton("Проект")}</div>
       </Dropdown>
 
       <Dropdown menu={{ items: editMenuItems }} trigger={["click"]}>
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          {renderButton("Правка")}
-        </div>
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>{renderButton("Правка")}</div>
       </Dropdown>
 
-      {/* Меню "Вид" с панелями и сценами как подпункты */}
       <Dropdown
         menu={{
           items: [
             {
               key: "panels",
               label: "Панели",
-              children: viewMenuItems.map((item) => ({
-                key: item.key,
-                label: item.label,
-              })),
+              children: viewMenuItems,
             },
             {
               key: "scenes",
-              label: "Сцены",
+              label: `Сцены (${openedScenes.length}/${scenes.length})`,
               children: scenesMenuItems,
             },
           ],
         }}
         trigger={["click"]}
       >
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          {renderButton("Вид")}
-        </div>
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>{renderButton("Вид")}</div>
       </Dropdown>
 
       <Dropdown menu={{ items: helpMenuItems }} trigger={["click"]}>
-        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-          {renderButton("Помощь")}
-        </div>
+        <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>{renderButton("Помощь")}</div>
       </Dropdown>
     </>
   );
