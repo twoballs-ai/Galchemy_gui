@@ -12,7 +12,8 @@ import {
 import { DownOutlined, RightOutlined } from "@ant-design/icons";
 import MaterialTile from "./MaterialTile";
 
-const ROOT_ID = undefined;
+const ROOT_ID: string | undefined = undefined;
+const ROOT_NODE_ID = "__root__";
 const SCRIPTS_FOLDER_NAME = "scripts";
 const AssetBrowser: React.FC = () => {
   const [assets, setAssets] = useState<AssetItem[]>([]);
@@ -40,7 +41,7 @@ const AssetBrowser: React.FC = () => {
           };
         });
 
-      setScriptAssets(scripts);
+      setScriptAssets(scripts as AssetItem[]);
     };
 
     loadScripts();
@@ -80,7 +81,7 @@ const AssetBrowser: React.FC = () => {
         type,
         parentId: currentFolderId,
         url: type === "image" ? URL.createObjectURL(file) : undefined,
-        fileData: reader.result,
+        fileData: reader.result ?? undefined,
       };
       await addAsset(asset);
       setAssets(await getAssets());
@@ -117,7 +118,7 @@ const AssetBrowser: React.FC = () => {
   function withRoot(folders: AssetItem[]): (AssetItem & { children?: AssetItem[] })[] {
     return [
       {
-        id: ROOT_ID,            // оставляем undefined, чтобы вся остальная логика (breadcrumbs и т. д.) не ломалась
+        id: ROOT_NODE_ID,
         name: "assets",
         type: "folder",
         parentId: undefined,
@@ -222,13 +223,13 @@ const FolderTreeNode: React.FC<{
   currentFolderId?: string;
   onSelect: (id?: string) => void;
 }> = ({ node, currentFolderId, onSelect }) => {
-  const [expanded, setExpanded] = useState(node.id === ROOT_ID);
+  const [expanded, setExpanded] = useState(node.id === ROOT_NODE_ID);
 
   return (
     <div className="folder-tree-node">
       <div
         className={"folder-tree-label" + (node.id === currentFolderId ? " selected" : "")}
-        onClick={() => onSelect(node.id)}
+        onClick={() => onSelect(node.id === ROOT_NODE_ID ? undefined : node.id)}
       >
         {/* стрелка-раскрывалка  */}
         {node.children && node.children.length > 0 && (
