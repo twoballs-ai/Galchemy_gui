@@ -7,7 +7,7 @@ import SceneObjectsPanel from "./panels/SceneObjectsPanel";
 import PropertiesPanel from "./panels/PropertiesPanel";
 import AssetBrowserPanel from "./panels/AssetBrowserPanel";
 import EditorToolbar from "./EditorToolbar";
-import { RootState, AppDispatch } from "../../../store/store";
+import { AppDispatch } from "../../../store/store";
 import { loadSceneObjects } from "../../../store/slices/sceneObjectsSlice";
 import { GameAlchemy } from "../../../utils/gameAlchemy";
 

@@ -41,14 +41,6 @@ const initialState: ProjectState = {
   openedScenes: [],
   activeScene: ''
 };
-// helper-функция для обновления списка сцен в файле
-const updateProjectScriptContent = (content: string, scenes: SceneData[]): string => {
-  const scenesList = scenes.map(scene => `"${scene.sceneName}"`).join(", ");
-  return content.replace(
-    /export const scenes = \[.*?\];/,
-    `export const scenes = [${scenesList}];`
-  );
-};
 /**
  * Thunk для сохранения данных проекта в localStorage.
  * Здесь сохраняем только scenes (без объектов), openedScenes и activeScene.
@@ -226,9 +218,6 @@ const projectSlice = createSlice({
       state.openedScenes = action.payload;
     },
   },
-  extraReducers: builder => {
-    // Опционально: обработка fulfilled/rejected для saveProject, loadProject
-  }
 });
 
 export const {

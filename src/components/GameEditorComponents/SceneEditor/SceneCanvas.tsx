@@ -10,14 +10,6 @@ import { GameAlchemy } from "../../../utils/gameAlchemy";
 import { DaylightBoxPaths } from "../../../../public/assets/skyBoxes/DaylightBox";
 import { findAssetById } from "../../../utils/assetStorage";
 
-interface GameObjectLive {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  [k: string]: any;
-}
-
 const DEFAULT_TEXTURE =
   "/assets/materials/basic/Concrete034_2K-PNG/Concrete034_2K-PNG_Color.png";
 
@@ -25,9 +17,8 @@ const SceneCanvas: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [gameObjectsMap, setGameObjectsMap] = useState<
-    Map<string, GameObjectLive>
-  >(new Map());
+
+  const [, setGameObjectsMap] = useState<Map<string, unknown>>(new Map());
 
   const activeScene = useSelector((s: RootState) => s.project.activeScene);
   const sceneObjects = useSelector((s: RootState) => s.sceneObjects.objects);

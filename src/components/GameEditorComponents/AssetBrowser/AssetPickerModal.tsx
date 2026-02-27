@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAssets } from "../../../utils/assetStorage";
 import { AssetItem } from "../../../types/assetTypes";
-import { Modal, Button } from "antd";
+import { Modal } from "antd";
 
 interface AssetPickerModalProps {
   open: boolean;
