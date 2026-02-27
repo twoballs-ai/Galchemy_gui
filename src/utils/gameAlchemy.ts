@@ -1,4 +1,4 @@
-import { GameAlchemy as ShimGameAlchemy } from '../shims/gameAlchemyCore';
+import { GameAlchemy as CoreGameAlchemy } from 'game-alchemy-core';
 
 type PrimitiveFactory = {
   create: (type: string, gl: unknown, options?: Record<string, unknown>) => unknown;
@@ -47,11 +47,14 @@ const isRuntimeProvided = (candidate: unknown): candidate is GameAlchemyApi => {
   );
 };
 
+const bundledCore = CoreGameAlchemy as unknown as GameAlchemyApi;
 const runtimeInstance = globalRef.GameAlchemy ?? globalRef.gameAlchemy;
+
 export const GameAlchemy: GameAlchemyApi = isRuntimeProvided(runtimeInstance)
   ? runtimeInstance
-  : (ShimGameAlchemy as GameAlchemyApi);
+  : bundledCore;
 
-if (!globalRef.GameAlchemy) {
-  globalRef.GameAlchemy = GameAlchemy;
+globalRef.GameAlchemy = GameAlchemy;
+if (!globalRef.gameAlchemy) {
+  globalRef.gameAlchemy = GameAlchemy;
 }

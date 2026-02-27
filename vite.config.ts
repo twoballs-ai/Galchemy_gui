@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react(), svgr()],
   resolve: {
     alias: {
-      'game-alchemy-core': '/src/shims/gameAlchemyCore.ts',
+      'game-alchemy-core': '/core/src/index.ts',
+      'gl-matrix': '/core/src/vendor/gl-matrix.ts',
     },
   },
   server: {

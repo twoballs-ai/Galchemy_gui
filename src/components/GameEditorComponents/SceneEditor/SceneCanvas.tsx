@@ -6,7 +6,7 @@ import { finishBoot } from "../../../store/slices/bootSlice";
 
 import GameObjectListener from "./sceneCanvas/GameObjectListener";
 import { GameAlchemy } from "../../../utils/gameAlchemy";
-import { DaylightBoxPaths } from "../../../../public/assets/skyBoxes/DaylightBox";
+import { DaylightBoxPaths } from "../../../constants/skyboxes";
 import { findAssetById } from "../../../utils/assetStorage";
 
 const DEFAULT_TEXTURE =
