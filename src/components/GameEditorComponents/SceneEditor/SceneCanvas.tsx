@@ -1,5 +1,4 @@
-// SceneCanvas.tsx
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../store/store";
 import { setCurrentObjectId } from "../../../store/slices/sceneObjectsSlice";
@@ -7,31 +6,29 @@ import { finishBoot } from "../../../store/slices/bootSlice";
 
 import GameObjectListener from "./sceneCanvas/GameObjectListener";
 import { GameAlchemy } from "../../../utils/gameAlchemy";
-import { DaylightBoxPaths } from "../../../../public/assets/skyBoxes/DaylightBox";
+import { DaylightBoxPaths } from "../../../constants/skyboxes";
 import { findAssetById } from "../../../utils/assetStorage";
 
 const DEFAULT_TEXTURE =
   "/assets/materials/basic/Concrete034_2K-PNG/Concrete034_2K-PNG_Color.png";
 
+type ShapeBuilder = (options?: Record<string, unknown>) => unknown;
+
 const SceneCanvas: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const [, setGameObjectsMap] = useState<Map<string, unknown>>(new Map());
 
   const activeScene = useSelector((s: RootState) => s.project.activeScene);
   const sceneObjects = useSelector((s: RootState) => s.sceneObjects.objects);
-  const currentObjectId = useSelector(
-    (s: RootState) => s.sceneObjects.currentObjectId
-  );
+  const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
 
-  const createShapeFactory = () => {
+  const createShapeFactory = (): Record<string, ShapeBuilder> | null => {
     const core = GameAlchemy.core;
     if (!core) return null;
 
     const gl = core.ctx;
-    const withMat = (type: string) => (opts: any = {}) =>
+    const withMat = (type: string) => (opts: Record<string, unknown> = {}) =>
       GameAlchemy.primitiveFactory.create(type, gl, {
         ...opts,
         texture: opts.texture || DEFAULT_TEXTURE,
@@ -43,15 +40,17 @@ const SceneCanvas: React.FC = () => {
       cylinder: withMat("cylinder"),
       terrain: withMat("terrain"),
       character: withMat("character"),
-      camera: (opts: any = {}) => GameAlchemy.primitiveFactory.create("camera", gl, opts),
-      light: (opts: any = {}) => GameAlchemy.primitiveFactory.create("light", gl, opts),
-      model: async (opts: any = {}) => {
-        const asset = await findAssetById(opts.modelAssetId);
+      camera: (opts: Record<string, unknown> = {}) =>
+        GameAlchemy.primitiveFactory.create("camera", gl, opts),
+      light: (opts: Record<string, unknown> = {}) =>
+        GameAlchemy.primitiveFactory.create("light", gl, opts),
+      model: async (opts: Record<string, unknown> = {}) => {
+        const asset = await findAssetById(String(opts.modelAssetId || ""));
         if (!asset?.fileData) throw new Error("Model asset not found");
         const blobUrl = URL.createObjectURL(new Blob([asset.fileData]));
         return GameAlchemy.spawn3DModel(
           blobUrl,
-          [opts.x ?? 0, opts.y ?? 0, opts.z ?? 0],
+          [Number(opts.x ?? 0), Number(opts.y ?? 0), Number(opts.z ?? 0)],
           asset.name,
           asset.id
         );
@@ -59,7 +58,6 @@ const SceneCanvas: React.FC = () => {
     };
   };
 
-  /* ---------- init / dispose ---------- */
   useEffect(() => {
     if (!activeScene) {
       dispatch(finishBoot());
@@ -73,15 +71,16 @@ const SceneCanvas: React.FC = () => {
     }
 
     let coreCleanup: () => void = () => {};
+
     (async () => {
       try {
         const { width, height } = canvas.getBoundingClientRect();
 
         GameAlchemy.init({
           canvasId: canvas.id,
-          w: Math.max(1, Math.round(width || canvas.clientWidth)),
-          h: Math.max(1, Math.round(height || canvas.clientHeight)),
-          bg: "#5d8aa8",
+          w: Math.max(1, Math.round(width || canvas.clientWidth || 640)),
+          h: Math.max(1, Math.round(height || canvas.clientHeight || 480)),
+          bg: "#1e293b",
         });
 
         GameAlchemy.setEditorMode();
@@ -91,20 +90,19 @@ const SceneCanvas: React.FC = () => {
         if (!core) {
           throw new Error("GameAlchemy core was not initialized");
         }
-        const onObjectSelected = (p: { id: string } | null) =>
-          dispatch(setCurrentObjectId(p?.id || null));
+
+        const onObjectSelected = (payload: { id: string } | null) => {
+          dispatch(setCurrentObjectId(payload?.id || null));
+        };
 
         core.attachResizeObserver?.(canvas);
         core.emitter.on("objectSelected", onObjectSelected);
 
-        // создать/переключить сцену
-        if (
-          !core.sceneManager.getCurrentScene() ||
-          core.sceneManager.getCurrentScene().name !== activeScene
-        ) {
+        const activeCoreScene = core.sceneManager.scenes?.get?.(activeScene);
+        if (!activeCoreScene) {
           core.sceneManager.createScene(activeScene);
-          core.sceneManager.switchScene(activeScene);
         }
+        core.sceneManager.switchScene(activeScene);
 
         GameAlchemy.start();
 
@@ -115,7 +113,6 @@ const SceneCanvas: React.FC = () => {
       } catch (err) {
         console.error("Ошибка инициализации GameAlchemy:", err);
       } finally {
-        // ✅ снимаем сплэш ВСЕГДА
         dispatch(finishBoot());
       }
     })();
@@ -125,28 +122,21 @@ const SceneCanvas: React.FC = () => {
     };
   }, [activeScene, dispatch]);
 
-  /* ---------- ререндер объектов ---------- */
   useEffect(() => {
     if (!activeScene) return;
     const shapeFactory = createShapeFactory();
     if (!GameAlchemy.core || !shapeFactory) return;
-    GameAlchemy.core.addSceneObjects(activeScene, sceneObjects, shapeFactory as any);
+    GameAlchemy.core.addSceneObjects(activeScene, sceneObjects, shapeFactory);
   }, [activeScene, sceneObjects]);
 
-  /* ---------- выделение объекта ---------- */
   useEffect(() => {
     if (!GameAlchemy.core) return;
     GameAlchemy.core.scene.setSelectedById?.(currentObjectId ?? null);
   }, [currentObjectId]);
 
-  /* ---------- render ---------- */
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <canvas
-        ref={canvasRef}
-        id="canvas"
-        style={{ border: "1px solid #ccc", width: "100%", height: "100%" }}
-      />
+    <div className="scene-canvas">
+      <canvas ref={canvasRef} id="canvas" className="scene-canvas__viewport" />
       <GameObjectListener
         coreInstance={GameAlchemy.core}
         onGameObjectsMapUpdate={setGameObjectsMap}

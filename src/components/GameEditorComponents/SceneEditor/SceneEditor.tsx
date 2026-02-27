@@ -20,7 +20,9 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480 };
 const cols = { lg: 12, md: 10, sm: 6, xs: 4 };
 
-const initialLayouts: any = {
+type GridLayouts = Record<string, Array<{ i: string; x: number; y: number; w: number; h: number; minW?: number; minH?: number; maxW?: number; maxH?: number }>>;
+
+const initialLayouts: GridLayouts = {
   lg: [
     { i: "objectsPanel", x: 0, y: 0, w: 3, h: 13, minW: 2, minH: 8, maxW: 6, maxH: 20 },
     { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 13, minW: 4, minH: 10, maxW: 8, maxH: 30 },
@@ -59,14 +61,14 @@ interface SceneEditorProps {
 const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene, panels, onTogglePanel }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTool, setActiveTool] = useState<'hand' | 'translate' | 'rotate' | 'scale'>('translate');
-  const [layouts, setLayouts] = useState<any>(initialLayouts);
+  const [layouts, setLayouts] = useState<GridLayouts>(initialLayouts);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
     if (activeScene) dispatch(loadSceneObjects(activeScene));
   }, [activeScene, dispatch]);
 
-  const onLayoutChange = (_currentLayout: any[], allLayouts: any) => {
+  const onLayoutChange = (_currentLayout: unknown[], allLayouts: GridLayouts) => {
     setLayouts(allLayouts);
   };
 
@@ -76,7 +78,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ activeScene, panels, onToggle
 
   const handleStartPreview = () => {
     if (!activeScene || !GameAlchemy.core) return;
-    GameAlchemy.core.sceneManager.changeScene?.(activeScene);
+    GameAlchemy.core.sceneManager.switchScene?.(activeScene);
     GameAlchemy.setPreviewMode();
     setIsPreviewing(true);
   };
