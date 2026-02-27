@@ -31,6 +31,7 @@ const materialProps = [
   { key: "color", label: "Цвет", type: "color" },
   { key: "roughness", label: "Шероховатость", type: "number", min: 0, max: 1, step: 0.01 },
   { key: "metalness", label: "Металличность", type: "number", min: 0, max: 1, step: 0.01 },
+  { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
 ];
 
 /* ───────────────────────────────
@@ -71,7 +72,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     ...rotationProps,
     ...scaleProps,
     { key: "color", label: "Цвет", type: "color" },
-    { key: "textureSrc", label: "Текстура (URL)", type: "text" },
+    { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
   ],
   terrain: [
     { key: "name", label: "Имя", type: "text" },
@@ -114,6 +115,41 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "lookAtY", label: "Смотреть на Y", type: "number" },
     { key: "lookAtZ", label: "Смотреть на Z", type: "number" },
   ],
+
+  plane: [
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+    { key: "width", label: "Ширина", type: "number", min: 1 },
+    { key: "depth", label: "Длина", type: "number", min: 1 },
+    ...materialProps,
+  ],
+  water: [
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+    { key: "width", label: "Ширина", type: "number", min: 1 },
+    { key: "depth", label: "Длина", type: "number", min: 1 },
+    { key: "color", label: "Цвет воды", type: "color" },
+    { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
+  ],
+  sprite: [
+    { key: "name", label: "Имя", type: "text" },
+    { key: "x", label: "X", type: "number" },
+    { key: "y", label: "Y", type: "number" },
+    { key: "width", label: "Ширина", type: "number", min: 1 },
+    { key: "height", label: "Высота", type: "number", min: 1 },
+    { key: "layer", label: "Слой", type: "number" },
+    { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
+  ],
+  spawnPoint: [
+    { key: "name", label: "Имя", type: "text" },
+    ...positionProps,
+    ...rotationProps,
+    ...scaleProps,
+  ],
   model: [
     { key: "name", label: "Имя", type: "text" },
     ...positionProps,
@@ -129,6 +165,8 @@ const geometryKeys: Record<string, Set<string>> = {
   cube: new Set(["width", "height", "depth"]),
   cylinder: new Set(["radius", "height"]),
   terrain: new Set(["width", "depth"]),
+  plane: new Set(["width", "depth"]),
+  water: new Set(["width", "depth"]),
 };
 const needsGeometry = (type: string, key: string) =>
   geometryKeys[type]?.has(key) ?? false;
@@ -146,6 +184,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const [local, setLocal] = useState<Record<string, any>>({});
   const [showPicker, setShowPicker] = useState(false);
+  const [showTexturePicker, setShowTexturePicker] = useState(false);
 
   /* sync local-state */
   useEffect(() => setLocal(selected ? { ...selected } : {}), [selected]);
@@ -343,6 +382,22 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
+                );
+                break;
+              case "texturePicker":
+                inputEl = (
+                  <>
+                    <button type="button" onClick={() => setShowTexturePicker(true)}>
+                      {local.textureAssetId ? "Выбрать другую текстуру" : "Выбрать текстуру"}
+                    </button>
+                    {local.textureAssetId && <span className="asset-id">ID: {local.textureAssetId}</span>}
+                    <AssetPickerModal
+                      open={showTexturePicker}
+                      acceptTypes={["image", "material"]}
+                      onSelect={assetId => handleChange("textureAssetId", assetId)}
+                      onClose={() => setShowTexturePicker(false)}
+                    />
+                  </>
                 );
                 break;
               case "modelPicker":

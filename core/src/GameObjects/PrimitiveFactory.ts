@@ -3,6 +3,7 @@ import { createSphereGeometry }    from './primitives/3dPrimitives/createSphereG
 import { createCubeGeometry }      from './primitives/3dPrimitives/createCubeGeometry';
 import { createCylinderGeometry }  from './primitives/3dPrimitives/createCylinderGeometry';
 import { createTerrainGeometry }   from './primitives/3dPrimitives/createTerrainGeometry';
+import { createPlaneGeometry }     from './primitives/3dPrimitives/createPlaneGeometry';
 import { GameObjectCamera }        from './GameObjectCamera';
 import { GameObjectLight }         from './GameObjectLight';
 // import defaultTextureSrc ... — УДАЛЕНО!
@@ -15,6 +16,7 @@ import { FirstPersonCamera } from '../core/cameras/FirstPersonCamera';
 import { ThirdPersonCamera } from '../core/cameras/ThirdPersonCamera';
 import { TopDownCamera }     from '../core/cameras/TopDownCamera';
 import { GameObjectModel } from './GameObjectModel';
+import { GameObject2D } from './primitives/GameObject2D';
 
 const DEFAULT_PRIMITIVE_COLOR = '#7f7f7f';
 const DEFAULT_DISTANCE = 5;
@@ -63,10 +65,12 @@ export const primitiveFactory = new PrimitiveFactory();
 
 primitiveFactory.register(
   'sphere',
-  (gl, { radius = 1, segments = 24, position = [0, 0, -5], color, texture }) =>
+  (gl, { radius = 1, segments = 24, position = [0, 0, -5], rotation, scale, color, texture }) =>
     new GameObject3D(gl, {
       mesh     : createSphereGeometry(radius, segments),
       position,
+      rotation,
+      scale,
       color,
       textureSrc: texture,
     })
@@ -79,11 +83,16 @@ primitiveFactory.register(
 );
 primitiveFactory.register(
   'cube',
-  (gl, { size = 1, position, color, texture }) => {
+  (gl, { size = 1, width, height, depth, position, rotation, scale, color, texture }) => {
     const pos = position ?? defaultPosition();
+    const w = width ?? size;
+    const h = height ?? size;
+    const d = depth ?? size;
     return new GameObject3D(gl, {
-      mesh      : createCubeGeometry(size),
+      mesh      : createCubeGeometry(w, h, d),
       position  : pos,
+      rotation,
+      scale,
       color,
       textureSrc: texture
     });
@@ -92,7 +101,7 @@ primitiveFactory.register(
 
 primitiveFactory.register(
   'cylinder',
-  (gl, { radius = 1, height = 2, position, color, texture }) => {
+  (gl, { radius = 1, height = 2, position, rotation, scale, color, texture }) => {
     const pos = position ?? defaultPosition();
     const mesh = createCylinderGeometry(radius, height);
 
@@ -109,6 +118,8 @@ primitiveFactory.register(
     return new GameObject3D(gl, {
       mesh,
       position : pos,
+      rotation,
+      scale,
       color,
       textureSrc: texture
     });
@@ -135,7 +146,7 @@ primitiveFactory.register(
   'terrain',
   (gl, {
     width = 10, depth = 10, seg = 64,
-    position, color, texture, heightFn = (x,z) => 0
+    position, rotation, scale, color, texture, heightFn = (x,z) => 0
   }) => {
     const pos = position ?? [0,0,0];
     const mesh = createTerrainGeometry({
@@ -147,21 +158,56 @@ primitiveFactory.register(
     return new GameObject3D(gl, {
       mesh,
       position: pos,
+      rotation,
+      scale,
       color,
       textureSrc: texture
     });
   }
 );
 
+primitiveFactory.register(
+  'plane',
+  (gl, { width = 10, depth = 10, widthSeg = 1, depthSeg = 1, position, rotation, scale, color, texture }) =>
+    new GameObject3D(gl, {
+      mesh: createPlaneGeometry({ width, depth, widthSeg, depthSeg }),
+      position: position ?? [0, 0, 0],
+      rotation,
+      scale,
+      color,
+      textureSrc: texture,
+    })
+);
+
 primitiveFactory.register('light', (gl, opts) => new GameObjectLight(gl, opts));
 
 primitiveFactory.register(
   'character',
-  (gl, { position = [0, 0, 0], color, texture, name = 'Character' }) =>
+  (gl, { position = [0, 0, 0], rotation, scale, color, texture, name = 'Character' }) =>
     new GameObjectCharacter(gl, {
       position,
+      rotation,
+      scale,
       color,
       textureSrc: texture,
       name,
     })
+);
+
+primitiveFactory.register(
+  'spawnPoint',
+  (gl, opts = {}) => new GameObjectSpawnPoint(gl, opts)
+);
+
+primitiveFactory.register(
+  'sprite',
+  (gl, {
+    imageSrc,
+    texture,
+    x = 0,
+    y = 0,
+    width = 128,
+    height = 128,
+    layer = 0,
+  }) => new GameObject2D(gl, { imageSrc: imageSrc ?? texture, x, y, width, height, layer })
 );

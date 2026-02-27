@@ -1,22 +1,21 @@
-// AddObjectModal.tsx
 "use client";
 
 import React from "react";
 import { v4 as uuidv4 } from "uuid";
 import CustomModal from "./CustomModal";
 
-import SphereIcon    from "../../../icons/circle.png";
-import CubeIcon      from "../../../icons/circle.png";
-import CylinderIcon  from "../../../icons/circle.png";
-import CameraIcon    from "../../../icons/circle.png";
-import LightIcon     from "../../../icons/circle.png";
-import TerrainIcon   from "../../../icons/circle.png";
-import CharacterIcon from "../../../icons/circle.png"; 
+import SphereIcon from "../../../icons/circle.png";
+import CubeIcon from "../../../icons/square.png";
+import CylinderIcon from "../../../icons/rectangle.png";
+import CameraIcon from "../../../icons/enemy.png";
+import LightIcon from "../../../icons/tilesmap.png";
+import TerrainIcon from "../../../icons/rectangle.png";
+import CharacterIcon from "../../../icons/character.png";
 import "./AddObjectModal.scss";
 
 interface AddObjectModalProps {
   open: boolean;
-  onAdd: (payload: { 
+  onAdd: (payload: {
     id: string;
     type: ObjectType;
     name: string;
@@ -33,7 +32,6 @@ interface AddObjectModalProps {
   onClose: () => void;
 }
 
-// Объекты — как раньше, плюс общий "light"
 export type ObjectType =
   | "sphere"
   | "cube"
@@ -41,13 +39,13 @@ export type ObjectType =
   | "camera"
   | "light"
   | "terrain"
+  | "plane"
+  | "water"
   | "sprite"
   | "character"
-  | "model";  // ← добавили
+  | "spawnPoint"
+  | "model";
 
-
-
-// Подтип для освещений
 export type LightSubtype = "point" | "directional" | "ambient";
 export type CameraSubtype = "game" | "first" | "third" | "topdown";
 
@@ -56,83 +54,80 @@ interface GroupedItem {
   type: ObjectType;
   icon: string;
   subtype?: LightSubtype | CameraSubtype;
-  modelPath?: string; // ← путь до модели (если нужно конкретная модель)
 }
 
 const groupedObjects: { group: string; items: GroupedItem[] }[] = [
   {
-    group: "Персонажи",
+    group: "Gameplay",
     items: [
+      { title: "Точка спавна", type: "spawnPoint", icon: CharacterIcon },
       { title: "Персонаж", type: "character", icon: CharacterIcon },
+      { title: "Спрайт", type: "sprite", icon: CharacterIcon },
     ],
   },
-    {
+  {
     group: "Модели / Объекты сцены",
-    items: [
-      { title: "3D Модель", type: "model", icon: CharacterIcon },
-    ],
+    items: [{ title: "3D Модель", type: "model", icon: CharacterIcon }],
   },
   {
     group: "Камеры",
     items: [
-      { title: "Игровая камера",     type: "camera", icon: CameraIcon, subtype: "game" },
-      { title: "От первого лица",    type: "camera", icon: CameraIcon, subtype: "first" },
-      { title: "От третьего лица",   type: "camera", icon: CameraIcon, subtype: "third" },
-      { title: "Top-Down",           type: "camera", icon: CameraIcon, subtype: "topdown" },
+      { title: "Игровая камера", type: "camera", icon: CameraIcon, subtype: "game" },
+      { title: "От первого лица", type: "camera", icon: CameraIcon, subtype: "first" },
+      { title: "От третьего лица", type: "camera", icon: CameraIcon, subtype: "third" },
+      { title: "Top-Down", type: "camera", icon: CameraIcon, subtype: "topdown" },
     ],
   },
   {
     group: "Освещение",
     items: [
-      { title: "Точечный свет",       type: "light", subtype: "point",       icon: LightIcon },
-      { title: "Направленный свет",   type: "light", subtype: "directional", icon: LightIcon },
-      { title: "Рассеянный свет",     type: "light", subtype: "ambient",     icon: LightIcon },
+      { title: "Точечный свет", type: "light", subtype: "point", icon: LightIcon },
+      { title: "Направленный свет", type: "light", subtype: "directional", icon: LightIcon },
+      { title: "Рассеянный свет", type: "light", subtype: "ambient", icon: LightIcon },
+    ],
+  },
+  {
+    group: "Окружение",
+    items: [
+      { title: "Поверхность", type: "plane", icon: TerrainIcon },
+      { title: "Вода", type: "water", icon: TerrainIcon },
+      { title: "Террейн", type: "terrain", icon: TerrainIcon },
     ],
   },
   {
     group: "3D Примитивы",
     items: [
-      { title: "Сфера",    type: "sphere",   icon: SphereIcon },
-      { title: "Куб",      type: "cube",     icon: CubeIcon },
-      { title: "Цилиндр",  type: "cylinder", icon: CylinderIcon },
-    ],
-  },
-  {
-    group: "Террэйн",
-    items: [
-      { title: "Террэйн", type: "terrain", icon: TerrainIcon },
+      { title: "Сфера", type: "sphere", icon: SphereIcon },
+      { title: "Куб", type: "cube", icon: CubeIcon },
+      { title: "Цилиндр", type: "cylinder", icon: CylinderIcon },
     ],
   },
 ];
 
 const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose }) => {
   const handleSelect = (item: GroupedItem) => {
-    const x = 0, y = 0, z = 0;
     const base = {
       id: uuidv4(),
       type: item.type,
       name: item.title,
-      x, y, z,
-      ...(item.subtype ? { subtype: item.subtype } : {})
+      x: 0,
+      y: 0,
+      z: 0,
+      ...(item.subtype ? { subtype: item.subtype } : {}),
     };
 
-  if (item.type === "sphere") {
-    onAdd({ ...base, radius: 1, segments: 16 });
-  } else if (item.type === "cube") {
-    onAdd({ ...base, width: 1, height: 1, depth: 1 });
-  } else if (item.type === "model") {
-    // Здесь можно потом добавить выбор модели (например, всплывающее окно выбора ассета)
-    onAdd({ ...base }); 
-  } else if (item.type === "character") {
-    onAdd({ ...base });
-  } else {
-    onAdd(base);
-  }
+    if (item.type === "sphere") onAdd({ ...base, radius: 1, segments: 24 });
+    else if (item.type === "cube") onAdd({ ...base, width: 1, height: 1, depth: 1 });
+    else if (item.type === "cylinder") onAdd({ ...base, radius: 1, height: 2 });
+    else if (item.type === "terrain") onAdd({ ...base, width: 12, depth: 12 });
+    else if (item.type === "plane") onAdd({ ...base, width: 10, depth: 10 });
+    else if (item.type === "water") onAdd({ ...base, width: 16, depth: 16 });
+    else if (item.type === "sprite") onAdd({ ...base, width: 128, height: 128 });
+    else onAdd(base);
 
     onClose();
   };
 
-  
   return (
     <CustomModal open={open} onClose={onClose} title="Добавить объект">
       <div className="add-object-modal">
@@ -140,12 +135,8 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
           <div key={group} className="object-group">
             <h3 className="group-title">{group}</h3>
             <div className="group-items">
-              {items.map(item => (
-                <div
-                  key={item.title}
-                  className="primitive-card"
-                  onClick={() => handleSelect(item)}
-                >
+              {items.map((item) => (
+                <div key={item.title} className="primitive-card" onClick={() => handleSelect(item)}>
                   <img className="primitive-icon" src={item.icon} alt={item.title} />
                   <span>{item.title}</span>
                 </div>

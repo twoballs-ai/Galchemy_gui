@@ -20,6 +20,7 @@ export interface GameObject {
   layer?: number;
   image?: string;
   // Другие свойства при необходимости
+  [key: string]: unknown;
 }
 
 interface MyDB extends DBSchema {

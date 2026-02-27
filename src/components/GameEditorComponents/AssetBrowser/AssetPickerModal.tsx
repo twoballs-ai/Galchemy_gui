@@ -34,7 +34,7 @@ const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
     <Modal
       open={open}
       onCancel={onClose}
-      title="Выберите модель"
+      title={acceptTypes.includes("modelAsset") ? "Выберите модель" : "Выберите ассет"}
       footer={null}
       width={600}
     >
@@ -73,7 +73,7 @@ const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
             }}>{asset.name}</span>
           </div>
         ))}
-        {!assets.length && <span style={{ color: "#888" }}>Нет ассетов моделей</span>}
+        {!assets.length && <span style={{ color: "#888" }}>Нет подходящих ассетов</span>}
       </div>
     </Modal>
   );
