@@ -14,12 +14,12 @@ const GameObjectListener: React.FC<GameObjectListenerProps> = ({
   useEffect(() => {
     if (!coreInstance) return;
 
-    const handleAdd = ({ object }) => {
+    const handleAdd = ({ object }: { object: any }) => {
       liveMap.set(object.id, object);
       onGameObjectsMapUpdate(new Map(liveMap));
     };
 
-    const handleRemove = ({ objectId }) => {
+    const handleRemove = ({ objectId }: { objectId: string }) => {
       liveMap.delete(objectId);
       onGameObjectsMapUpdate(new Map(liveMap));
     };

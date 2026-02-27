@@ -1,36 +1,15 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { 
-  getSceneObjects, 
-  dbAddSceneObject, 
-  dbUpdateSceneObject, 
-  dbRemoveSceneObject 
+import {
+  getSceneObjects,
+  dbAddSceneObject,
+  dbUpdateSceneObject,
+  dbRemoveSceneObject,
+  GameObject,
 } from '../../utils/dbUtils';
-
-// "Сырые" данные объекта из базы / Redux
-export interface GameObject {
-  id: string;
-  sceneId: string;
-  type: string;
-  name: string;
-  title: string;
-  x: number;
-  y: number;
-  z: number;
-  width?: number;
-  height?: number;
-  radius?: number | null;
-  color?: string;
-  borderColor?: string;
-  borderWidth?: number;
-  enablePhysics?: boolean;
-  isStatic?: boolean;
-  layer?: number;
-  image?: string;
-}
 
 interface SceneObjectsState {
   objects: GameObject[];
-  currentObjectId: string | null; // <-- Храним только ID, а не весь объект
+  currentObjectId: string | null;
   loading: boolean;
   error?: string;
 }
@@ -42,14 +21,12 @@ const initialState: SceneObjectsState = {
   error: undefined,
 };
 
-// Thunks (не меняются):
 export const loadSceneObjects = createAsyncThunk(
   'sceneObjects/load',
   async (activeScene: string, { rejectWithValue }) => {
     try {
-      const objects = await getSceneObjects(activeScene);
-      return objects;
-    } catch (error) {
+      return await getSceneObjects(activeScene);
+    } catch {
       return rejectWithValue('Ошибка загрузки объектов');
     }
   }
@@ -62,17 +39,8 @@ export const addSceneObject = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const newObject = await dbAddSceneObject(activeScene, object);
-       const projectName = "название_текущего_проекта"; // достать из state
-    const scriptKey = `SceneScript:${projectName}:${activeScene}`;
-    const script = loadScript(scriptKey);
-    if (script) {
-      script.content += `\nGameAlchemy.spawnGameObject(${JSON.stringify(newObject)});`;
-      saveScript(scriptKey, script);
-    }
-
-      return newObject;
-    } catch (error) {
+      return await dbAddSceneObject(activeScene, object);
+    } catch {
       return rejectWithValue('Ошибка добавления объекта');
     }
   }
@@ -85,9 +53,8 @@ export const updateSceneObject = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const updatedObject = await dbUpdateSceneObject(activeScene, object);
-      return updatedObject;
-    } catch (error) {
+      return await dbUpdateSceneObject(activeScene, object);
+    } catch {
       return rejectWithValue('Ошибка обновления объекта');
     }
   }
@@ -102,7 +69,7 @@ export const removeSceneObject = createAsyncThunk(
     try {
       await dbRemoveSceneObject(activeScene, objectId);
       return objectId;
-    } catch (error) {
+    } catch {
       return rejectWithValue('Ошибка удаления объекта');
     }
   }
@@ -115,7 +82,6 @@ const sceneObjectsSlice = createSlice({
     clearObjects(state) {
       state.objects = [];
     },
-    // Вместо setCurrentObject -> setCurrentObjectId
     setCurrentObjectId(state, action: PayloadAction<string | null>) {
       state.currentObjectId = action.payload;
     },
@@ -127,9 +93,7 @@ const sceneObjectsSlice = createSlice({
     },
     updateLocalObject(state, action: PayloadAction<GameObject>) {
       const index = state.objects.findIndex(obj => obj.id === action.payload.id);
-      if (index !== -1) {
-        state.objects[index] = action.payload;
-      }
+      if (index !== -1) state.objects[index] = action.payload;
     },
     removeLocalObject(state, action: PayloadAction<string>) {
       state.objects = state.objects.filter(obj => obj.id !== action.payload);
@@ -141,7 +105,7 @@ const sceneObjectsSlice = createSlice({
         state.loading = true;
         state.error = undefined;
       })
-      .addCase(loadSceneObjects.fulfilled, (state, action: PayloadAction<GameObject[]>) => {
+      .addCase(loadSceneObjects.fulfilled, (state, action) => {
         state.loading = false;
         state.objects = action.payload;
       })
@@ -149,16 +113,14 @@ const sceneObjectsSlice = createSlice({
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to load scene objects';
       })
-      .addCase(addSceneObject.fulfilled, (state, action: PayloadAction<GameObject>) => {
+      .addCase(addSceneObject.fulfilled, (state, action) => {
         state.objects.push(action.payload);
       })
-      .addCase(updateSceneObject.fulfilled, (state, action: PayloadAction<GameObject>) => {
+      .addCase(updateSceneObject.fulfilled, (state, action) => {
         const index = state.objects.findIndex(obj => obj.id === action.payload.id);
-        if (index !== -1) {
-          state.objects[index] = action.payload;
-        }
+        if (index !== -1) state.objects[index] = action.payload;
       })
-      .addCase(removeSceneObject.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(removeSceneObject.fulfilled, (state, action) => {
         state.objects = state.objects.filter(obj => obj.id !== action.payload);
       });
   },
@@ -166,7 +128,7 @@ const sceneObjectsSlice = createSlice({
 
 export const {
   clearObjects,
-  setCurrentObjectId,     // экшен для выбора объекта
+  setCurrentObjectId,
   clearCurrentObject,
   addLocalObject,
   updateLocalObject,

@@ -28,7 +28,7 @@ interface AddObjectModalProps {
     width?: number;
     height?: number;
     depth?: number;
-    subtype?: LightSubtype;
+    subtype?: LightSubtype | CameraSubtype;
   }) => void;
   onClose: () => void;
 }
@@ -55,7 +55,7 @@ interface GroupedItem {
   title: string;
   type: ObjectType;
   icon: string;
-  subtype?: LightSubtype;
+  subtype?: LightSubtype | CameraSubtype;
   modelPath?: string; // ← путь до модели (если нужно конкретная модель)
 }
 
