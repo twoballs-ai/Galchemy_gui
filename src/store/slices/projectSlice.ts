@@ -5,9 +5,14 @@ import {
   loadProjectData,
   ProjectData,
   OpenedScene,
-  setCurrentProjectToLS
+  setCurrentProjectToLS,
+  ProjectSummary
 } from '../../utils/storageUtils';
-import { getOrCreateProjectScriptAsset, getOrCreateSceneScriptAsset } from '../../utils/assetStorage';
+import {
+  getOrCreateProjectScriptAsset,
+  getOrCreateSceneScriptAsset,
+  deleteSceneScriptAsset
+} from '../../utils/assetStorage';
 import { initializeDefaultSceneObjects } from '../../utils/initScene';
 /**
  * Если объекты не нужны в проектном срезе,
@@ -63,10 +68,12 @@ export const saveProject = createAsyncThunk(
       scenes: state.project.scenes.map(scene => ({
         id: scene.id,
         sceneName: scene.sceneName,
-        settings: scene.settings
+        settings: scene.settings,
+        visible: true
       })),
       openedScenes: state.project.openedScenes,
-      activeScene: state.project.activeScene
+      activeScene: state.project.activeScene,
+      visible: true
     };
 
     saveProjectData(projectId, projectData);
@@ -80,11 +87,20 @@ export const saveProject = createAsyncThunk(
 export const loadProject = createAsyncThunk(
   'project/loadProject',
   async (projectId: string, { dispatch }) => {
+    dispatch(setCurrentProjectId(projectId));
     const data = loadProjectData(projectId);
     if (data) {
       dispatch(loadProjectState(data));
-      dispatch(setCurrentProjectId(projectId));  // Запоминаем текущий проект
+      return;
     }
+
+    // Если проект открывается впервые, инициализируем пустое состояние проекта
+    dispatch(loadProjectState({
+      scenes: [],
+      openedScenes: [],
+      activeScene: "",
+      visible: true,
+    }));
   }
 );
 export const addSceneWithScript = createAsyncThunk(
@@ -96,7 +112,9 @@ export const addSceneWithScript = createAsyncThunk(
     // 2. создаём script-ассет для новой сцены
     const { currentProjectId, openedScenes } =
       (getState() as { project: ProjectState }).project;
-    await getOrCreateSceneScriptAsset(scene.sceneName, currentProjectId!);
+    if (currentProjectId) {
+      await getOrCreateSceneScriptAsset(scene.sceneName, currentProjectId);
+    }
 
     // 3. кладём на сцену дефолтные объекты
     await dispatch(initializeDefaultSceneObjects(scene.id));
@@ -104,7 +122,7 @@ export const addSceneWithScript = createAsyncThunk(
     // 4. открываем вкладку и делаем сцену активной (по желанию)
     dispatch(setOpenedScenes([
       ...openedScenes,
-      { id: scene.id, sceneName: scene.sceneName, key: scene.id },
+      { id: scene.id, sceneName: scene.sceneName, key: scene.id, visible: true },
     ]));
     dispatch(setActiveScene(scene.id));
 
@@ -125,7 +143,7 @@ export const initializeProject = createAsyncThunk(
     const startScene = {
       id: `scene_${uuidv4()}`,
       sceneName: "Scene 1",
-      settings: {},
+      settings: {} as Record<string, unknown>,
     };
     dispatch(addScene(startScene));
 
@@ -137,6 +155,7 @@ export const initializeProject = createAsyncThunk(
       id: startScene.id,
       sceneName: startScene.sceneName,
       key: startScene.id,
+      visible: true,
     }]));
     dispatch(setActiveScene(startScene.id));
 
@@ -158,9 +177,9 @@ export const removeSceneWithScript = createAsyncThunk(
       // 1. Удаляем сцену из Redux
       dispatch(removeScene(sceneId));
       // 2. Удаляем script-ассет сцены
-      await deleteSceneScriptAsset(scene.sceneName);
+      await deleteSceneScriptAsset(scene.sceneName, state.project.currentProjectId ?? "");
       // 3. Сохраняем проект
-      dispatch(saveProject(state.project.currentProjectId));
+      dispatch(saveProject());
     }
   }
 );
@@ -173,7 +192,8 @@ const projectSlice = createSlice({
       state.scenes = action.payload.scenes.map(scene => ({
         id: scene.id,
         sceneName: scene.sceneName,
-        settings: scene.settings
+        settings: scene.settings as Record<string, unknown>,
+        visible: (scene as any).visible ?? true
       }));
       state.openedScenes = action.payload.openedScenes;
       state.activeScene = action.payload.activeScene;

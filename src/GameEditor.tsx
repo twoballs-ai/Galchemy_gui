@@ -1,31 +1,26 @@
-// GameEditor.tsx
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout, Button, Dropdown, Space } from "antd";
+import { Layout } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-
 import { v4 as uuidv4 } from "uuid";
+
 import SceneEditor from "./components/GameEditorComponents/SceneEditor/SceneEditor";
 import Tabs from "./components/GameEditorComponents/Tabs/Tabs";
 import EditorMenuBar from "./components/GameEditorComponents/MainMenuBar";
-import { ProjectSummary, saveSceneLogic } from "./utils/storageUtils";
+import { ProjectSummary } from "./utils/storageUtils";
 import { startBoot, finishBoot } from "./store/slices/bootSlice";
-
 import { RootState, AppDispatch } from "./store/store";
 import {
   loadProject,
   saveProject,
-  addScene,
-  removeScene,
   setActiveScene,
   setOpenedScenes,
-  updateScene,
-  updateOpenedScene,
   addSceneWithScript,
 } from "./store/slices/projectSlice";
 import SplashScreen from "./components/SplashScreen";
 
-
 const { Header, Content } = Layout;
+
+type PanelKey = "objectsPanel" | "propertiesPanel" | "assetBrowserPanel";
 
 interface GameEditorProps {
   project: ProjectSummary;
@@ -39,16 +34,7 @@ const createScene = (sceneName: string) => ({
   settings: {},
 });
 
-
-
-// ────────────────────────────────────────────────────────────
-// Компонент GameEditor
-// ────────────────────────────────────────────────────────────
-const GameEditor: React.FC<GameEditorProps> = ({
-  project,
-  onUpdateProject,
-  onCloseProject,
-}) => {
+const GameEditor: React.FC<GameEditorProps> = ({ project, onCloseProject }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const boot = useSelector((s: RootState) => s.boot);
@@ -57,57 +43,43 @@ const GameEditor: React.FC<GameEditorProps> = ({
   );
 
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-  // состояние видимости панелей для меню «Вид → Панели»
-  const [panels, setPanels] = useState({
+  const [panels, setPanels] = useState<Record<PanelKey, boolean>>({
     objectsPanel: true,
     propertiesPanel: true,
     assetBrowserPanel: true,
   });
+
   const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
     sceneName: s.sceneName,
   }));
-useEffect(()=> {
-  dispatch(startBoot("Компиляция сцены…"));
-},[dispatch]);
 
-  // ───── Загрузка проекта ─────
-useEffect(() => {
-  dispatch(loadProject(project.id))
-    .then(() => setIsProjectLoaded(true))
-    .finally(() => {
-      // даже если SceneCanvas не смонтируется – бут будет снят
-      dispatch(finishBoot());
-    });
-}, [dispatch, project.id]);
+  useEffect(() => {
+    dispatch(startBoot("Компиляция сцены…"));
+  }, [dispatch]);
 
-  // ───── Добавление новой сцены ─────
+  useEffect(() => {
+    dispatch(loadProject(project.id))
+      .then(() => setIsProjectLoaded(true))
+      .finally(() => dispatch(finishBoot()));
+  }, [dispatch, project.id]);
+
   const addNewScene = useCallback(
     async (sceneName: string) => {
       const newScene = createScene(sceneName);
-      await dispatch(addSceneWithScript(newScene)); // <--- thunk
+      await dispatch(addSceneWithScript(newScene));
 
-      const newOpenedScene = {
-        id: newScene.id,
-        sceneName: newScene.sceneName,
-        key: newScene.id,
-      };
-
-      dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
-      dispatch(setActiveScene(newScene.id));
-      dispatch(saveProject(project.id));
+      // addSceneWithScript already opens tab, activates scene and persists project.
     },
-    [dispatch, project.id, openedScenes]
+    [dispatch]
   );
 
-  // ───── Создаём первую сцену при пустом проекте ─────
   useEffect(() => {
     if (isProjectLoaded && scenes.length === 0 && activeScene === "") {
       addNewScene("Scene 1");
     }
   }, [isProjectLoaded, scenes, activeScene, addNewScene]);
 
-  // ───── Обработчики вкладок ─────
   const handleNewScene = () => addNewScene(`Scene ${scenes.length + 1}`);
 
   const handleRemoveOpenedScene = (tabKey: string) => {
@@ -119,76 +91,49 @@ useEffect(() => {
       dispatch(setActiveScene(newActive));
     }
 
-    dispatch(saveProject(project.id));
+    dispatch(saveProject());
   };
-
 
   const handleSceneChange = (tabKey: string) => {
     dispatch(setActiveScene(tabKey));
-    dispatch(saveProject(project.id));
+    dispatch(saveProject());
   };
 
-  
-  // ────────────────────────────────────────────────────
-  // JSX
-  // ────────────────────────────────────────────────────
   return (
-    <> {boot.isBooting && <SplashScreen msg={boot.message} />}
-       <Layout style={{ height: "100vh", background: "#1c1c1c" }}>
-      {/* ───── Верхнее меню и вкладки ───── */}
-      <Header style={{ background: "#1f1f1f", padding: "0 16px", display: "flex", height: "60px" }}>
-        <EditorMenuBar
-          onNewScene={handleNewScene}
-          onCloseProject={onCloseProject}
-          panels={panels}
-          onTogglePanel={(panelKey) =>
-            setPanels(prev => ({ ...prev, [panelKey]: !prev[panelKey] }))
-          }
-        />
-        <Tabs
-          tabs={sceneTabs}
-          activeTab={activeScene}
-          onTabClick={handleSceneChange}
-          onAddTab={handleNewScene}
-          onRemoveTab={handleRemoveOpenedScene}
-          showGlobalLogicTab={false}
-        />
-      </Header>
-
-      {/* ───── Кнопки управления ───── */}
-      <Header
-        style={{
-          background: "#1f1f1f",
-          padding: "0 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: "48px",
-        }}
-      >
-
-
-        <div style={{ width: "48px" }} />
-      </Header>
-
-      {/* ───── Контент ───── */}
-      <Layout>
-        <Content style={{ padding: "6px", background: "#2e2e2e" }}>
-
-          <SceneEditor
-            activeScene={activeScene}
-            projectName={project.name}
-            panels={panels}                  // <-- сюда
-            onTogglePanel={key =>
-              setPanels(prev => ({ ...prev, [key]: !prev[key] }))
+    <>
+      {boot.isBooting && <SplashScreen msg={boot.message} />}
+      <Layout style={{ height: "100vh", background: "#141925" }}>
+        <Header className="editor-topbar">
+          <EditorMenuBar
+            onNewScene={handleNewScene}
+            onCloseProject={onCloseProject}
+            panels={panels}
+            onTogglePanel={(panelKey) =>
+              setPanels((prev) => ({ ...prev, [panelKey]: !prev[panelKey] }))
             }
           />
-        </Content>
+          <Tabs
+            tabs={sceneTabs}
+            activeTab={activeScene}
+            onTabClick={handleSceneChange}
+            onRemoveTab={handleRemoveOpenedScene}
+          />
+        </Header>
 
+        <Layout>
+          <Content style={{ padding: "8px", background: "#111827" }}>
+            <SceneEditor
+              activeScene={activeScene}
+              projectName={project.name}
+              panels={panels}
+              onTogglePanel={(key) =>
+                setPanels((prev) => ({ ...prev, [key]: !prev[key] }))
+              }
+            />
+          </Content>
+        </Layout>
       </Layout>
-
-    </Layout></>
- 
+    </>
   );
 };
 
