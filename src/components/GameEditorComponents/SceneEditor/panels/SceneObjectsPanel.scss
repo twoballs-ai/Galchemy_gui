@@ -1,10 +1,10 @@
 .scene-objects-panel {
   display: flex;
   flex-direction: column;
-  background-color: rgb(80, 80, 80);
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 5px;
+  background: linear-gradient(180deg, #0f172a, #1e293b);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px;
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
@@ -39,6 +39,27 @@
     flex-direction: column;
     min-height: 0;
 
+    .quick-add-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 10px;
+
+      .quick-add {
+        background: #1d4ed8;
+        color: #eff6ff;
+        border: 1px solid #2563eb;
+        border-radius: 6px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+
+        &:hover {
+          background: #2563eb;
+        }
+      }
+    }
+
     ul {
       list-style: none;
       padding: 0;
@@ -46,23 +67,20 @@
       flex-grow: 1;
       overflow-y: auto;
       max-height: calc(100vh - 100px);
-
-      /* Firefox scrollbar */
       scrollbar-width: thin;
-      scrollbar-color: #0b3d91 #2e2e2e;
+      scrollbar-color: #1d4ed8 #0f172a;
 
-      /* WebKit (Chrome, Edge, Safari) */
       &::-webkit-scrollbar {
         width: 8px;
       }
 
       &::-webkit-scrollbar-thumb {
-        background: #0b3d91;
+        background: #1d4ed8;
         border-radius: 4px;
       }
 
       &::-webkit-scrollbar-track {
-        background: #2e2e2e;
+        background: #0f172a;
         border-radius: 4px;
       }
 
@@ -71,7 +89,8 @@
         justify-content: space-between;
         align-items: center;
         padding: 5px 0;
-        border-bottom: 1px solid #ccc;
+        border-bottom: 1px solid #334155;
+        color: #e2e8f0;
 
         &:last-child {
           border-bottom: none;
@@ -107,8 +126,7 @@
     }
   }
 
-  /* Класс выделенного объекта */
   .selected {
-    background-color: #00ff0d77; /* Цвет для выделенного объекта */
+    background-color: #1e3a8a;
   }
 }
