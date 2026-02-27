@@ -21,7 +21,6 @@ const AssetBrowser: React.FC = () => {
   useEffect(() => {
     getAssets().then(setAssets);
   }, []);
-  const [scriptAssets, setScriptAssets] = useState<AssetItem[]>([]);
   useEffect(() => {
     const loadScripts = async () => {
       const assetsList = await getAssets();
@@ -39,13 +38,16 @@ const AssetBrowser: React.FC = () => {
             parentId: scriptsFolder.id,
             fileData: script.content,
           };
-        });
+        }) as AssetItem[];
 
-      setScriptAssets(scripts as AssetItem[]);
+      setAssets(prev => {
+        const nonScripts = prev.filter(item => item.type !== "script");
+        return [...nonScripts, ...scripts];
+      });
     };
 
     loadScripts();
-  }, [assets]);
+  }, []);
   useEffect(() => {
     const createScriptsFolder = async () => {
       const assetsList = await getAssets();
