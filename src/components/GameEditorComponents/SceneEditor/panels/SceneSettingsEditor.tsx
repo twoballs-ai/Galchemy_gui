@@ -16,7 +16,7 @@ const SceneSettingsEditor: React.FC<SceneSettingsEditorProps> = ({ sceneSettings
       <h3>Scene Settings</h3>
       <label>
         Background Color:
-        <input type="color" name="backgroundColor" value={sceneSettings.backgroundColor} onChange={handleChange} />
+        <input type="color" name="backgroundColor" value={sceneSettings.backgroundColor || "#000000"} onChange={handleChange} />
       </label>
       <label>
         Ambient Light:
