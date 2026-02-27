@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../../store/store";
 import { updateSceneObject } from "../../../../store/slices/sceneObjectsSlice";
-import { GameAlchemy } from "game-alchemy-core";
+import { GameAlchemy } from "../../../../utils/gameAlchemy";
 import AssetPickerModal from "../../AssetBrowser/AssetPickerModal";
 import "./PropertiesPanel.scss";
 

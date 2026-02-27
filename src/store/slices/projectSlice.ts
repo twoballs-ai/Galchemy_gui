@@ -87,11 +87,20 @@ export const saveProject = createAsyncThunk(
 export const loadProject = createAsyncThunk(
   'project/loadProject',
   async (projectId: string, { dispatch }) => {
+    dispatch(setCurrentProjectId(projectId));
     const data = loadProjectData(projectId);
     if (data) {
       dispatch(loadProjectState(data));
-      dispatch(setCurrentProjectId(projectId));  // Запоминаем текущий проект
+      return;
     }
+
+    // Если проект открывается впервые, инициализируем пустое состояние проекта
+    dispatch(loadProjectState({
+      scenes: [],
+      openedScenes: [],
+      activeScene: "",
+      visible: true,
+    }));
   }
 );
 export const addSceneWithScript = createAsyncThunk(
@@ -103,7 +112,9 @@ export const addSceneWithScript = createAsyncThunk(
     // 2. создаём script-ассет для новой сцены
     const { currentProjectId, openedScenes } =
       (getState() as { project: ProjectState }).project;
-    await getOrCreateSceneScriptAsset(scene.sceneName, currentProjectId!);
+    if (currentProjectId) {
+      await getOrCreateSceneScriptAsset(scene.sceneName, currentProjectId);
+    }
 
     // 3. кладём на сцену дефолтные объекты
     await dispatch(initializeDefaultSceneObjects(scene.id));

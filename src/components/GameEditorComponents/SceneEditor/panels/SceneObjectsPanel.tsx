@@ -9,7 +9,7 @@ import {
 } from '../../../../store/slices/sceneObjectsSlice';
 import AddObjectModal from '../../Modal/AddObjectModal';
 import './SceneObjectsPanel.scss';
-import { GameAlchemy } from 'game-alchemy-core';
+import { GameAlchemy } from "../../../../utils/gameAlchemy";
 
 const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -40,7 +40,12 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleAddObject = (newObject: any) => {
     if (!activeScene) return;
-    dispatch(addSceneObject({ activeScene, object: newObject }));
+    const preparedObject = {
+      ...newObject,
+      sceneId: activeScene,
+      title: newObject.title || newObject.name || newObject.type,
+    };
+    dispatch(addSceneObject({ activeScene, object: preparedObject }));
   };
 
   return (

@@ -9,7 +9,7 @@ import AssetBrowserPanel from "./panels/AssetBrowserPanel";
 import EditorToolbar from "./EditorToolbar";
 import { RootState, AppDispatch } from "../../../store/store";
 import { loadSceneObjects } from "../../../store/slices/sceneObjectsSlice";
-import { GameAlchemy } from "game-alchemy-core";
+import { GameAlchemy } from "../../../utils/gameAlchemy";
 
 import "./SceneEditor.scss";
 import "react-grid-layout/css/styles.css";

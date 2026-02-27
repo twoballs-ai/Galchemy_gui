@@ -6,7 +6,7 @@ import { setCurrentObjectId } from "../../../store/slices/sceneObjectsSlice";
 import { finishBoot } from "../../../store/slices/bootSlice";
 
 import GameObjectListener from "./sceneCanvas/GameObjectListener";
-import { GameAlchemy } from "game-alchemy-core";
+import { GameAlchemy } from "../../../utils/gameAlchemy";
 import { DaylightBoxPaths } from "../../../../public/assets/skyBoxes/DaylightBox";
 import { findAssetById } from "../../../utils/assetStorage";
 
@@ -70,6 +70,11 @@ const SceneCanvas: React.FC = () => {
 
   /* ---------- init / dispose ---------- */
   useEffect(() => {
+    if (!activeScene) {
+      dispatch(finishBoot());
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) {
       dispatch(finishBoot());
@@ -126,6 +131,7 @@ const SceneCanvas: React.FC = () => {
 
   /* ---------- ререндер объектов ---------- */
   useEffect(() => {
+    if (!activeScene) return;
     const shapeFactory = createShapeFactory();
     if (!GameAlchemy.core || !shapeFactory) return;
     GameAlchemy.core.addSceneObjects(activeScene, sceneObjects, shapeFactory as any);

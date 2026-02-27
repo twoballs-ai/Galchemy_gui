@@ -69,18 +69,9 @@ const GameEditor: React.FC<GameEditorProps> = ({ project, onCloseProject }) => {
       const newScene = createScene(sceneName);
       await dispatch(addSceneWithScript(newScene));
 
-      const newOpenedScene = {
-        id: newScene.id,
-        sceneName: newScene.sceneName,
-        key: newScene.id,
-        visible: true,
-      };
-
-      dispatch(setOpenedScenes([...openedScenes, newOpenedScene]));
-      dispatch(setActiveScene(newScene.id));
-      dispatch(saveProject());
+      // addSceneWithScript already opens tab, activates scene and persists project.
     },
-    [dispatch, openedScenes]
+    [dispatch]
   );
 
   useEffect(() => {
