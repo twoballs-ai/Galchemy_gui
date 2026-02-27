@@ -311,15 +311,19 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   />
                 );
                 break;
-              case "color":
+              case "color": {
+                const colorValue = typeof value === "string" && /^#[0-9A-Fa-f]{6}$/.test(value)
+                  ? value
+                  : "#000000";
                 inputEl = (
                   <input
                     type="color"
-                    value={value}
+                    value={colorValue}
                     onChange={e => handleChange(prop.key, e.target.value)}
                   />
                 );
                 break;
+              }
               case "checkbox":
                 inputEl = (
                   <input

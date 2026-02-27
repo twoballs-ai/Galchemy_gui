@@ -84,21 +84,26 @@ const SceneCanvas: React.FC = () => {
     let coreCleanup: () => void = () => {};
     (async () => {
       try {
+        const { width, height } = canvas.getBoundingClientRect();
+
         GameAlchemy.init({
           canvasId: canvas.id,
-          w: canvas.clientWidth,
-          h: canvas.clientHeight,
+          w: Math.max(1, Math.round(width || canvas.clientWidth)),
+          h: Math.max(1, Math.round(height || canvas.clientHeight)),
           bg: "#5d8aa8",
         });
 
         GameAlchemy.setEditorMode();
         GameAlchemy.setSkybox(DaylightBoxPaths);
 
-        const core = GameAlchemy.core!;
+        const core = GameAlchemy.core;
+        if (!core) {
+          throw new Error("GameAlchemy core was not initialized");
+        }
         const onObjectSelected = (p: { id: string } | null) =>
           dispatch(setCurrentObjectId(p?.id || null));
 
-        core.attachResizeObserver(canvas);
+        core.attachResizeObserver?.(canvas);
         core.emitter.on("objectSelected", onObjectSelected);
 
         // создать/переключить сцену

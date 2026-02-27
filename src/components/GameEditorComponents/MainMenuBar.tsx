@@ -1,5 +1,5 @@
 import React from "react";
-import { Dropdown, Button, Checkbox, Menu } from "antd";
+import { Dropdown, Button, Checkbox } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleSceneVisibility, setOpenedScenes } from "../../store/slices/projectSlice"; // Экшен для переключения видимости сцены
@@ -135,25 +135,26 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
       </Dropdown>
 
       {/* Меню "Вид" с панелями и сценами как подпункты */}
-      <Dropdown overlay={
-        <Menu items={[
-          // Подменю с панелями
-          {
-            key: 'panels',
-            label: 'Панели',
-            children: viewMenuItems.map(item => ({
-              key: item.key,
-              label: item.label,
-            }))
-          },
-          // Подменю с сценами
-          {
-            key: 'scenes',
-            label: 'Сцены',
-            children: scenesMenuItems,
-          },
-        ]} />
-      } trigger={["click"]}>
+      <Dropdown
+        menu={{
+          items: [
+            {
+              key: "panels",
+              label: "Панели",
+              children: viewMenuItems.map((item) => ({
+                key: item.key,
+                label: item.label,
+              })),
+            },
+            {
+              key: "scenes",
+              label: "Сцены",
+              children: scenesMenuItems,
+            },
+          ],
+        }}
+        trigger={["click"]}
+      >
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
           {renderButton("Вид")}
         </div>
