@@ -1,5 +1,5 @@
 // SceneCanvas.tsx
-import React, { useRef, useEffect, useState, useMemo } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../store/store";
 import { setCurrentObjectId } from "../../../store/slices/sceneObjectsSlice";
@@ -35,13 +35,12 @@ const SceneCanvas: React.FC = () => {
     (s: RootState) => s.sceneObjects.currentObjectId
   );
 
-  /* ---------- shape-factory ---------- */
-  const shapeFactory = useMemo(() => {
+  const createShapeFactory = () => {
     const core = GameAlchemy.core;
     if (!core) return null;
 
     const gl = core.ctx;
-    const withMat = (type: string) => (opts = {}) =>
+    const withMat = (type: string) => (opts: any = {}) =>
       GameAlchemy.primitiveFactory.create(type, gl, {
         ...opts,
         texture: opts.texture || DEFAULT_TEXTURE,
@@ -53,11 +52,9 @@ const SceneCanvas: React.FC = () => {
       cylinder: withMat("cylinder"),
       terrain: withMat("terrain"),
       character: withMat("character"),
-      camera: (opts = {}) =>
-        GameAlchemy.primitiveFactory.create("camera", gl, opts),
-      light: (opts = {}) =>
-        GameAlchemy.primitiveFactory.create("light", gl, opts),
-      model: async (opts = {}) => {
+      camera: (opts: any = {}) => GameAlchemy.primitiveFactory.create("camera", gl, opts),
+      light: (opts: any = {}) => GameAlchemy.primitiveFactory.create("light", gl, opts),
+      model: async (opts: any = {}) => {
         const asset = await findAssetById(opts.modelAssetId);
         if (!asset?.fileData) throw new Error("Model asset not found");
         const blobUrl = URL.createObjectURL(new Blob([asset.fileData]));
@@ -69,7 +66,7 @@ const SceneCanvas: React.FC = () => {
         );
       },
     };
-  }, []);
+  };
 
   /* ---------- init / dispose ---------- */
   useEffect(() => {
@@ -129,13 +126,10 @@ const SceneCanvas: React.FC = () => {
 
   /* ---------- ререндер объектов ---------- */
   useEffect(() => {
+    const shapeFactory = createShapeFactory();
     if (!GameAlchemy.core || !shapeFactory) return;
-    GameAlchemy.core.addSceneObjects(
-      activeScene,
-      sceneObjects,
-      shapeFactory as any
-    );
-  }, [activeScene, sceneObjects, shapeFactory]);
+    GameAlchemy.core.addSceneObjects(activeScene, sceneObjects, shapeFactory as any);
+  }, [activeScene, sceneObjects]);
 
   /* ---------- выделение объекта ---------- */
   useEffect(() => {

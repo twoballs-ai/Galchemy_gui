@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
+import { RootState, AppDispatch } from '../../../../store/store';
 import {
   addSceneObject,
   loadSceneObjects,
@@ -12,7 +12,7 @@ import './SceneObjectsPanel.scss';
 import { GameAlchemy } from 'game-alchemy-core';
 
 const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const objects = useSelector((state: RootState) => state.sceneObjects.objects);
   const activeScene = useSelector((state: RootState) => state.project.activeScene);
   const currentObjectId = useSelector((state: RootState) => state.sceneObjects.currentObjectId);
@@ -26,7 +26,7 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, [activeScene, dispatch]);
 
 
-  const handleSelectObject = (object) => {
+  const handleSelectObject = (object: any) => {
     // Обновляем текущий выбранный объект в Redux
     dispatch(setCurrentObjectId(object.id));
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../../store/store";
+import { RootState, AppDispatch } from "../../../../store/store";
 import { updateSceneObject } from "../../../../store/slices/sceneObjectsSlice";
 import { GameAlchemy } from "game-alchemy-core";
 import AssetPickerModal from "../../AssetBrowser/AssetPickerModal";
@@ -137,7 +137,7 @@ const needsGeometry = (type: string, key: string) =>
  * 3. КОМПОНЕНТ
  * ─────────────────────────────── */
 const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const dispatch    = useDispatch();
+  const dispatch    = useDispatch<AppDispatch>();
   const activeScene = useSelector((s: RootState) => s.project.activeScene);
 
   const currentId   = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
@@ -183,9 +183,9 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     /* --- lookAt для камеры --- */
     if (key.startsWith("lookAt")) {
-      const idx = { lookAtX: 0, lookAtY: 1, lookAtZ: 2 }[key];
+      const idx = ({ lookAtX: 0, lookAtY: 1, lookAtZ: 2 } as Record<string, number>)[key];
       next.lookAt = Array.isArray(next.lookAt) ? [...next.lookAt] : [0, 0, 0];
-      next.lookAt[idx] = Number(value);
+      if (idx !== undefined) next.lookAt[idx] = Number(value);
     }
 
     /* остальные поля */
@@ -200,7 +200,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
 
     setLocal(next);
-    dispatch(updateSceneObject({ activeScene, object: next }));
+    dispatch(updateSceneObject({ activeScene, object: next as any }));
 
     /* готовим дельту для движка */
     const delta: any = {};
