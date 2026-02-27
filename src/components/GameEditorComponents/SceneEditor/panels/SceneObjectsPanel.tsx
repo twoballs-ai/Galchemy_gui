@@ -44,6 +44,19 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       ...newObject,
       sceneId: activeScene,
       title: newObject.title || newObject.name || newObject.type,
+      name: newObject.name || newObject.title || newObject.type,
+      x: newObject.x ?? 0,
+      y: newObject.y ?? 0,
+      z: newObject.z ?? 0,
+      position: [newObject.x ?? 0, newObject.y ?? 0, newObject.z ?? 0],
+      rotX: newObject.rotX ?? 0,
+      rotY: newObject.rotY ?? 0,
+      rotZ: newObject.rotZ ?? 0,
+      rotation: newObject.rotation ?? [0, 0, 0],
+      scaleX: newObject.scaleX ?? 1,
+      scaleY: newObject.scaleY ?? 1,
+      scaleZ: newObject.scaleZ ?? 1,
+      scale: newObject.scale ?? [1, 1, 1],
     };
     dispatch(addSceneObject({ activeScene, object: preparedObject }));
   };

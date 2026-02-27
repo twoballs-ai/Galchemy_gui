@@ -113,7 +113,7 @@ export const addSceneWithScript = createAsyncThunk(
 
     // 4. открываем вкладку и делаем сцену активной (по желанию)
     dispatch(setOpenedScenes([
-      ...openedScenes,
+      ...openedScenes.filter(s => s.id !== scene.id),
       { id: scene.id, sceneName: scene.sceneName, key: scene.id, visible: true },
     ]));
     dispatch(setActiveScene(scene.id));
@@ -187,8 +187,24 @@ const projectSlice = createSlice({
         settings: scene.settings as Record<string, unknown>,
         visible: (scene as any).visible ?? true
       }));
-      state.openedScenes = action.payload.openedScenes;
-      state.activeScene = action.payload.activeScene;
+
+      const validOpened = (action.payload.openedScenes || [])
+        .filter(opened => state.scenes.some(scene => scene.id === opened.id))
+        .map(opened => ({ ...opened, key: opened.id }));
+
+      state.openedScenes = validOpened.length
+        ? validOpened
+        : state.scenes.slice(0, 1).map(scene => ({
+            id: scene.id,
+            sceneName: scene.sceneName,
+            key: scene.id,
+            visible: true,
+          }));
+
+      state.activeScene =
+        state.openedScenes.find(scene => scene.id === action.payload.activeScene)?.id ||
+        state.openedScenes[0]?.id ||
+        '';
     },
     
     /** Новый экшен для установки currentProjectId */
