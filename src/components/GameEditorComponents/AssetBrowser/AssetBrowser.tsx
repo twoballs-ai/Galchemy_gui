@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { getAssets, addAsset, removeAsset } from "../../../utils/assetStorage";
+import React, { useCallback, useEffect, useState } from "react";
+import { getAssets, addAsset, removeAsset, getOrCreateScriptsFolder } from "../../../utils/assetStorage";
 import { AssetItem } from "../../../types/assetTypes";
 import { Button, Upload } from "antd";
 import { UploadOutlined, DeleteOutlined, FolderOutlined, FileOutlined } from "@ant-design/icons";
@@ -8,64 +8,34 @@ import { buildFolderTree, getFolderContent, getBreadcrumbs } from "./assetTree";
 import { DownOutlined, RightOutlined } from "@ant-design/icons";
 import MaterialTile from "./MaterialTile";
 import ScriptEditorModal from "../Modal/ScriptEditorModal";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/store";
 
 const ROOT_ID: string | undefined = undefined;
 const ROOT_NODE_ID = "__root__";
-const SCRIPTS_FOLDER_NAME = "scripts";
-
 const AssetBrowser: React.FC = () => {
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(ROOT_ID);
-  const [scriptAssets, setScriptAssets] = useState<AssetItem[]>([]);
   const [openedScript, setOpenedScript] = useState<{ id: string; name: string; content: string } | null>(null);
+  const currentProjectId = useSelector((state: RootState) => state.project.currentProjectId);
+
+  const loadAssets = useCallback(async () => {
+    const allAssets = await getAssets();
+    setAssets(allAssets.filter((asset) => !asset.projectId || asset.projectId === currentProjectId));
+  }, [currentProjectId]);
 
   useEffect(() => {
-    getAssets().then(setAssets);
-  }, []);
+    loadAssets();
+  }, [currentProjectId, loadAssets]);
 
-  useEffect(() => {
-    const loadScripts = async () => {
-      const assetsList = await getAssets();
-      const scriptsFolder = assetsList.find((a) => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
-      if (!scriptsFolder) return;
-
-      const scripts = Object.entries(localStorage)
-        .filter(([key]) => key.startsWith("ProjectScript:") || key.startsWith("SceneScript:"))
-        .map(([key, value]) => {
-          const script = JSON.parse(value);
-          return {
-            id: key,
-            name: script.name,
-            type: "script",
-            parentId: scriptsFolder.id,
-            fileData: script.content,
-          };
-        }) as AssetItem[];
-
-      setAssets(prev => {
-        const nonScripts = prev.filter(item => item.type !== "script");
-        return [...nonScripts, ...scripts];
-      });
-    };
-
-    loadScripts();
-  }, [assets]);
   useEffect(() => {
     const createScriptsFolder = async () => {
-      const assetsList = await getAssets();
-      const scriptsFolder = assetsList.find((a) => a.name === SCRIPTS_FOLDER_NAME && !a.parentId);
-      if (!scriptsFolder) {
-        const folder: AssetItem = {
-          id: crypto.randomUUID(),
-          name: SCRIPTS_FOLDER_NAME,
-          type: "folder",
-        };
-        await addAsset(folder);
-        setAssets(await getAssets());
-      }
+      if (!currentProjectId) return;
+      await getOrCreateScriptsFolder(currentProjectId);
+      await loadAssets();
     };
     createScriptsFolder();
-  }, []);
+  }, [currentProjectId, loadAssets]);
 
   const handleUpload = (file: File) => {
     const reader = new FileReader();
@@ -86,7 +56,7 @@ const AssetBrowser: React.FC = () => {
         fileData: reader.result ?? undefined,
       };
       await addAsset(asset);
-      setAssets(await getAssets());
+      await loadAssets();
     };
     reader.readAsArrayBuffer(file);
     return false;
@@ -94,7 +64,7 @@ const AssetBrowser: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     await removeAsset(id);
-    setAssets(await getAssets());
+    await loadAssets();
   };
 
   const handleCreateFolder = async () => {
@@ -107,13 +77,12 @@ const AssetBrowser: React.FC = () => {
       parentId: currentFolderId,
     };
     await addAsset(newFolder);
-    setAssets(await getAssets());
+    await loadAssets();
   };
 
-  const allAssets = [...assets, ...scriptAssets];
-  const folderTree = withRoot(buildFolderTree(allAssets, ROOT_ID));
-  const content = getFolderContent(allAssets, currentFolderId);
-  const breadcrumbs = getBreadcrumbs(allAssets, currentFolderId);
+  const folderTree = withRoot(buildFolderTree(assets, ROOT_ID));
+  const content = getFolderContent(assets, currentFolderId);
+  const breadcrumbs = getBreadcrumbs(assets, currentFolderId);
 
   const openScriptEditor = (asset: AssetItem) => {
     setOpenedScript({
@@ -126,15 +95,11 @@ const AssetBrowser: React.FC = () => {
   const saveScript = (content: string) => {
     if (!openedScript) return;
 
-    const raw = localStorage.getItem(openedScript.id);
-    if (!raw) return;
+    const sourceAsset = assets.find((asset) => asset.id === openedScript.id);
+    if (!sourceAsset) return;
 
-    const parsed = JSON.parse(raw);
-    localStorage.setItem(openedScript.id, JSON.stringify({ ...parsed, content }));
-
-    setScriptAssets((prev) =>
-      prev.map((item) => (item.id === openedScript.id ? { ...item, fileData: content } : item))
-    );
+    void addAsset({ ...sourceAsset, fileData: content });
+    setAssets((prev) => prev.map((item) => (item.id === openedScript.id ? { ...item, fileData: content } : item)));
     setOpenedScript((prev) => (prev ? { ...prev, content } : prev));
   };
 

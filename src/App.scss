@@ -21,6 +21,31 @@
   padding: 28px;
 }
 
+.main-page {
+  .ant-list,
+  .ant-list-bordered,
+  .ant-list-item,
+  .ant-modal-content,
+  .ant-modal-header {
+    background: rgba(15, 23, 42, 0.92);
+    color: #e2e8f0;
+    border-color: #334155;
+  }
+
+  .ant-list-item {
+    border-block-end: 1px solid #334155;
+  }
+
+  .ant-btn-link {
+    color: #93c5fd;
+  }
+
+  .ant-typography,
+  .ant-modal-title {
+    color: #e2e8f0;
+  }
+}
+
 .ant-btn {
   border-radius: 10px;
 }
