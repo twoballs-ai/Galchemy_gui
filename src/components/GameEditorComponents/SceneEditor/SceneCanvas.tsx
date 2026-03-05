@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { mat4, vec3 } from "../../../../core/src/vendor/gl-matrix";
 import { RootState, AppDispatch } from "../../../store/store";
 import { setCurrentObjectId, updateSceneObject } from "../../../store/slices/sceneObjectsSlice";
 import { finishBoot } from "../../../store/slices/bootSlice";
@@ -37,6 +38,19 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
   const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
   const pendingPatchRef = useRef<Record<string, Record<string, unknown>>>({});
   const patchTimerRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const interactionRef = useRef<{
+    mode: "move" | "resize";
+    pointerId: number;
+    objectId: string;
+    basePosition: [number, number, number];
+    baseScale: [number, number, number];
+    baseY: number;
+    startClientX: number;
+    startClientY: number;
+    startDistance: number;
+  } | null>(null);
+  const [selectionRect, setSelectionRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const sceneObjectsRef = useRef(sceneObjects);
 
   useEffect(() => {
@@ -284,6 +298,25 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
   return (
     <div className={`scene-canvas scene-canvas--${devicePreset} scene-canvas--${orientation}`}>
       <canvas ref={canvasRef} id="canvas" className="scene-canvas__viewport" />
+      {!isPreviewing && selectionRect && currentObjectId && (
+        <div
+          className="scene-canvas__selection"
+          style={{
+            left: `${selectionRect.left}px`,
+            top: `${selectionRect.top}px`,
+            width: `${selectionRect.width}px`,
+            height: `${selectionRect.height}px`,
+          }}
+          onPointerDown={(e) => onSelectionPointerDown("move", e)}
+          onPointerMove={onSelectionPointerMove}
+          onPointerUp={onSelectionPointerUp}
+        >
+          <div
+            className="scene-canvas__selection-handle scene-canvas__selection-handle--br"
+            onPointerDown={(e) => onSelectionPointerDown("resize", e)}
+          />
+        </div>
+      )}
       <TouchControlsOverlay enabled={isPreviewing && devicePreset !== 'desktop'} />
       <GameObjectListener
         coreInstance={GameAlchemy.core}
