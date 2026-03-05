@@ -39,4 +39,33 @@
       background: #4096ff;
     }
   }
+
+  .add-object {
+    border: 1px solid #334155;
+    border-radius: 6px;
+    background: #0f172a;
+  }
+
+  .toolbar-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #cbd5e1;
+
+    select {
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }

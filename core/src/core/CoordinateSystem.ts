@@ -63,13 +63,6 @@ export class CoordinateSystem {
   getViewNoTranslation(view: mat4): mat4 {
     const v = mat4.clone(view);
     v[12] = v[13] = v[14] = 0;
-
-    if (UP_AXIS === "Y") {
-      v[1] = 0; v[5] = 1; v[9] = 0;  // Y-вверх
-    } else {
-      v[2] = 0; v[6] = 0; v[10] = 1; // Z-вверх
-    }
-
     return v;
   }
 
@@ -81,8 +74,8 @@ export class CoordinateSystem {
       [g.TEXTURE_CUBE_MAP_NEGATIVE_X]: paths.negx, // left
       [g.TEXTURE_CUBE_MAP_POSITIVE_Y]: paths.posy, // top (Y+)
       [g.TEXTURE_CUBE_MAP_NEGATIVE_Y]: paths.negy, // bottom (Y-)
-      [g.TEXTURE_CUBE_MAP_POSITIVE_Z]: paths.posz, // back (Z+)
-      [g.TEXTURE_CUBE_MAP_NEGATIVE_Z]: paths.negz  // front (Z-)
+      [g.TEXTURE_CUBE_MAP_POSITIVE_Z]: paths.negz, // back (Z+)
+      [g.TEXTURE_CUBE_MAP_NEGATIVE_Z]: paths.posz  // front (Z-)
     };
   }
 }

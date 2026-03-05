@@ -7,6 +7,8 @@ import { setOpenedScenes, setActiveScene, saveProject } from "../../store/slices
 interface EditorMenuBarProps {
   onNewScene: () => void;
   onCloseProject: () => void;
+  onOpenAddObjectModal: () => void;
+  onQuickAddObject: (payload: { type: string; name: string; subtype?: string }) => void;
   panels: Record<string, boolean>;
   onTogglePanel: (panelKey: string) => void;
 }
@@ -14,6 +16,8 @@ interface EditorMenuBarProps {
 const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
   onNewScene,
   onCloseProject,
+  onOpenAddObjectModal,
+  onQuickAddObject,
   panels,
   onTogglePanel,
 }) => {
@@ -25,6 +29,21 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
 
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: onNewScene },
+    {
+      label: "Добавить объект",
+      key: "addObject",
+      children: [
+        { label: "Открыть каталог…", key: "addObjectModal", onClick: onOpenAddObjectModal },
+        { type: "divider" as const },
+        { label: "Сфера", key: "addSphere", onClick: () => onQuickAddObject({ type: "sphere", name: "Сфера" }) },
+        { label: "Куб", key: "addCube", onClick: () => onQuickAddObject({ type: "cube", name: "Куб" }) },
+        { label: "Цилиндр", key: "addCylinder", onClick: () => onQuickAddObject({ type: "cylinder", name: "Цилиндр" }) },
+        { label: "Плоскость", key: "addPlane", onClick: () => onQuickAddObject({ type: "plane", name: "Плоскость" }) },
+        { label: "Свет", key: "addLight", onClick: () => onQuickAddObject({ type: "light", name: "Свет", subtype: "point" }) },
+        { label: "Камера", key: "addCamera", onClick: () => onQuickAddObject({ type: "camera", name: "Камера", subtype: "game" }) },
+        { label: "Спавн", key: "addSpawn", onClick: () => onQuickAddObject({ type: "spawnPoint", name: "Спавн" }) },
+      ],
+    },
     { label: "Закрыть проект", key: "close", onClick: onCloseProject },
   ];
 

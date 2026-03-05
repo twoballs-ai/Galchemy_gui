@@ -19,14 +19,6 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const quickObjects = [
-    { label: 'Сфера', type: 'sphere' },
-    { label: 'Куб', type: 'cube' },
-    { label: 'Спавн', type: 'spawnPoint' },
-    { label: 'Свет', type: 'light', subtype: 'point' },
-    { label: 'Камера', type: 'camera', subtype: 'game' },
-  ];
-
   useEffect(() => {
     if (activeScene) {
       dispatch(loadSceneObjects(activeScene)); // Загружаем объекты при смене сцены
@@ -83,25 +75,6 @@ const SceneObjectsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </button>
       </div>
       <div className="panel-content">
-        <div className="quick-add-row">
-          {quickObjects.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              className="quick-add"
-              onClick={() =>
-                handleAddObject({
-                  id: crypto.randomUUID(),
-                  name: item.label,
-                  type: item.type,
-                  subtype: item.subtype,
-                })
-              }
-            >
-              + {item.label}
-            </button>
-          ))}
-        </div>
         <ul>
           {objects.map((object) => (
             <li

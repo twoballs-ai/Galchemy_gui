@@ -1,20 +1,34 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../../store/store";
-import { setCurrentObjectId } from "../../../store/slices/sceneObjectsSlice";
+import { setCurrentObjectId, updateSceneObject } from "../../../store/slices/sceneObjectsSlice";
 import { finishBoot } from "../../../store/slices/bootSlice";
 
 import GameObjectListener from "./sceneCanvas/GameObjectListener";
 import { GameAlchemy } from "../../../utils/gameAlchemy";
 import { DaylightBoxPaths } from "../../../constants/skyboxes";
 import { findAssetById } from "../../../utils/assetStorage";
+import TouchControlsOverlay from "./sceneCanvas/TouchControlsOverlay";
+import { defaultSceneSettings } from "../../../store/slices/projectSlice";
 
 const DEFAULT_TEXTURE =
   "/assets/materials/basic/Concrete034_2K-PNG/Concrete034_2K-PNG_Color.png";
 
 type ShapeBuilder = (options?: Record<string, unknown>) => unknown | Promise<unknown>;
 
-const SceneCanvas: React.FC = () => {
+interface SceneCanvasProps {
+  isPreviewing: boolean;
+  orientation: 'landscape' | 'portrait';
+}
+
+const qualityScaleMap: Record<string, number> = {
+  low: 0.6,
+  medium: 0.8,
+  high: 1,
+  ultra: 1.25,
+};
+
+const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) => {
   const dispatch = useDispatch<AppDispatch>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [, setGameObjectsMap] = useState<Map<string, unknown>>(new Map());
@@ -22,6 +36,23 @@ const SceneCanvas: React.FC = () => {
   const activeScene = useSelector((s: RootState) => s.project.activeScene);
   const sceneObjects = useSelector((s: RootState) => s.sceneObjects.objects);
   const currentObjectId = useSelector((s: RootState) => s.sceneObjects.currentObjectId);
+  const pendingPatchRef = useRef<Record<string, Record<string, unknown>>>({});
+  const patchTimerRef = useRef<number | null>(null);
+  const sceneObjectsRef = useRef(sceneObjects);
+
+  useEffect(() => {
+    sceneObjectsRef.current = sceneObjects;
+  }, [sceneObjects]);
+  const activeSceneData = useSelector((s: RootState) =>
+    s.project.scenes.find((scene) => scene.id === activeScene)
+  );
+
+  const graphicsPreset =
+    String(activeSceneData?.settings?.graphicsPreset ?? defaultSceneSettings.graphicsPreset);
+  const devicePreset =
+    String(activeSceneData?.settings?.devicePreset ?? defaultSceneSettings.devicePreset);
+  const backgroundColor =
+    String(activeSceneData?.settings?.backgroundColor ?? defaultSceneSettings.backgroundColor);
 
 
   const resolveTexture = async (opts: Record<string, unknown>) => {
@@ -39,7 +70,7 @@ const SceneCanvas: React.FC = () => {
     return DEFAULT_TEXTURE;
   };
 
-  const createShapeFactory = (): Record<string, ShapeBuilder> | null => {
+  const createShapeFactory = useCallback((): Record<string, ShapeBuilder> | null => {
     const core = GameAlchemy.core;
     if (!core) return null;
 
@@ -85,7 +116,7 @@ const SceneCanvas: React.FC = () => {
         );
       },
     };
-  };
+  }, []);
 
   useEffect(() => {
     if (!activeScene) {
@@ -105,11 +136,12 @@ const SceneCanvas: React.FC = () => {
       try {
         const { width, height } = canvas.getBoundingClientRect();
 
+        const scale = qualityScaleMap[graphicsPreset] ?? 1;
         GameAlchemy.init({
           canvasId: canvas.id,
-          w: Math.max(1, Math.round(width || canvas.clientWidth || 640)),
-          h: Math.max(1, Math.round(height || canvas.clientHeight || 480)),
-          bg: "#1e293b",
+          w: Math.max(1, Math.round((width || canvas.clientWidth || 640) * scale)),
+          h: Math.max(1, Math.round((height || canvas.clientHeight || 480) * scale)),
+          bg: backgroundColor,
         });
 
         GameAlchemy.setEditorMode();
@@ -124,8 +156,57 @@ const SceneCanvas: React.FC = () => {
           dispatch(setCurrentObjectId(payload?.id || null));
         };
 
+        const flushObjectPatches = () => {
+          const queued = pendingPatchRef.current;
+          pendingPatchRef.current = {};
+          patchTimerRef.current = null;
+
+          Object.entries(queued).forEach(([objectId, patch]) => {
+            const current = sceneObjectsRef.current.find((obj) => obj.id === objectId);
+            if (!current) return;
+
+            const merged: Record<string, unknown> = { ...current, ...patch };
+
+            if (Array.isArray(merged.position)) {
+              const [x = 0, y = 0, z = 0] = merged.position as number[];
+              merged.x = x;
+              merged.y = y;
+              merged.z = z;
+            }
+            if (Array.isArray(merged.rotation)) {
+              const [rx = 0, ry = 0, rz = 0] = merged.rotation as number[];
+              merged.rotX = (Number(rx) * 180) / Math.PI;
+              merged.rotY = (Number(ry) * 180) / Math.PI;
+              merged.rotZ = (Number(rz) * 180) / Math.PI;
+            }
+            if (Array.isArray(merged.scale)) {
+              const [sx = 1, sy = 1, sz = 1] = merged.scale as number[];
+              merged.scaleX = sx;
+              merged.scaleY = sy;
+              merged.scaleZ = sz;
+            }
+
+            dispatch(updateSceneObject({ activeScene, object: merged as any }));
+          });
+        };
+
+        const onObjectUpdated = (payload: { object?: Record<string, unknown> } | null) => {
+          if (isPreviewing) return;
+          if (!payload?.object?.id || !activeScene) return;
+
+          const objectId = String(payload.object.id);
+          pendingPatchRef.current[objectId] = {
+            ...(pendingPatchRef.current[objectId] || {}),
+            ...payload.object,
+          };
+
+          if (patchTimerRef.current !== null) return;
+          patchTimerRef.current = window.setTimeout(flushObjectPatches, 50);
+        };
+
         core.attachResizeObserver?.(canvas);
         core.emitter.on("objectSelected", onObjectSelected);
+        core.emitter.on("objectUpdated", onObjectUpdated as (payload: unknown) => void);
 
         const activeCoreScene = core.sceneManager.scenes?.get?.(activeScene);
         if (!activeCoreScene) {
@@ -136,7 +217,12 @@ const SceneCanvas: React.FC = () => {
         GameAlchemy.start();
 
         coreCleanup = () => {
+          if (patchTimerRef.current !== null) {
+            window.clearTimeout(patchTimerRef.current);
+            patchTimerRef.current = null;
+          }
           core.emitter.off("objectSelected", onObjectSelected);
+          core.emitter.off("objectUpdated", onObjectUpdated as (payload: unknown) => void);
           core.stop();
         };
       } catch (err) {
@@ -149,7 +235,26 @@ const SceneCanvas: React.FC = () => {
     return () => {
       coreCleanup();
     };
-  }, [activeScene, dispatch]);
+  }, [activeScene, dispatch, graphicsPreset, backgroundColor, isPreviewing]);
+
+  useEffect(() => {
+    const core = GameAlchemy.core;
+    const canvas = canvasRef.current;
+    if (!core || !canvas) return;
+
+    const resize = () => {
+      const { width, height } = canvas.getBoundingClientRect();
+      const scale = qualityScaleMap[graphicsPreset] ?? 1;
+      core.resize?.(
+        Math.max(1, Math.round((width || canvas.clientWidth || 640) * scale)),
+        Math.max(1, Math.round((height || canvas.clientHeight || 480) * scale))
+      );
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, [graphicsPreset]);
 
   useEffect(() => {
     if (!activeScene) return;
@@ -167,7 +272,7 @@ const SceneCanvas: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [activeScene, sceneObjects, currentObjectId]);
+  }, [activeScene, sceneObjects, currentObjectId, createShapeFactory]);
 
   useEffect(() => {
     if (!GameAlchemy.core) return;
@@ -175,8 +280,9 @@ const SceneCanvas: React.FC = () => {
   }, [currentObjectId]);
 
   return (
-    <div className="scene-canvas">
+    <div className={`scene-canvas scene-canvas--${devicePreset} scene-canvas--${orientation}`}>
       <canvas ref={canvasRef} id="canvas" className="scene-canvas__viewport" />
+      <TouchControlsOverlay enabled={isPreviewing && devicePreset !== 'desktop'} />
       <GameObjectListener
         coreInstance={GameAlchemy.core}
         onGameObjectsMapUpdate={setGameObjectsMap}
