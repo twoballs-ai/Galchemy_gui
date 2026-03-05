@@ -105,6 +105,32 @@
   border-radius: 8px;
 }
 
+.scene-canvas__selection {
+  position: absolute;
+  border: 1px dashed #60a5fa;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25);
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 4px;
+  cursor: move;
+  touch-action: none;
+}
+
+.scene-canvas__selection-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #2563eb;
+  border: 1px solid #dbeafe;
+  border-radius: 2px;
+  touch-action: none;
+
+  &--br {
+    right: -7px;
+    bottom: -7px;
+    cursor: nwse-resize;
+  }
+}
+
 .touch-controls {
   position: absolute;
   inset: 0;
