@@ -4,7 +4,12 @@ import { vec3, mat4 } from "gl-matrix";
 
 type DragObjectInfo = {
   obj: IGameObject;
-  offset: [number, number, number];
+  mode: "move" | "scale";
+  startPlanePoint: [number, number, number];
+  basePosition: [number, number, number];
+  baseScale: [number, number, number];
+  yPlane: number;
+  startClientY: number;
 } | null;
 
 type DragState = { mode: "orbit" | "pan"; x: number; y: number };
@@ -49,13 +54,22 @@ export class EditorControls {
         this.selectedObject = pick.obj;
         scene.selectedObject = pick.obj;
         this.core.setSelectedObject?.(pick.obj);
+
         const objPos = this._readPosition(pick.obj);
-        const off: [number, number, number] = [
-          pick.pickPoint[0] - objPos[0],
-          pick.pickPoint[1] - objPos[1],
-          pick.pickPoint[2] - objPos[2]
-        ];
-        this.dragObjectInfo = { obj: pick.obj, offset: off };
+        const planePoint = this._pickOnHorizontalPlane(e, objPos[1]);
+        const baseScale = this._readScale(pick.obj);
+
+        if (planePoint) {
+          this.dragObjectInfo = {
+            obj: pick.obj,
+            mode: e.altKey ? "scale" : "move",
+            startPlanePoint: planePoint,
+            basePosition: objPos,
+            baseScale,
+            yPlane: objPos[1],
+            startClientY: e.clientY,
+          };
+        }
 
         this.core.emitter.emit("objectSelected", {
           id: pick.obj.id,
@@ -63,7 +77,6 @@ export class EditorControls {
           type: pick.obj.type,
           position: objPos,
         });
-
         return;
       }
 
@@ -84,21 +97,39 @@ export class EditorControls {
     const camera = this.core.camera as any;
 
     if (this.dragObjectInfo) {
-      const { obj, offset } = this.dragObjectInfo;
-      const objPos = this._readPosition(obj);
-      const pickPoint = this._pickOnHorizontalPlane(e, objPos[1]);
-      if (!pickPoint) return;
+      const drag = this.dragObjectInfo;
 
-      const nextPos: [number, number, number] = [
-        pickPoint[0] - offset[0],
-        objPos[1],
-        pickPoint[2] - offset[2]
+      if (drag.mode === "move") {
+        const hit = this._pickOnHorizontalPlane(e, drag.yPlane);
+        if (!hit) return;
+
+        const dx = hit[0] - drag.startPlanePoint[0];
+        const dz = hit[2] - drag.startPlanePoint[2];
+        const nextPos: [number, number, number] = [
+          drag.basePosition[0] + dx,
+          drag.basePosition[1],
+          drag.basePosition[2] + dz,
+        ];
+
+        (drag.obj as any).position = nextPos;
+        this.core.emitter.emit("objectUpdated", {
+          scene: this.core.scene.name,
+          object: { id: drag.obj.id, position: nextPos }
+        });
+        return;
+      }
+
+      const dy = drag.startClientY - e.clientY;
+      const factor = Math.max(0.1, 1 + dy * 0.01);
+      const scale: [number, number, number] = [
+        drag.baseScale[0] * factor,
+        drag.baseScale[1] * factor,
+        drag.baseScale[2] * factor,
       ];
-
-      (obj as any).position = nextPos;
+      (drag.obj as any).scale = scale;
       this.core.emitter.emit("objectUpdated", {
         scene: this.core.scene.name,
-        object: { id: obj.id, position: nextPos }
+        object: { id: drag.obj.id, scale }
       });
       return;
     }
@@ -152,6 +183,11 @@ export class EditorControls {
     return [Number(p?.[0] ?? 0), Number(p?.[1] ?? 0), Number(p?.[2] ?? 0)];
   }
 
+  private _readScale(obj: IGameObject): [number, number, number] {
+    const s = (obj as any).scale;
+    return [Number(s?.[0] ?? 1), Number(s?.[1] ?? 1), Number(s?.[2] ?? 1)];
+  }
+
   private _screenRay(e: MouseEvent): { origin: vec3; dir: vec3 } | null {
     const { canvas, camera } = this.core;
     const rect = canvas.getBoundingClientRect();
@@ -189,7 +225,8 @@ export class EditorControls {
 
     const t = (yPlane - ray.origin[1]) / ray.dir[1];
     if (t < 0) return null;
-    return vec3.scaleAndAdd(vec3.create(), ray.origin, ray.dir, t) as [number, number, number];
+    const p = vec3.scaleAndAdd(vec3.create(), ray.origin, ray.dir, t);
+    return [p[0], p[1], p[2]];
   }
 
   private _pickObject(e: MouseEvent): { obj: IGameObject, pickPoint: [number, number, number] } | null {
@@ -220,7 +257,7 @@ export class EditorControls {
     }
 
     if (!closest) return null;
-    const pickPoint = vec3.scaleAndAdd(vec3.create(), ray.origin, ray.dir, closest.t) as [number, number, number];
-    return { obj: closest.obj, pickPoint };
+    const pickPoint = vec3.scaleAndAdd(vec3.create(), ray.origin, ray.dir, closest.t);
+    return { obj: closest.obj, pickPoint: [pickPoint[0], pickPoint[1], pickPoint[2]] };
   }
 }
