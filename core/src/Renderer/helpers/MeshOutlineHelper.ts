@@ -15,6 +15,8 @@ export function drawMeshOutline({
   attribs: { aPos: number, aTexCoord: number },
   state: any
 }) {
+  const depthWasEnabled = gl.isEnabled(gl.DEPTH_TEST);
+
   gl.uniform1i(uUseTexture, false);
   gl.uniform4fv(uColor, SELECTION_COLOR);
 
@@ -42,5 +44,15 @@ export function drawMeshOutline({
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state._lineBuffer);
   }
 
+  // 1) обычная обводка по видимым рёбрам
   gl.drawElements(gl.LINES, state._lineCount, state._lineType, 0);
+
+  // 2) X-Ray проход, чтобы были видны все грани/рёбра даже через меш
+  gl.disable(gl.DEPTH_TEST);
+  gl.uniform4fv(uColor, [SELECTION_COLOR[0], SELECTION_COLOR[1], SELECTION_COLOR[2], 0.35]);
+  gl.drawElements(gl.LINES, state._lineCount, state._lineType, 0);
+
+  if (depthWasEnabled) {
+    gl.enable(gl.DEPTH_TEST);
+  }
 }

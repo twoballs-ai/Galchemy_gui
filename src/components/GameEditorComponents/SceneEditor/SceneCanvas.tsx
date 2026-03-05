@@ -6,7 +6,6 @@ import { finishBoot } from "../../../store/slices/bootSlice";
 
 import GameObjectListener from "./sceneCanvas/GameObjectListener";
 import { GameAlchemy } from "../../../utils/gameAlchemy";
-import { DaylightBoxPaths } from "../../../constants/skyboxes";
 import { findAssetById } from "../../../utils/assetStorage";
 import TouchControlsOverlay from "./sceneCanvas/TouchControlsOverlay";
 import { defaultSceneSettings } from "../../../store/slices/projectSlice";
@@ -118,6 +117,13 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
     };
   }, []);
 
+  const queuePatch = useCallback((objectId: string, patch: Record<string, unknown>) => {
+    pendingPatchRef.current[objectId] = {
+      ...(pendingPatchRef.current[objectId] || {}),
+      ...patch,
+    };
+  }, []);
+
   useEffect(() => {
     if (!activeScene) {
       dispatch(finishBoot());
@@ -145,7 +151,6 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
         });
 
         GameAlchemy.setEditorMode();
-        GameAlchemy.setSkybox(DaylightBoxPaths);
 
         const core = GameAlchemy.core;
         if (!core) {
@@ -195,10 +200,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
           if (!payload?.object?.id || !activeScene) return;
 
           const objectId = String(payload.object.id);
-          pendingPatchRef.current[objectId] = {
-            ...(pendingPatchRef.current[objectId] || {}),
-            ...payload.object,
-          };
+          queuePatch(objectId, payload.object);
 
           if (patchTimerRef.current !== null) return;
           patchTimerRef.current = window.setTimeout(flushObjectPatches, 50);
@@ -235,7 +237,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
     return () => {
       coreCleanup();
     };
-  }, [activeScene, dispatch, graphicsPreset, backgroundColor, isPreviewing]);
+  }, [activeScene, dispatch, graphicsPreset, backgroundColor, isPreviewing, queuePatch]);
 
   useEffect(() => {
     const core = GameAlchemy.core;
