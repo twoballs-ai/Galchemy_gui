@@ -50,6 +50,42 @@ npm run start
 - 📚 **Руководство пользователя** — доступно в разделе [Wiki](https://github.com/twoballs-ai/TETTE_GUI/wiki).
 - 📖 **API ядра** — см. [документацию tette-core](https://www.npmjs.com/package/tette-core).
 
+## Preview-режим (как реализовано правильно)
+
+Для корректного preview в редакторе важно разделить **данные редактора** и **runtime-состояние игры**:
+
+1. В редакторе любые изменения (позиция/масштаб/свойства) должны сохраняться в хранилище проекта.
+2. В preview физика/логика может менять объекты каждый кадр, но эти временные изменения не должны записываться обратно в проект.
+3. При выходе из preview сцена должна возвращаться к сохранённому состоянию редактора.
+
+В текущей реализации это учтено: обновления объектов из runtime не синхронизируются обратно в проект во время preview.
+
+## API для запуска игры без визуального редактора
+
+Добавлен программный API, который можно использовать как «headless editor-runtime bridge»:
+
+- `createRuntime(...)` — инициализация GameAlchemy на canvas.
+- `runtime.loadScene(sceneId)` — загрузка объектов сцены из IndexedDB и построение объектов движка.
+- `runtime.start()/stop()` — управление циклом игры.
+- `runtime.setPreviewMode()/setEditorMode()` — переключение режимов движка.
+
+Пример:
+
+```ts
+import { createRuntime } from './src/api';
+
+const runtime = await createRuntime({
+  canvasId: 'game-canvas',
+  width: 1280,
+  height: 720,
+  background: '#0f172a',
+});
+
+await runtime.loadScene('scene_123');
+runtime.setPreviewMode();
+runtime.start();
+```
+
 ## Архитектура
 
 | Компонент       | Описание                                                      |
@@ -74,4 +110,3 @@ npm run start
 ## Связанные проекты
 
 - [TETTE_CORE (Ядро движка)](https://github.com/twoballs-ai/TETTE_CORE)
-

@@ -34,6 +34,13 @@ const materialProps = [
   { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
 ];
 
+const behaviorProps = [
+  { key: "visible", label: "Виден", type: "checkbox" },
+  { key: "enablePhysics", label: "Физика", type: "checkbox" },
+  { key: "isStatic", label: "Статичный", type: "checkbox" },
+  { key: "layer", label: "Слой", type: "number", step: 1 },
+];
+
 /* ───────────────────────────────
  * 2. КОНФИГ СВОЙСТВ ДЛЯ ОБЪЕКТОВ
  * ─────────────────────────────── */
@@ -46,6 +53,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "radius", label: "Радиус", type: "number" },
     { key: "segments", label: "Сегменты", type: "number", min: 3, max: 64 },
     ...materialProps,
+    ...behaviorProps,
   ],
   cube: [
     { key: "name", label: "Имя", type: "text" },
@@ -56,6 +64,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "height", label: "Высота", type: "number" },
     { key: "depth", label: "Глубина", type: "number" },
     ...materialProps,
+    ...behaviorProps,
   ],
   cylinder: [
     { key: "name", label: "Имя", type: "text" },
@@ -65,6 +74,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "radius", label: "Радиус", type: "number" },
     { key: "height", label: "Высота", type: "number" },
     ...materialProps,
+    ...behaviorProps,
   ],
   character: [
     { key: "name", label: "Имя", type: "text" },
@@ -73,6 +83,9 @@ const objectPropertiesConfig: Record<string, any[]> = {
     ...scaleProps,
     { key: "color", label: "Цвет", type: "color" },
     { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
+    { key: "speed", label: "Скорость", type: "number", min: 0, step: 0.1 },
+    { key: "jumpStrength", label: "Сила прыжка", type: "number", min: 0, step: 0.1 },
+    ...behaviorProps,
   ],
   terrain: [
     { key: "name", label: "Имя", type: "text" },
@@ -82,6 +95,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "width", label: "Ширина", type: "number", min: 1 },
     { key: "depth", label: "Длина", type: "number", min: 1 },
     ...materialProps,
+    ...behaviorProps,
   ],
   light: [
     { key: "name", label: "Имя", type: "text" },
@@ -89,7 +103,9 @@ const objectPropertiesConfig: Record<string, any[]> = {
     ...rotationProps,
     ...scaleProps,
     { key: "intensity", label: "Интенсивность", type: "number" },
+    { key: "range", label: "Дальность", type: "number", min: 0 },
     { key: "color", label: "Цвет", type: "color" },
+    { key: "castShadow", label: "Тени", type: "checkbox" },
     {
       key: "subtype",
       label: "Тип света",
@@ -100,6 +116,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
         { value: "ambient", label: "Рассеянный" },
       ],
     },
+    ...behaviorProps,
   ],
   camera: [
     { key: "name", label: "Имя", type: "text" },
@@ -114,6 +131,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "lookAtX", label: "Смотреть на X", type: "number" },
     { key: "lookAtY", label: "Смотреть на Y", type: "number" },
     { key: "lookAtZ", label: "Смотреть на Z", type: "number" },
+    ...behaviorProps,
   ],
 
   plane: [
@@ -124,6 +142,7 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "width", label: "Ширина", type: "number", min: 1 },
     { key: "depth", label: "Длина", type: "number", min: 1 },
     ...materialProps,
+    ...behaviorProps,
   ],
   water: [
     { key: "name", label: "Имя", type: "text" },
@@ -134,6 +153,8 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "depth", label: "Длина", type: "number", min: 1 },
     { key: "color", label: "Цвет воды", type: "color" },
     { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
+    { key: "waveSpeed", label: "Скорость волн", type: "number", min: 0, step: 0.01 },
+    ...behaviorProps,
   ],
   sprite: [
     { key: "name", label: "Имя", type: "text" },
@@ -141,14 +162,16 @@ const objectPropertiesConfig: Record<string, any[]> = {
     { key: "y", label: "Y", type: "number" },
     { key: "width", label: "Ширина", type: "number", min: 1 },
     { key: "height", label: "Высота", type: "number", min: 1 },
-    { key: "layer", label: "Слой", type: "number" },
+    { key: "opacity", label: "Прозрачность", type: "number", min: 0, max: 1, step: 0.01 },
     { key: "textureAssetId", label: "Текстура", type: "texturePicker" },
+    ...behaviorProps,
   ],
   spawnPoint: [
     { key: "name", label: "Имя", type: "text" },
     ...positionProps,
     ...rotationProps,
     ...scaleProps,
+    ...behaviorProps,
   ],
   model: [
     { key: "name", label: "Имя", type: "text" },
@@ -156,7 +179,63 @@ const objectPropertiesConfig: Record<string, any[]> = {
     ...rotationProps,
     ...scaleProps,
     { key: "modelAssetId", label: "Модель", type: "modelPicker" },
+    ...behaviorProps,
   ],
+};
+
+const normalizeForEditor = (value: Record<string, any>): Record<string, any> => {
+  const next = { ...value };
+
+  if (Array.isArray(next.position)) {
+    next.x = Number(next.position[0] ?? next.x ?? 0);
+    next.y = Number(next.position[1] ?? next.y ?? 0);
+    next.z = Number(next.position[2] ?? next.z ?? 0);
+  } else {
+    next.x = Number(next.x ?? 0);
+    next.y = Number(next.y ?? 0);
+    next.z = Number(next.z ?? 0);
+    next.position = [next.x, next.y, next.z];
+  }
+
+  if (Array.isArray(next.rotation)) {
+    const [rx = 0, ry = 0, rz = 0] = next.rotation;
+    next.rotX = (Number(rx) * 180) / Math.PI;
+    next.rotY = (Number(ry) * 180) / Math.PI;
+    next.rotZ = (Number(rz) * 180) / Math.PI;
+  } else {
+    next.rotX = Number(next.rotX ?? 0);
+    next.rotY = Number(next.rotY ?? 0);
+    next.rotZ = Number(next.rotZ ?? 0);
+    next.rotation = [
+      (next.rotX * Math.PI) / 180,
+      (next.rotY * Math.PI) / 180,
+      (next.rotZ * Math.PI) / 180,
+    ];
+  }
+
+  if (Array.isArray(next.scale)) {
+    next.scaleX = Number(next.scale[0] ?? next.scaleX ?? 1);
+    next.scaleY = Number(next.scale[1] ?? next.scaleY ?? 1);
+    next.scaleZ = Number(next.scale[2] ?? next.scaleZ ?? 1);
+  } else {
+    next.scaleX = Number(next.scaleX ?? 1);
+    next.scaleY = Number(next.scaleY ?? 1);
+    next.scaleZ = Number(next.scaleZ ?? 1);
+    next.scale = [next.scaleX, next.scaleY, next.scaleZ];
+  }
+
+  if (Array.isArray(next.lookAt)) {
+    next.lookAtX = Number(next.lookAt[0] ?? 0);
+    next.lookAtY = Number(next.lookAt[1] ?? 0);
+    next.lookAtZ = Number(next.lookAt[2] ?? 0);
+  }
+
+  next.visible = next.visible ?? true;
+  next.enablePhysics = next.enablePhysics ?? false;
+  next.isStatic = next.isStatic ?? false;
+  next.layer = Number(next.layer ?? 0);
+
+  return next;
 };
 
 /* набор ключей, при изменении которых надо пересобрать геометрию */
@@ -187,7 +266,7 @@ const PropertiesPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [showTexturePicker, setShowTexturePicker] = useState(false);
 
   /* sync local-state */
-  useEffect(() => setLocal(selected ? { ...selected } : {}), [selected]);
+  useEffect(() => setLocal(selected ? normalizeForEditor(selected as any) : {}), [selected]);
 
   /* ---------------- handleChange ---------------- */
   const handleChange = (key: string, value: any) => {

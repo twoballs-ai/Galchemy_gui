@@ -24,6 +24,23 @@ export interface SceneData {
   settings?: Record<string, unknown>;
 }
 
+export type GraphicsPreset = 'low' | 'medium' | 'high' | 'ultra';
+export type DevicePreset = 'desktop' | 'tablet' | 'phone';
+
+export interface SceneSettings {
+  backgroundColor?: string;
+  graphicsPreset?: GraphicsPreset;
+  devicePreset?: DevicePreset;
+  orientation?: 'landscape' | 'portrait';
+}
+
+export const defaultSceneSettings: SceneSettings = {
+  backgroundColor: '#1e293b',
+  graphicsPreset: 'high',
+  devicePreset: 'desktop',
+  orientation: 'landscape',
+};
+
 /**
  * Добавляем новое поле currentProjectId для хранения id текущего проекта.
  */
@@ -60,7 +77,10 @@ export const saveProject = createAsyncThunk(
       scenes: state.project.scenes.map(scene => ({
         id: scene.id,
         sceneName: scene.sceneName,
-        settings: scene.settings,
+        settings: {
+          ...defaultSceneSettings,
+          ...scene.settings,
+        },
         visible: true
       })),
       openedScenes: state.project.openedScenes,
@@ -135,7 +155,7 @@ export const initializeProject = createAsyncThunk(
     const startScene = {
       id: `scene_${uuidv4()}`,
       sceneName: "Scene 1",
-      settings: {} as Record<string, unknown>,
+      settings: { ...defaultSceneSettings } as Record<string, unknown>,
     };
     dispatch(addScene(startScene));
 
@@ -184,7 +204,10 @@ const projectSlice = createSlice({
       state.scenes = action.payload.scenes.map(scene => ({
         id: scene.id,
         sceneName: scene.sceneName,
-        settings: scene.settings as Record<string, unknown>,
+        settings: {
+          ...defaultSceneSettings,
+          ...(scene.settings as Record<string, unknown>),
+        },
         visible: (scene as any).visible ?? true
       }));
 
@@ -214,8 +237,27 @@ const projectSlice = createSlice({
     },
     /** Добавляем новую сцену (объекты не используем) */
     addScene(state, action: PayloadAction<SceneData>) {
-      state.scenes.push(action.payload);
+      state.scenes.push({
+        ...action.payload,
+        settings: {
+          ...defaultSceneSettings,
+          ...(action.payload.settings ?? {}),
+        },
+      });
 
+    },
+
+    updateSceneSettings(
+      state,
+      action: PayloadAction<{ sceneId: string; settings: Record<string, unknown> }>
+    ) {
+      const targetScene = state.scenes.find((scene) => scene.id === action.payload.sceneId);
+      if (!targetScene) return;
+      targetScene.settings = {
+        ...defaultSceneSettings,
+        ...(targetScene.settings ?? {}),
+        ...action.payload.settings,
+      };
     },
 
     removeScene(state, action: PayloadAction<string>) {
@@ -240,6 +282,7 @@ export const {
   loadProjectState,
   setCurrentProjectId,
   addScene,
+  updateSceneSettings,
   removeScene,
   setActiveScene,
   setOpenedScenes,

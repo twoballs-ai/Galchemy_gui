@@ -48,6 +48,11 @@ const GameEditor: React.FC<GameEditorProps> = ({ project, onCloseProject }) => {
     propertiesPanel: true,
     assetBrowserPanel: true,
   });
+  const [openAddObjectSignal, setOpenAddObjectSignal] = useState(0);
+  const [quickAddRequest, setQuickAddRequest] = useState<{
+    nonce: number;
+    payload: { type: string; name: string; subtype?: string } | null;
+  }>({ nonce: 0, payload: null });
 
   const sceneTabs = openedScenes.map((s) => ({
     key: s.key,
@@ -107,6 +112,10 @@ const GameEditor: React.FC<GameEditorProps> = ({ project, onCloseProject }) => {
           <EditorMenuBar
             onNewScene={handleNewScene}
             onCloseProject={onCloseProject}
+            onOpenAddObjectModal={() => setOpenAddObjectSignal((v) => v + 1)}
+            onQuickAddObject={(payload) =>
+              setQuickAddRequest((prev) => ({ nonce: prev.nonce + 1, payload }))
+            }
             panels={panels}
             onTogglePanel={(panelKey) =>
               setPanels((prev) => ({ ...prev, [panelKey]: !prev[panelKey] }))
@@ -126,6 +135,8 @@ const GameEditor: React.FC<GameEditorProps> = ({ project, onCloseProject }) => {
               activeScene={activeScene}
               projectName={project.name}
               panels={panels}
+              openAddObjectSignal={openAddObjectSignal}
+              quickAddRequest={quickAddRequest}
               onTogglePanel={(key) =>
                 setPanels((prev) => ({ ...prev, [key]: !prev[key] }))
               }

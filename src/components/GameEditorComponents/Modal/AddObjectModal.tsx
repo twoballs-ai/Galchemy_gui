@@ -13,22 +13,33 @@ import TerrainIcon from "../../../icons/rectangle.png";
 import CharacterIcon from "../../../icons/character.png";
 import "./AddObjectModal.scss";
 
+export interface AddObjectPayload {
+  id: string;
+  type: ObjectType;
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  radius?: number;
+  segments?: number;
+  width?: number;
+  height?: number;
+  depth?: number;
+  subtype?: LightSubtype | CameraSubtype;
+  title?: string;
+  rotX?: number;
+  rotY?: number;
+  rotZ?: number;
+  rotation?: [number, number, number];
+  scaleX?: number;
+  scaleY?: number;
+  scaleZ?: number;
+  scale?: [number, number, number];
+}
+
 interface AddObjectModalProps {
   open: boolean;
-  onAdd: (payload: {
-    id: string;
-    type: ObjectType;
-    name: string;
-    x: number;
-    y: number;
-    z: number;
-    radius?: number;
-    segments?: number;
-    width?: number;
-    height?: number;
-    depth?: number;
-    subtype?: LightSubtype | CameraSubtype;
-  }) => void;
+  onAdd: (payload: AddObjectPayload) => void;
   onClose: () => void;
 }
 

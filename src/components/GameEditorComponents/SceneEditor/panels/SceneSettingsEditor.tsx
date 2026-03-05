@@ -1,28 +1,71 @@
 import React from 'react';
+import { SceneSettings, defaultSceneSettings } from '../../../../store/slices/projectSlice';
 
 interface SceneSettingsEditorProps {
-  sceneSettings: any;
-  onSettingsChange: (newSettings: any) => void;
+  sceneSettings?: Record<string, unknown>;
+  onSettingsChange: (newSettings: SceneSettings) => void;
 }
 
 const SceneSettingsEditor: React.FC<SceneSettingsEditorProps> = ({ sceneSettings, onSettingsChange }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    onSettingsChange({ ...sceneSettings, [name]: value });
+  const settings: SceneSettings = {
+    ...defaultSceneSettings,
+    ...(sceneSettings as SceneSettings | undefined),
+  };
+
+  const update = <K extends keyof SceneSettings>(key: K, value: SceneSettings[K]) => {
+    onSettingsChange({
+      ...settings,
+      [key]: value,
+    });
   };
 
   return (
     <div className="scene-settings-editor">
-      <h3>Scene Settings</h3>
+      <h3>Настройки сцены</h3>
       <label>
-        Background Color:
-        <input type="color" name="backgroundColor" value={sceneSettings.backgroundColor || "#000000"} onChange={handleChange} />
+        Фон
+        <input
+          type="color"
+          value={settings.backgroundColor || '#1e293b'}
+          onChange={(e) => update('backgroundColor', e.target.value)}
+        />
       </label>
+
       <label>
-        Ambient Light:
-        <input type="range" name="ambientLight" min="0" max="1" step="0.01" value={sceneSettings.ambientLight} onChange={handleChange} />
+        Качество графики
+        <select
+          value={settings.graphicsPreset || 'high'}
+          onChange={(e) => update('graphicsPreset', e.target.value as SceneSettings['graphicsPreset'])}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="ultra">Ultra</option>
+        </select>
       </label>
-      {/* Добавьте другие настройки по необходимости */}
+
+      <label>
+        Профиль устройства
+        <select
+          value={settings.devicePreset || 'desktop'}
+          onChange={(e) => update('devicePreset', e.target.value as SceneSettings['devicePreset'])}
+        >
+          <option value="desktop">Desktop</option>
+          <option value="tablet">Tablet</option>
+          <option value="phone">Phone</option>
+        </select>
+      </label>
+
+      <label>
+        Ориентация
+        <select
+          value={settings.orientation || 'landscape'}
+          onChange={(e) => update('orientation', e.target.value as SceneSettings['orientation'])}
+        >
+          <option value="landscape">Landscape</option>
+          <option value="portrait">Portrait</option>
+        </select>
+      </label>
     </div>
   );
 };
