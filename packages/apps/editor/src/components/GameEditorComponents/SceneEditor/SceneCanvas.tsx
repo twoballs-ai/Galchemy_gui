@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { mat4, vec3 } from "../../../../core/src/vendor/gl-matrix";
+import { mat4, vec3 } from "../../../../../../core/src/vendor/gl-matrix";
 import { RootState, AppDispatch } from "../../../store/store";
 import { setCurrentObjectId, updateSceneObject } from "../../../store/slices/sceneObjectsSlice";
 import { finishBoot } from "../../../store/slices/bootSlice";
