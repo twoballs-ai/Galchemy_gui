@@ -26,12 +26,14 @@ export interface SceneData {
 
 export type GraphicsPreset = 'low' | 'medium' | 'high' | 'ultra';
 export type DevicePreset = 'desktop' | 'tablet' | 'phone';
+export type RendererType = 'webgl' | 'webgpu';
 
 export interface SceneSettings {
   backgroundColor?: string;
   graphicsPreset?: GraphicsPreset;
   devicePreset?: DevicePreset;
   orientation?: 'landscape' | 'portrait';
+  rendererType?: RendererType;
 }
 
 export const defaultSceneSettings: SceneSettings = {
@@ -39,6 +41,7 @@ export const defaultSceneSettings: SceneSettings = {
   graphicsPreset: 'high',
   devicePreset: 'desktop',
   orientation: 'landscape',
+  rendererType: 'webgl',
 };
 
 /**
@@ -229,7 +232,7 @@ const projectSlice = createSlice({
         state.openedScenes[0]?.id ||
         '';
     },
-    
+
     /** Новый экшен для установки currentProjectId */
     setCurrentProjectId(state, action: PayloadAction<string | null>) {
       state.currentProjectId = action.payload;

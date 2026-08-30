@@ -66,6 +66,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
     String(activeSceneData?.settings?.devicePreset ?? defaultSceneSettings.devicePreset);
   const backgroundColor =
     String(activeSceneData?.settings?.backgroundColor ?? defaultSceneSettings.backgroundColor);
+  const rendererType =
+    String(activeSceneData?.settings?.rendererType ?? defaultSceneSettings.rendererType) as 'webgl' | 'webgpu';
 
 
   const resolveTexture = async (opts: Record<string, unknown>) => {
@@ -162,6 +164,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
           w: Math.max(1, Math.round((width || canvas.clientWidth || 640) * scale)),
           h: Math.max(1, Math.round((height || canvas.clientHeight || 480) * scale)),
           bg: backgroundColor,
+          renderer: rendererType,
         });
 
         GameAlchemy.setEditorMode();
@@ -251,7 +254,7 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
     return () => {
       coreCleanup();
     };
-  }, [activeScene, dispatch, graphicsPreset, backgroundColor, isPreviewing, queuePatch]);
+  }, [activeScene, dispatch, graphicsPreset, backgroundColor, rendererType, isPreviewing, queuePatch]);
 
   useEffect(() => {
     const core = GameAlchemy.core;

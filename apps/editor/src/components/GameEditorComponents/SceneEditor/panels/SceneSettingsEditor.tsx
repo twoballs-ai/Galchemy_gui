@@ -66,6 +66,17 @@ const SceneSettingsEditor: React.FC<SceneSettingsEditorProps> = ({ sceneSettings
           <option value="portrait">Portrait</option>
         </select>
       </label>
+
+      <label>
+        Рендерер
+        <select
+          value={settings.rendererType || 'webgl'}
+          onChange={(e) => update('rendererType', e.target.value as SceneSettings['rendererType'])}
+        >
+          <option value="webgl">WebGL</option>
+          <option value="webgpu">WebGPU</option>
+        </select>
+      </label>
     </div>
   );
 };
