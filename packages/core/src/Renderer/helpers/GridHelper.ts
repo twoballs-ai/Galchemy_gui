@@ -47,7 +47,6 @@ export class GridHelper {
       }
     }
 
-    // Создаем буферы ОДИН раз
     this.gridBuffer = this._createBuffer(new Float32Array(gridLines));
     this.gridCount = gridLines.length / 3;
 
@@ -66,29 +65,34 @@ export class GridHelper {
     return buf;
   }
 
-  /**
-   * Вызывается каждый кадр для отрисовки. 
-   * Здесь НЕТ создания новых массивов или буферов!
-   */
   public render(ctx: any) {
-    const { gl, plainShaderProgram, plain_aPos, plain_uModel, plain_uView, plain_uProj, plain_uColor, activeCamera } = ctx;
-    
-    if (!plainShaderProgram || !activeCamera) return;
+    const gl = this.gl;
+    const { plainShaderProgram, plain_aPos, plain_uModel, plain_uView, plain_uProj, plain_uColor, activeCamera } = ctx;
+
+    // ЗАЩИТА 1: Проверяем, что шейдер и атрибут валидны
+    if (!plainShaderProgram || !activeCamera || plain_aPos < 0) {
+      console.warn("GridHelper: Пропуск отрисовки. Проверьте, что plain_aPos >= 0 (имя атрибута в шейдере должно быть 'aVertexPosition')");
+      return;
+    }
 
     gl.useProgram(plainShaderProgram);
-    
-    // Матрицы
+
     const identity = mat4.create();
     gl.uniformMatrix4fv(plain_uModel, false, identity);
     gl.uniformMatrix4fv(plain_uView, false, activeCamera.getView());
     gl.uniformMatrix4fv(plain_uProj, false, activeCamera.getProjection());
 
-    // Включаем атрибут позиции (он один для всех частей сетки)
-    if (plain_aPos >= 0) {
-      gl.enableVertexAttribArray(plain_aPos);
-    }
+    // ЗАЩИТА 2: Явно отключаем "мусорные" атрибуты, которые могли остаться от 3D-рендера
+    const texLoc = gl.getAttribLocation(plainShaderProgram, "aTexCoord");
+    if (texLoc >= 0) gl.disableVertexAttribArray(texLoc);
 
-    // 1. Рисуем основную сетку (серая)
+    const normLoc = gl.getAttribLocation(plainShaderProgram, "aVertexNormal");
+    if (normLoc >= 0) gl.disableVertexAttribArray(normLoc);
+
+    // Теперь безопасно включаем только нужный атрибут
+    gl.enableVertexAttribArray(plain_aPos);
+
+    // 1. Основная сетка (серая)
     if (this.gridBuffer && this.gridCount > 0) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.gridBuffer);
       gl.vertexAttribPointer(plain_aPos, 3, gl.FLOAT, false, 0, 0);
@@ -96,7 +100,7 @@ export class GridHelper {
       gl.drawArrays(gl.LINES, 0, this.gridCount);
     }
 
-    // 2. Рисуем ось X (красная)
+    // 2. Ось X (красная)
     if (this.xBuffer && this.xCount > 0) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.xBuffer);
       gl.vertexAttribPointer(plain_aPos, 3, gl.FLOAT, false, 0, 0);
@@ -104,7 +108,7 @@ export class GridHelper {
       gl.drawArrays(gl.LINES, 0, this.xCount);
     }
 
-    // 3. Рисуем ось Z (синяя)
+    // 3. Ось Z (синяя)
     if (this.zBuffer && this.zCount > 0) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.zBuffer);
       gl.vertexAttribPointer(plain_aPos, 3, gl.FLOAT, false, 0, 0);
@@ -112,16 +116,11 @@ export class GridHelper {
       gl.drawArrays(gl.LINES, 0, this.zCount);
     }
 
-    // Выключаем атрибут после отрисовки (хорошая практика)
-    if (plain_aPos >= 0) {
-      gl.disableVertexAttribArray(plain_aPos);
-    }
+    // Очистка состояния после отрисовки
+    gl.disableVertexAttribArray(plain_aPos);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
-  /**
-   * Очистка памяти при уничтожении сцены/редактора
-   */
   public dispose() {
     const gl = this.gl;
     if (this.gridBuffer) gl.deleteBuffer(this.gridBuffer);

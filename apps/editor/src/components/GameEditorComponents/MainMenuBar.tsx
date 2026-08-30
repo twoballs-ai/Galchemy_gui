@@ -1,5 +1,5 @@
-import React from "react";
-import { Dropdown, Button, Checkbox } from "antd";
+import React, { useState } from "react";
+import { Dropdown, Button, Checkbox, Modal, Typography } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { setOpenedScenes, setActiveScene, saveProject } from "../../store/slices/projectSlice";
@@ -26,6 +26,10 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
   const scenes = useSelector((state: any) => state.project.scenes);
   const openedScenes = useSelector((state: any) => state.project.openedScenes);
   const activeScene = useSelector((state: any) => state.project.activeScene);
+
+  // Состояния для модалок раздела "Помощь"
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const projectMenuItems = [
     { label: "Создать сцену", key: "newScene", onClick: onNewScene },
@@ -129,9 +133,10 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
     };
   });
 
+  // Добавляем обработчики кликов для вызова модалок
   const helpMenuItems = [
-    { label: "Версия", key: "version" },
-    { label: "Контакты", key: "contact" },
+    { label: "Версия", key: "version", onClick: () => setIsVersionModalOpen(true) },
+    { label: "Контакты", key: "contact", onClick: () => setIsContactModalOpen(true) },
   ];
 
   const renderButton = (text: string) => (
@@ -186,6 +191,61 @@ const EditorMenuBar: React.FC<EditorMenuBarProps> = ({
       <Dropdown menu={{ items: helpMenuItems }} trigger={["click"]}>
         <div style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>{renderButton("Помощь")}</div>
       </Dropdown>
+
+      {/* =========================
+          Модальное окно "Версия" 
+         ========================= */}
+      <Modal
+        title="О программе"
+        open={isVersionModalOpen}
+        onCancel={() => setIsVersionModalOpen(false)}
+        footer={null}
+        className="editor-modal"
+      >
+        <div style={{ color: "#e5e7eb" }}>
+          <Typography.Paragraph strong style={{ color: "#f1f5f9", fontSize: 16 }}>
+            Game Alchemy Engine
+          </Typography.Paragraph>
+          <Typography.Paragraph>
+            Версия: <Text code style={{ background: "rgba(255,255,255,0.1)", borderColor: "#334155", color: "#60a5fa" }}>0.1.0 (Alpha)</Text>
+          </Typography.Paragraph>
+          <Typography.Paragraph>
+            Дата сборки: {new Date().toLocaleDateString("ru-RU")}
+          </Typography.Paragraph>
+          <Typography.Paragraph style={{ marginTop: 16, color: "#94a3b8", borderLeft: "2px solid #3b82f6", paddingLeft: 12 }}>
+            Game Alchemy — современный инструмент для прототипирования и создания 3D-игр.
+          </Typography.Paragraph>
+        </div>
+      </Modal>
+
+      {/* =========================
+          Модальное окно "Контакты" 
+         ========================= */}
+      <Modal
+        title="Контакты"
+        open={isContactModalOpen}
+        onCancel={() => setIsContactModalOpen(false)}
+        footer={null}
+        className="editor-modal"
+      >
+        <div style={{ color: "#e5e7eb" }}>
+          <Typography.Paragraph style={{ marginBottom: 16 }}>
+            По всем вопросам, багам и предложениям обращайтесь к нам:
+          </Typography.Paragraph>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Typography.Paragraph style={{ margin: 0 }}>
+              📧 Email: <a href="mailto:support@gamealchemy.local" style={{ color: "#60a5fa" }}>support@gamealchemy.local</a>
+            </Typography.Paragraph>
+            <Typography.Paragraph style={{ margin: 0 }}>
+              🌐 Сайт: <a href="https://gamealchemy.local" target="_blank" rel="noreferrer" style={{ color: "#60a5fa" }}>gamealchemy.local</a>
+            </Typography.Paragraph>
+            <Typography.Paragraph style={{ margin: 0 }}>
+              💬 Discord: <a href="https://discord.gg/gamealchemy" target="_blank" rel="noreferrer" style={{ color: "#60a5fa" }}>Присоединиться к серверу</a>
+            </Typography.Paragraph>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };
