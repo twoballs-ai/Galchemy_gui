@@ -47,6 +47,12 @@ export type ObjectType =
   | "sphere"
   | "cube"
   | "cylinder"
+  | "capsule"
+  | "cone"
+  | "torus"
+  | "icosahedron"
+  | "pyramid"
+  | "prism"
   | "camera"
   | "light"
   | "terrain"
@@ -111,6 +117,12 @@ const groupedObjects: { group: string; items: GroupedItem[] }[] = [
       { title: "Сфера", type: "sphere", icon: SphereIcon },
       { title: "Куб", type: "cube", icon: CubeIcon },
       { title: "Цилиндр", type: "cylinder", icon: CylinderIcon },
+      { title: "Капсула", type: "capsule", icon: CylinderIcon },
+      { title: "Конус", type: "cone", icon: CylinderIcon },
+      { title: "Тор (Бублик)", type: "torus", icon: CylinderIcon },
+      { title: "Икосаэдр", type: "icosahedron", icon: SphereIcon },
+      { title: "Пирамида", type: "pyramid", icon: CubeIcon },
+      { title: "Призма", type: "prism", icon: CubeIcon },
     ],
   },
 ];
@@ -130,6 +142,12 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     if (item.type === "sphere") onAdd({ ...base, radius: 1, segments: 24 });
     else if (item.type === "cube") onAdd({ ...base, width: 1, height: 1, depth: 1 });
     else if (item.type === "cylinder") onAdd({ ...base, radius: 1, height: 2 });
+    else if (item.type === "capsule") onAdd({ ...base, radius: 0.5, height: 2, segments: 16 });
+    else if (item.type === "cone") onAdd({ ...base, radius: 1, height: 2, segments: 32 });
+    else if (item.type === "torus") onAdd({ ...base, outerRadius: 1, innerRadius: 0.3, segmentsOuter: 32, segmentsInner: 16 });
+    else if (item.type === "icosahedron") onAdd({ ...base, radius: 1 });
+    else if (item.type === "pyramid") onAdd({ ...base, baseSize: 1, height: 1 });
+    else if (item.type === "prism") onAdd({ ...base, width: 1, height: 1, depth: 1 });
     else if (item.type === "terrain") onAdd({ ...base, width: 12, depth: 12 });
     else if (item.type === "plane") onAdd({ ...base, width: 10, depth: 10 });
     else if (item.type === "water") onAdd({ ...base, width: 16, depth: 16 });

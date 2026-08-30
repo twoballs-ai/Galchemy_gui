@@ -46,6 +46,18 @@ export const createRuntime = async (opts: RuntimeOptions) => {
       GameAlchemy.primitiveFactory.create('cube', gl, { ...o, texture: await resolveTexture(o) }),
     cylinder: async (o: Record<string, unknown> = {}) =>
       GameAlchemy.primitiveFactory.create('cylinder', gl, { ...o, texture: await resolveTexture(o) }),
+    capsule: async (o: Record<string, unknown> = {}) =>
+      GameAlchemy.primitiveFactory.create('capsule', gl, { ...o, texture: await resolveTexture(o) }),
+    cone: async (o: Record<string, unknown> = {}) =>
+      GameAlchemy.primitiveFactory.create('cone', gl, { ...o, texture: await resolveTexture(o) }),
+    torus: async (o: Record<string, unknown> = {}) =>
+      GameAlchemy.primitiveFactory.create('torus', gl, { ...o, texture: await resolveTexture(o) }),
+    icosahedron: async (o: Record<string, unknown> = {}) =>
+      GameAlchemy.primitiveFactory.create('icosahedron', gl, { ...o, texture: await resolveTexture(o) }),
+    pyramid: async (o: Record<string, unknown> = {}) =>
+      GameAlchemy.primitiveFactory.create('pyramid', gl, { ...o, texture: await resolveTexture(o) }),
+    prism: async (o: Record<string, unknown> = {}) =>
+      GameAlchemy.primitiveFactory.create('prism', gl, { ...o, texture: await resolveTexture(o) }),
     terrain: async (o: Record<string, unknown> = {}) =>
       GameAlchemy.primitiveFactory.create('terrain', gl, { ...o, texture: await resolveTexture(o) }),
     plane: async (o: Record<string, unknown> = {}) =>
