@@ -1,6 +1,6 @@
 import { Renderer } from "./Renderer";
 import { SpriteRenderer } from "./SpriteRenderer";
-import { GridHelper } from "./helpers/GridHelper"; // <-- ИЗМЕНЕНО: импортируем класс вместо функции
+import { GridHelper } from "./helpers/GridHelper";
 import { drawGizmo } from "./helpers/GizmoHelper";
 import type { Scene } from "../core/Scene";
 import { TransformGizmo } from "./helpers/TransformGizmo";
@@ -20,7 +20,7 @@ export class WebGLRenderer extends Renderer {
   canvas: HTMLCanvasElement;
   gl: WebGL2RenderingContext;
   transformGizmo = new TransformGizmo();
-  private gridHelper: GridHelper; // <-- ДОБАВЛЕНО: свойство для хранения экземпляра
+  private gridHelper: GridHelper;
   
   gridSize = 10;
   gridStep = 1;
@@ -56,7 +56,7 @@ export class WebGLRenderer extends Renderer {
   private plain_uProj!: WebGLUniformLocation;
   private plain_uColor!: WebGLUniformLocation;
   private spriteRenderer: SpriteRenderer;
-  private plain_aPos: number = -1; 
+  public plain_aPos: number = -1; 
 
   public core: Core | null = null;
 
@@ -74,7 +74,6 @@ export class WebGLRenderer extends Renderer {
     initShadowMap(this);
     initDepthProgram(this);
 
-    // <-- ДОБАВЛЕНО: инициализация GridHelper (буферы создаются один раз)
     this.gridHelper = new GridHelper(this.gl, this.gridStep);
 
     this.spriteRenderer = new SpriteRenderer(
@@ -213,17 +212,17 @@ export class WebGLRenderer extends Renderer {
 
       for (const o of scene.objects) {
         if (o.parent) continue;
-        
         if ((o as any).isEditorOnly || (o as any).isLight) continue;
 
         if (typeof o.renderWebGL3D === "function") {
+          // ИСПРАВЛЕНО: передаём depthProgram и uDepthModel, остальные uniform-ы = null
           o.renderWebGL3D(
             gl, 
-            this.shaderProgram,
-            this.uModel, 
-            this.uAmbientColor,
-            this.uUseTexture, 
-            this.uNormalMatrix
+            this.depthProgram,
+            this.uDepthModel, 
+            null,
+            null, 
+            null
           );
         }
       }
@@ -306,7 +305,7 @@ export class WebGLRenderer extends Renderer {
 
     // --- 7) Помощники ---
     if (helpers) {
-      this.gridHelper.render(this); // <-- ИЗМЕНЕНО: вызываем метод класса вместо старой функции
+      this.gridHelper.render(this);
       drawGizmo(this);
       for (const o of scene.objects) {
         if ((o as any).isCamera && (o as any).camera) {

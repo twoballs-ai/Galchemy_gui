@@ -11,7 +11,7 @@ export interface Mesh {
 export interface GameObject3DOptions {
   mesh?: Mesh | null;
   position?: [number, number, number];
-  rotation?: [number, number, number]; // эйлеры (рад)
+  rotation?: [number, number, number];
   scale?: [number, number, number];
   color?: string | number[];
   textureSrc?: string;
@@ -25,13 +25,11 @@ export class GameObject3D {
   children: Set<GameObject3D> = new Set();
   offset: [number, number, number] = [0, 0, 0];
 
-  // Трансформации
   position: [number, number, number];
   rotation: [number, number, number];
   scale: [number, number, number];
   worldMatrix: mat4 = mat4.create();
 
-  // Материалы, буферы и пр.
   roughness: number;
   metalness: number;
   color: number[];
@@ -202,7 +200,6 @@ export class GameObject3D {
     return tex;
   }
 
-  // ИЗМЕНЕНО: private -> protected, чтобы дочерние классы могли использовать
   protected _getAttribLocation(shaderProgram: WebGLProgram): number {
     if (!this.aPosLocMap.has(shaderProgram)) {
       const loc = this.gl.getAttribLocation(shaderProgram, 'aVertexPosition');
@@ -214,31 +211,34 @@ export class GameObject3D {
   renderWebGL3D(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
     shaderProgram: WebGLProgram,
-    uModel: WebGLUniformLocation,
-    uAmbientColor: WebGLUniformLocation,
-    uUseTexture: WebGLUniformLocation,
-    uNormalMatrix: WebGLUniformLocation,
+    uModel: WebGLUniformLocation | null,
+    uAmbientColor: WebGLUniformLocation | null,
+    uUseTexture: WebGLUniformLocation | null,
+    uNormalMatrix: WebGLUniformLocation | null,
     parentMatrix: mat4 = mat4.create()
   ): void {
-    // КРИТИЧЕСКИ ВАЖНО: Активируем программу перед любыми uniform или атрибутами
     gl.useProgram(shaderProgram);
 
     if (this.vertexBuffer && this.indexBuffer && this.vertexCount > 0) {
       const posLoc = this._getAttribLocation(shaderProgram);
 
-      gl.uniformMatrix4fv(uModel, false, this.worldMatrix);
+      if (uModel) {
+        gl.uniformMatrix4fv(uModel, false, this.worldMatrix);
+      }
 
-      const nrm = mat3.create();
-      mat3.normalFromMat4(nrm, this.worldMatrix);
-      gl.uniformMatrix3fv(uNormalMatrix, false, nrm);
+      if (uNormalMatrix) {
+        const nrm = mat3.create();
+        mat3.normalFromMat4(nrm, this.worldMatrix);
+        gl.uniformMatrix3fv(uNormalMatrix, false, nrm);
+      }
 
       if (this.texture && this.textureLoaded) {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.uniform1i(uUseTexture, 1);
+        if (uUseTexture) gl.uniform1i(uUseTexture, 1);
       } else {
-        gl.uniform3fv(uAmbientColor, this.color.slice(0, 3));
-        gl.uniform1i(uUseTexture, 0);
+        if (uAmbientColor) gl.uniform3fv(uAmbientColor, this.color.slice(0, 3));
+        if (uUseTexture) gl.uniform1i(uUseTexture, 0);
       }
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -265,6 +265,8 @@ export class GameObject3D {
 
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
       gl.drawElements(gl.TRIANGLES, this.vertexCount, this.indexType, 0);
+      
+      gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
     for (const child of this.children) {
@@ -281,11 +283,9 @@ export class GameObject3D {
   }
 
   renderWebGPU3D(renderer: any): void {
-    // WebGPU реализация рендеринга 3D объекта
     const device = renderer.device;
     if (!device || !this.vertexBuffer || !this.indexBuffer || this.vertexCount === 0) return;
 
-    // Создаём WebGPU буферы если ещё не созданы
     if (!(this as any)._gpuVertexBuffer) {
       (this as any)._gpuVertexBuffer = device.createBuffer({
         size: this.mesh!.positions.byteLength,
@@ -302,10 +302,6 @@ export class GameObject3D {
       device.queue.writeBuffer((this as any)._gpuIndexBuffer, 0, this.mesh!.indices);
     }
 
-    // Обновляем uniform buffer с матрицей модели
     const modelMatrix = this.worldMatrix;
-    
-    // Примитивная установка данных для рендеринга
-    // В полной реализации здесь нужно создать bind group с текстурами и_uniforms
   }
 }

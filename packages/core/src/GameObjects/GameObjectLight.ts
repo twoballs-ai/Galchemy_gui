@@ -21,7 +21,6 @@ export class GameObjectLight extends GameObject3D {
     (this as any).isLight = true;
     (this as any).intensity = intensity;
     
-    // ИСПРАВЛЕНИЕ: Создаем буфер один раз в конструкторе, а не каждый кадр
     this._lightLineBuffer = gl.createBuffer();
   }
 
@@ -32,19 +31,18 @@ export class GameObjectLight extends GameObject3D {
   renderWebGL3D(
     gl: WebGLRenderingContext | WebGL2RenderingContext, 
     shaderProgram: WebGLProgram, 
-    uModel: WebGLUniformLocation, 
-    uColor: WebGLUniformLocation, 
-    uUseTexture: WebGLUniformLocation
+    uModel: WebGLUniformLocation | null, 
+    uColor: WebGLUniformLocation | null, 
+    uUseTexture: WebGLUniformLocation | null
   ) {
     if (!(this as any).isEditorMode) return;
   
-    // ИСПРАВЛЕНИЕ: Гарантируем, что нужный шейдер активен
     gl.useProgram(shaderProgram);
   
     const model = mat4.create();
     mat4.translate(model, model, this.position);
-    gl.uniformMatrix4fv(uModel, false, model);
-    gl.uniform1i(uUseTexture, 0);
+    if (uModel) gl.uniformMatrix4fv(uModel, false, model);
+    if (uUseTexture) gl.uniform1i(uUseTexture, 0);
   
     let verts: number[] | Float32Array;
     let color: number[];
@@ -90,25 +88,25 @@ export class GameObjectLight extends GameObject3D {
         return;
     }
   
-    gl.uniform4fv(uColor, color);
+    if (uColor) gl.uniform4fv(uColor, color);
   
     const posLoc = this._getAttribLocation(shaderProgram);
     
-    // ИСПРАВЛЕНИЕ: Отключаем неиспользуемые атрибуты, чтобы избежать ошибки "no buffer is bound"
     const texCoordLoc = gl.getAttribLocation(shaderProgram, 'aTexCoord');
     if (texCoordLoc >= 0) gl.disableVertexAttribArray(texCoordLoc);
 
     const normLoc = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
     if (normLoc >= 0) gl.disableVertexAttribArray(normLoc);
   
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._lightLineBuffer!);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(posLoc);
-  
-    gl.drawArrays(gl.LINES, 0, verts.length / 3);
+    if (posLoc >= 0) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this._lightLineBuffer!);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.DYNAMIC_DRAW);
+      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(posLoc);
     
-    // Сброс привязки текстуры для безопасности
+      gl.drawArrays(gl.LINES, 0, verts.length / 3);
+    }
+    
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }

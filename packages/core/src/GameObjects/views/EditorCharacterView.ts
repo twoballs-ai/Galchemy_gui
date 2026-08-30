@@ -22,30 +22,37 @@ export class EditorCharacterView extends GameObject3D {
   renderWebGL3D(
     gl: WebGLRenderingContext | WebGL2RenderingContext, 
     shaderProgram: WebGLProgram, 
-    uModel: WebGLUniformLocation, 
-    uColor: WebGLUniformLocation, 
-    uUseTexture: WebGLUniformLocation, 
-    uNormalMatrix: WebGLUniformLocation
+    uModel: WebGLUniformLocation | null, 
+    uColor: WebGLUniformLocation | null, 
+    uUseTexture: WebGLUniformLocation | null, 
+    uNormalMatrix: WebGLUniformLocation | null
   ) {
-    // ИСПРАВЛЕНИЕ: Гарантируем, что нужный шейдер активен ПЕРЕД любыми uniform-вызовами
+    // ИСПРАВЛЕНИЕ 1: Защита от пустых или неинициализированных буферов
+    if (!this.vertexBuffer || !this.indexBuffer || this.vertexCount === 0) {
+      return;
+    }
+
     gl.useProgram(shaderProgram);
 
     const modelMatrix = mat4.create();
     mat4.translate(modelMatrix, modelMatrix, this.worldPosition);
     mat4.scale(modelMatrix, modelMatrix, [0.5, 1.5, 0.5]);
 
-    gl.uniformMatrix4fv(uModel, false, modelMatrix);
-    gl.uniform4fv(uColor, this.color);
-    gl.uniform1i(uUseTexture, 0);
+    if (uModel) gl.uniformMatrix4fv(uModel, false, modelMatrix);
+    if (uColor) gl.uniform4fv(uColor, this.color);
+    if (uUseTexture) gl.uniform1i(uUseTexture, 0);
+
+    const posLoc = this._getAttribLocation(shaderProgram);
+    
+    // ИСПРАВЛЕНИЕ 2: Если атрибут позиции не найден в шейдере, рисовать нельзя
+    if (posLoc < 0) {
+      return;
+    }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    
-    // ИСПРАВЛЕНИЕ: Динамическое получение локации атрибута вместо хардкода '0'
-    const posLoc = this._getAttribLocation(shaderProgram);
     gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(posLoc);
 
-    // ИСПРАВЛЕНИЕ: Принудительно отключаем атрибуты, которые есть в шейдере, но не используются капсулой
     const texLoc = gl.getAttribLocation(shaderProgram, 'aTexCoord');
     if (texLoc >= 0) gl.disableVertexAttribArray(texLoc);
     
@@ -55,7 +62,6 @@ export class EditorCharacterView extends GameObject3D {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.drawElements(gl.LINES, this.vertexCount, this.indexType, 0);
     
-    // Сброс привязки текстуры для безопасности
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }
