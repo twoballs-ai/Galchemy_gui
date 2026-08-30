@@ -1,5 +1,5 @@
 import { mat4 } from 'gl-matrix';
-import { COORD } from "../../core/CoordinateSystem";
+import { COORD } from "../CoordinateSystem";
 import { UP } from '../../constants/CoordSystem';  // добавим импорт
 
 import { vec3 } from 'gl-matrix';

@@ -1,5 +1,5 @@
 // src/GameObjects/primitives/3dPrimitives/GameObjectCharacter.ts
-import { GameObject3D } from '../GameObjects/primitives/GameObject3D';
+import { GameObject3D } from './primitives/GameObject3D';
 
 export class GameObjectCharacter extends GameObject3D {
   // Если нужна физика, добавим поле collider

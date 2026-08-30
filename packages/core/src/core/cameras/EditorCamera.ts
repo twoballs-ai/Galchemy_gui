@@ -1,6 +1,6 @@
 import { BaseCamera } from './BaseCamera';
 import { mat4, vec3, quat } from 'gl-matrix';
-import { COORD } from "../../core/CoordinateSystem";
+import { COORD } from "../CoordinateSystem";
 
 export class EditorCamera extends BaseCamera {
   // Новые поля трансформации

@@ -1,0 +1,20 @@
+{
+  "name": "game-alchemy-core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+    "dependencies": {
+    "gl-matrix": "^3.4.3",
+    "tslib": "^2.8.1",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/gl-matrix": "^3.2.0",
+    "typescript": "^5.4.5"
+  }
+}
