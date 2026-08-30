@@ -48,6 +48,23 @@ export class GameObject2D {
     spriteRenderer.add(this);
   }
 
+  /** вызывается WebGPURenderer для спрайтов */
+  renderWebGPU2D(renderer: any) {
+    if (!this._texture) return;
+    
+    const device = renderer.device;
+    if (!device) return;
+
+    // Создаём WebGPU текстуру если ещё не создана
+    if (!(this as any)._gpuTexture) {
+      // В полной реализации здесь создаётся GPUTexture из WebGLTexture
+      // или загружается напрямую через WebGPU
+    }
+
+    // Примитивная установка данных для рендеринга
+    // В полной реализации здесь нужно создать bind group с текстурой
+  }
+
   /** матрица модели для спрайта */
   get modelMatrix() {
     const m = mat4.create();

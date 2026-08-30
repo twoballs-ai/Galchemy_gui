@@ -279,4 +279,33 @@ export class GameObject3D {
       );
     }
   }
+
+  renderWebGPU3D(renderer: any): void {
+    // WebGPU реализация рендеринга 3D объекта
+    const device = renderer.device;
+    if (!device || !this.vertexBuffer || !this.indexBuffer || this.vertexCount === 0) return;
+
+    // Создаём WebGPU буферы если ещё не созданы
+    if (!(this as any)._gpuVertexBuffer) {
+      (this as any)._gpuVertexBuffer = device.createBuffer({
+        size: this.mesh!.positions.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer((this as any)._gpuVertexBuffer, 0, this.mesh!.positions);
+    }
+
+    if (!(this as any)._gpuIndexBuffer) {
+      (this as any)._gpuIndexBuffer = device.createBuffer({
+        size: this.mesh!.indices.byteLength,
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer((this as any)._gpuIndexBuffer, 0, this.mesh!.indices);
+    }
+
+    // Обновляем uniform buffer с матрицей модели
+    const modelMatrix = this.worldMatrix;
+    
+    // Примитивная установка данных для рендеринга
+    // В полной реализации здесь нужно создать bind group с текстурами и_uniforms
+  }
 }
