@@ -231,7 +231,7 @@ private resizeObs: ResizeObserver | null = null;
     this.renderer.render(this.scene, this.showHelpers);
 
     if (this.debugLogging) {
-      console.log(`[dt=${dt.toFixed(3)}] objs=${this.scene.objects.length}`);
+      // console.log(`[dt=${dt.toFixed(3)}] objs=${this.scene.objects.length}`);
     }
 
     requestAnimationFrame(this.loop);

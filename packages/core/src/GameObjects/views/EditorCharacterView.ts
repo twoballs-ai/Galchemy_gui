@@ -14,8 +14,7 @@ export class EditorCharacterView extends GameObject3D {
 
     this.characterRef = targetCharacter;
     this.type = 'editorCharacterView';
-    // @ts-ignore - если это свойство есть в вашем базовом классе или режиме
-    (this as any).isEditorOnly = true;         
+    (this as any).isEditorOnly = true;
 
     this.attachTo(targetCharacter);
   }
@@ -28,7 +27,7 @@ export class EditorCharacterView extends GameObject3D {
     uUseTexture: WebGLUniformLocation, 
     uNormalMatrix: WebGLUniformLocation
   ) {
-    // КРИТИЧЕСКИ ВАЖНО: Активируем программу
+    // ИСПРАВЛЕНИЕ: Гарантируем, что нужный шейдер активен ПЕРЕД любыми uniform-вызовами
     gl.useProgram(shaderProgram);
 
     const modelMatrix = mat4.create();
@@ -41,12 +40,12 @@ export class EditorCharacterView extends GameObject3D {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     
-    // ИСПРАВЛЕНО: Получаем реальный индекс атрибута вместо хардкода '0'
+    // ИСПРАВЛЕНИЕ: Динамическое получение локации атрибута вместо хардкода '0'
     const posLoc = this._getAttribLocation(shaderProgram);
     gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(posLoc);
 
-    // БЕЗОПАСНОСТЬ: Отключаем атрибуты, которые есть в шейдере, но не используются капсулой
+    // ИСПРАВЛЕНИЕ: Принудительно отключаем атрибуты, которые есть в шейдере, но не используются капсулой
     const texLoc = gl.getAttribLocation(shaderProgram, 'aTexCoord');
     if (texLoc >= 0) gl.disableVertexAttribArray(texLoc);
     
@@ -55,5 +54,8 @@ export class EditorCharacterView extends GameObject3D {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.drawElements(gl.LINES, this.vertexCount, this.indexType, 0);
+    
+    // Сброс привязки текстуры для безопасности
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }

@@ -30,24 +30,43 @@ export function drawLines(
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-  const resolvedColor =
-    typeof color === 'string' ? COLORS[color] : color;
+  const resolvedColor = typeof color === 'string' ? COLORS[color] : color;
 
   if (ctx) {
+    // 1. Активируем НУЖНЫЙ шейдер
     gl.useProgram(ctx.plainShaderProgram);
-    gl.vertexAttribPointer(ctx.aPos, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(ctx.aPos);
+    
+    // 2. ИСПРАВЛЕНИЕ: Используем plain_aPos, а не aPos (который от основного шейдера)
+    const posLoc = ctx.plain_aPos !== undefined ? ctx.plain_aPos : attribLoc;
 
+    // 3. Безопасная привязка (проверяем, что локация валидна)
+    if (posLoc >= 0) {
+      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(posLoc);
+    }
+
+    // 4. Uniform-переменные
     gl.uniformMatrix4fv(ctx.plain_uModel, false, modelMat);
     gl.uniformMatrix4fv(ctx.plain_uView, false, ctx.activeCamera.getView());
     gl.uniformMatrix4fv(ctx.plain_uProj, false, ctx.activeCamera.getProjection());
     gl.uniform4fv(ctx.plain_uColor, resolvedColor);
   } else {
-    gl.vertexAttribPointer(attribLoc, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(attribLoc);
+    // Fallback, если ctx не передан
+    if (attribLoc >= 0) {
+      gl.vertexAttribPointer(attribLoc, 3, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(attribLoc);
+    }
     gl.uniform4fv(colorLoc, resolvedColor);
   }
 
+  // 5. Отрисовка
   gl.drawArrays(gl.LINES, 0, vertices.length / 3);
+
+  // 6. Очистка состояния (хорошая практика, чтобы не "загрязнять" WebGL)
+  const activePosLoc = ctx ? (ctx.plain_aPos !== undefined ? ctx.plain_aPos : attribLoc) : attribLoc;
+  if (activePosLoc >= 0) {
+    gl.disableVertexAttribArray(activePosLoc);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
   gl.deleteBuffer(buf);
 }

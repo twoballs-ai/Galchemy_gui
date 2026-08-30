@@ -4,13 +4,6 @@ import { mat4 } from 'gl-matrix';
 export class GameObjectLight extends GameObject3D {
   private _lightLineBuffer: WebGLBuffer | null = null;
 
-  /**
-   * opts:
-   *   subtype:   'point'|'directional'|'ambient'
-   *   position:  [x,y,z]
-   *   direction: [dx,dy,dz]
-   *   color:     hex-строка, например '#ffff00'
-   */
   constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, {
     subtype = 'point',
     position = [0, 0, 0],
@@ -28,7 +21,7 @@ export class GameObjectLight extends GameObject3D {
     (this as any).isLight = true;
     (this as any).intensity = intensity;
     
-    // ИСПРАВЛЕНО: Создаем буфер один раз, а не каждый кадр
+    // ИСПРАВЛЕНИЕ: Создаем буфер один раз в конструкторе, а не каждый кадр
     this._lightLineBuffer = gl.createBuffer();
   }
 
@@ -45,7 +38,7 @@ export class GameObjectLight extends GameObject3D {
   ) {
     if (!(this as any).isEditorMode) return;
   
-    // КРИТИЧЕСКИ ВАЖНО: Активируем программу
+    // ИСПРАВЛЕНИЕ: Гарантируем, что нужный шейдер активен
     gl.useProgram(shaderProgram);
   
     const model = mat4.create();
@@ -63,10 +56,7 @@ export class GameObjectLight extends GameObject3D {
         const radius = 0.2;
         for (let i = 0; i < segs; i++) {
           const angle = (i / segs) * Math.PI * 2;
-          verts.push(
-            0, 0, 0,
-            Math.cos(angle) * radius, Math.sin(angle) * radius, 0
-          );
+          verts.push(0, 0, 0, Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
         }
         color = [1, 1, 0, 1];
         break;
@@ -104,19 +94,21 @@ export class GameObjectLight extends GameObject3D {
   
     const posLoc = this._getAttribLocation(shaderProgram);
     
-    // БЕЗОПАСНОСТЬ: Отключаем неиспользуемые атрибуты
+    // ИСПРАВЛЕНИЕ: Отключаем неиспользуемые атрибуты, чтобы избежать ошибки "no buffer is bound"
     const texCoordLoc = gl.getAttribLocation(shaderProgram, 'aTexCoord');
     if (texCoordLoc >= 0) gl.disableVertexAttribArray(texCoordLoc);
 
     const normLoc = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
     if (normLoc >= 0) gl.disableVertexAttribArray(normLoc);
   
-    // ИСПРАВЛЕНО: Используем кэшированный буфер
     gl.bindBuffer(gl.ARRAY_BUFFER, this._lightLineBuffer!);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(posLoc);
   
     gl.drawArrays(gl.LINES, 0, verts.length / 3);
+    
+    // Сброс привязки текстуры для безопасности
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }
