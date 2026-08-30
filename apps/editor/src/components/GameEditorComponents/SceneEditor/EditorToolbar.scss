@@ -1,42 +1,58 @@
 .editor-toolbar {
   display: flex;
   gap: 8px;
-  background: #1c1c1c;
-  padding: 8px;
-  border-bottom: 1px solid #333;
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+  padding: 10px 12px;
+  border-bottom: 1px solid #334155;
   align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
   button {
     background: transparent;
-    border: none;
-    color: white;
+    border: 1px solid transparent;
+    color: #94a3b8;
     cursor: pointer;
-    padding: 4px 6px;
-
-    &.active {
-      background: #1677ff;
-      border-radius: 4px;
-    }
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
 
     &:hover {
-      background: #2a2a2a;
+      background: rgba(59, 130, 246, 0.15);
+      color: #e2e8f0;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    &.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #1d4ed8;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
     }
   }
 
   .separator {
     width: 1px;
-    height: 24px;
-    background: #444;
+    height: 28px;
+    background: #334155;
     margin: 0 8px;
   }
 
   .preview {
-    background: #1677ff;
-    border-radius: 4px;
-    padding: 4px 8px;
+    background: #2563eb;
+    border-color: #1d4ed8;
+    color: #fff;
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
 
     &:hover {
-      background: #4096ff;
+      background: #1d4ed8;
     }
   }
 
@@ -44,6 +60,13 @@
     border: 1px solid #334155;
     border-radius: 6px;
     background: #0f172a;
+    color: #94a3b8;
+
+    &:hover {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-color: #475569;
+    }
   }
 
   .toolbar-select {
@@ -51,14 +74,23 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: #cbd5e1;
+    color: #94a3b8;
+    font-weight: 500;
 
     select {
       background: #0f172a;
       color: #e2e8f0;
       border: 1px solid #334155;
       border-radius: 6px;
-      padding: 4px 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+
+      &:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      }
     }
   }
 }

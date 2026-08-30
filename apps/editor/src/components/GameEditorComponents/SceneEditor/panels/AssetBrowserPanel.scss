@@ -1,43 +1,69 @@
 .asset-browser-panel {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0f172a, #1e293b);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+
+  .panel-header {
     display: flex;
-    flex-direction: column;
-    background-color: rgb(80, 80, 80);
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 5px;
-    height: 100%;
-    max-height: 100%;
-    overflow: hidden;
-  
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #1f1f1f;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 10px 12px;
+    cursor: grab;
+    user-select: none;
+    border-bottom: 1px solid #334155;
+
+    h3 {
+      margin: 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button {
+      background-color: #e74c3c;
       color: white;
-      padding: 4px;
-      cursor: move;
-  
-      button {
-        background-color: #e74c3c;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        padding: 0 2px;
-  
-        &:hover {
-          background-color: #c0392b;
-        }
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 16px;
+      line-height: 1;
+
+      &:hover {
+        background-color: #c0392b;
       }
     }
-  
-    .panel-body {
-      flex-grow: 1;
-      overflow-y: auto;
-      background: #1c1c1c;
-      padding: 8px;
-      color: white;
+  }
+
+  .panel-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    background: transparent;
+    padding: 8px;
+    color: #e2e8f0;
+    scrollbar-width: thin;
+    scrollbar-color: #1d4ed8 #0f172a;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #1d4ed8;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 4px;
     }
   }
-  
+}

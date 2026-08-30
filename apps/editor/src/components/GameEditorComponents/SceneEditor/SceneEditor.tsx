@@ -69,28 +69,28 @@ const normalizeLayouts = (candidate: GridLayouts): GridLayouts => {
 
 const initialLayouts: GridLayouts = {
   lg: [
-    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 13, minW: 2, minH: 8, maxW: 6, maxH: 20 },
-    { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 13, minW: 4, minH: 10, maxW: 8, maxH: 30 },
-    { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 13, minW: 2, minH: 8, maxW: 6, maxH: 20 },
-    { i: "assetBrowserPanel", x: 0, y: 20, w: 12, h: 8, minW: 4, minH: 3, maxH: 10 },
+    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 25, minW: 2, minH: 10, maxW: 5 },
+    { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 25, minW: 5, minH: 15, maxW: 9 },
+    { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 25, minW: 2, minH: 10, maxW: 5 },
+    { i: "assetBrowserPanel", x: 0, y: 25, w: 12, h: 12, minW: 6, minH: 8, maxH: 15 },
   ],
   md: [
-    { i: "objectsPanel", x: 0, y: 0, w: 2, h: 10, minW: 2, minH: 8, maxW: 4, maxH: 20 },
-    { i: "sceneCanvas", x: 2, y: 0, w: 6, h: 20, minW: 4, minH: 12, maxW: 8, maxH: 30 },
-    { i: "propertiesPanel", x: 8, y: 0, w: 2, h: 10, minW: 2, minH: 8, maxW: 4, maxH: 20 },
-    { i: "assetBrowserPanel", x: 0, y: 20, w: 10, h: 4, minW: 4, minH: 3, maxH: 10 },
+    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 20, minW: 2, minH: 10, maxW: 4 },
+    { i: "sceneCanvas", x: 3, y: 0, w: 6, h: 20, minW: 5, minH: 15, maxW: 8 },
+    { i: "propertiesPanel", x: 9, y: 0, w: 3, h: 20, minW: 2, minH: 10, maxW: 4 },
+    { i: "assetBrowserPanel", x: 0, y: 20, w: 10, h: 10, minW: 5, minH: 8, maxH: 12 },
   ],
   sm: [
-    { i: "objectsPanel", x: 0, y: 0, w: 3, h: 5, minW: 2, minH: 4, maxW: 6, maxH: 10 },
-    { i: "sceneCanvas", x: 0, y: 5, w: 6, h: 20, minW: 4, minH: 10, maxW: 6, maxH: 30 },
-    { i: "propertiesPanel", x: 0, y: 25, w: 2, h: 5, minW: 2, minH: 4, maxW: 4, maxH: 10 },
-    { i: "assetBrowserPanel", x: 0, y: 30, w: 6, h: 4, minW: 4, minH: 3, maxH: 10 },
+    { i: "objectsPanel", x: 0, y: 0, w: 6, h: 8, minW: 3, minH: 6 },
+    { i: "sceneCanvas", x: 0, y: 8, w: 6, h: 20, minW: 4, minH: 15 },
+    { i: "propertiesPanel", x: 0, y: 28, w: 6, h: 8, minW: 3, minH: 6 },
+    { i: "assetBrowserPanel", x: 0, y: 36, w: 6, h: 8, minW: 4, minH: 6 },
   ],
   xs: [
-    { i: "objectsPanel", x: 0, y: 0, w: 4, h: 5, minW: 2, minH: 4, maxW: 4, maxH: 10 },
-    { i: "sceneCanvas", x: 0, y: 5, w: 4, h: 20, minW: 4, minH: 10, maxH: 30 },
-    { i: "propertiesPanel", x: 0, y: 25, w: 4, h: 5, minW: 2, minH: 4, maxW: 4, maxH: 10 },
-    { i: "assetBrowserPanel", x: 0, y: 30, w: 4, h: 4, minW: 4, minH: 3, maxH: 10 },
+    { i: "objectsPanel", x: 0, y: 0, w: 4, h: 6, minW: 2, minH: 5 },
+    { i: "sceneCanvas", x: 0, y: 6, w: 4, h: 18, minW: 3, minH: 12 },
+    { i: "propertiesPanel", x: 0, y: 24, w: 4, h: 6, minW: 2, minH: 5 },
+    { i: "assetBrowserPanel", x: 0, y: 30, w: 4, h: 6, minW: 3, minH: 5 },
   ],
 };
 
@@ -302,12 +302,12 @@ const SceneEditor: React.FC<SceneEditorProps> = ({
         layouts={layouts}
         cols={cols}
         breakpoints={breakpoints}
-        compactType={null}
-        preventCollision={true}
+        compactType="vertical"
+        preventCollision={false}
         isBounded={true}
         resizeHandles={["e", "s", "se"]}
-        margin={[10, 10]}
-        containerPadding={[0, 0]}
+        margin={[8, 8]}
+        containerPadding={[8, 8]}
         rowHeight={30}
         onLayoutChange={onLayoutChange}
         isResizable={devicePreset === 'desktop' && !isLayoutLocked}

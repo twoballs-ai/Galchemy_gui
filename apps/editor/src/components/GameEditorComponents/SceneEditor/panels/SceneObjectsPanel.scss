@@ -5,8 +5,8 @@
   border: 1px solid #334155;
   border-radius: 8px;
   padding: 8px;
-  height: 100vh;
-  max-height: 100vh;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
 
   .panel-header {
@@ -16,7 +16,9 @@
 
     h3 {
       margin: 0;
-      font-size: 18px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     button {
@@ -25,7 +27,9 @@
       border: none;
       border-radius: 3px;
       cursor: pointer;
-      padding: 0 2px;
+      padding: 4px 8px;
+      font-size: 16px;
+      line-height: 1;
 
       &:hover {
         background-color: #c0392b;
@@ -38,6 +42,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden;
 
     .quick-add-row {
       display: flex;
@@ -66,7 +71,6 @@
       margin: 0;
       flex-grow: 1;
       overflow-y: auto;
-      max-height: calc(100vh - 100px);
       scrollbar-width: thin;
       scrollbar-color: #1d4ed8 #0f172a;
 
@@ -88,9 +92,16 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 5px 0;
+        padding: 8px 10px;
         border-bottom: 1px solid #334155;
         color: #e2e8f0;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.15s ease;
+
+        &:hover {
+          background-color: rgba(59, 130, 246, 0.15);
+        }
 
         &:last-child {
           border-bottom: none;
@@ -102,7 +113,8 @@
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          padding: 3px 8px;
+          padding: 4px 8px;
+          font-size: 12px;
 
           &:hover {
             background-color: #c0392b;
@@ -116,9 +128,11 @@
       background-color: #3498db;
       color: white;
       border: none;
-      border-radius: 3px;
+      border-radius: 6px;
       cursor: pointer;
-      padding: 8px;
+      padding: 10px;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
 
       &:hover {
         background-color: #2980b9;
@@ -127,6 +141,7 @@
   }
 
   .selected {
-    background-color: #1e3a8a;
+    background-color: #1e3a8a !important;
+    border-left: 3px solid #60a5fa;
   }
 }
