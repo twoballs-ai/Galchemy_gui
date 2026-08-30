@@ -117,8 +117,6 @@ export class GameObject3D {
     }
 
     this.aPosLocMap = new WeakMap();
-
-    // Сразу считаем worldMatrix (без parent пока)
     this.updateWorldMatrix();
   }
 
@@ -136,7 +134,6 @@ export class GameObject3D {
   }
 
   updateWorldMatrix(parentMatrix: mat4 = mat4.create()) {
-    // Собираем локальную матрицу
     const local = mat4.create();
     mat4.translate(local, local, this.position);
     mat4.rotateX(local, local, this.rotation[0]);
@@ -144,21 +141,17 @@ export class GameObject3D {
     mat4.rotateZ(local, local, this.rotation[2]);
     mat4.scale(local, local, this.scale);
 
-    // offset (если есть)
     if (this.offset && (this.offset[0] !== 0 || this.offset[1] !== 0 || this.offset[2] !== 0)) {
       mat4.translate(local, local, this.offset);
     }
 
-    // Умножаем на parent
     mat4.multiply(this.worldMatrix, parentMatrix, local);
 
-    // Рекурсивно для детей
     for (const child of this.children) {
       child.updateWorldMatrix(this.worldMatrix);
     }
   }
 
-  // (Оставим attachTo/detach как есть, но теперь они должны вызывать updateWorldMatrix)
   attachTo(parentGO: GameObject3D, offset: [number, number, number] = [0, 0, 0]): this {
     if (this.parent) this.parent.children.delete(this);
     this.parent = parentGO;
@@ -175,7 +168,6 @@ export class GameObject3D {
   }
 
   get worldPosition(): [number, number, number] {
-    // worldMatrix из матрицы вытаскиваем позицию
     return [
       this.worldMatrix[12],
       this.worldMatrix[13],
@@ -210,7 +202,8 @@ export class GameObject3D {
     return tex;
   }
 
-  private _getAttribLocation(shaderProgram: WebGLProgram): number {
+  // ИЗМЕНЕНО: private -> protected, чтобы дочерние классы могли использовать
+  protected _getAttribLocation(shaderProgram: WebGLProgram): number {
     if (!this.aPosLocMap.has(shaderProgram)) {
       const loc = this.gl.getAttribLocation(shaderProgram, 'aVertexPosition');
       this.aPosLocMap.set(shaderProgram, loc);
@@ -227,9 +220,9 @@ export class GameObject3D {
     uNormalMatrix: WebGLUniformLocation,
     parentMatrix: mat4 = mat4.create()
   ): void {
+    // КРИТИЧЕСКИ ВАЖНО: Активируем программу перед любыми uniform или атрибутами
+    gl.useProgram(shaderProgram);
 
-
-    // Если есть mesh — рендерим этот объект
     if (this.vertexBuffer && this.indexBuffer && this.vertexCount > 0) {
       const posLoc = this._getAttribLocation(shaderProgram);
 
@@ -242,17 +235,16 @@ export class GameObject3D {
       if (this.texture && this.textureLoaded) {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.uniform1i(uUseTexture, true);
+        gl.uniform1i(uUseTexture, 1);
       } else {
         gl.uniform3fv(uAmbientColor, this.color.slice(0, 3));
-        gl.uniform1i(uUseTexture, false);
+        gl.uniform1i(uUseTexture, 0);
       }
 
       gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
       gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(posLoc);
 
-      // texCoords
       const texLoc = gl.getAttribLocation(shaderProgram, "aTexCoord");
       if (this.texCoordBuffer && texLoc !== -1) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
@@ -262,7 +254,6 @@ export class GameObject3D {
         gl.disableVertexAttribArray(texLoc);
       }
 
-      // normals
       const normLoc = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
       if (this.normalBuffer && normLoc !== -1) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
@@ -276,7 +267,6 @@ export class GameObject3D {
       gl.drawElements(gl.TRIANGLES, this.vertexCount, this.indexType, 0);
     }
 
-    // После себя обязательно отрисовываем всех детей — с учётом текущей мировой матрицы
     for (const child of this.children) {
       child.renderWebGL3D(
         gl,
@@ -285,7 +275,7 @@ export class GameObject3D {
         uAmbientColor,
         uUseTexture,
         uNormalMatrix,
-        this.worldMatrix // прокидываем актуальный worldMatrix для детей
+        this.worldMatrix
       );
     }
   }
