@@ -4,6 +4,12 @@ import { createCubeGeometry }      from './primitives/3dPrimitives/createCubeGeo
 import { createCylinderGeometry }  from './primitives/3dPrimitives/createCylinderGeometry';
 import { createTerrainGeometry }   from './primitives/3dPrimitives/createTerrainGeometry';
 import { createPlaneGeometry }     from './primitives/3dPrimitives/createPlaneGeometry';
+import { createCapsuleGeometry }   from './primitives/3dPrimitives/createCapsuleGeometry';
+import { createConeGeometry }      from './primitives/3dPrimitives/createConeGeometry';
+import { createTorusGeometry }     from './primitives/3dPrimitives/createTorusGeometry';
+import { createIcosahedronGeometry } from './primitives/3dPrimitives/createIcosahedronGeometry';
+import { createPyramidGeometry }   from './primitives/3dPrimitives/createPyramidGeometry';
+import { createPrismGeometry }     from './primitives/3dPrimitives/createPrismGeometry';
 import { GameObjectCamera }        from './GameObjectCamera';
 import { GameObjectLight }         from './GameObjectLight';
 // import defaultTextureSrc ... — УДАЛЕНО!
@@ -210,4 +216,96 @@ primitiveFactory.register(
     height = 128,
     layer = 0,
   }) => new GameObject2D(gl, { imageSrc: imageSrc ?? texture, x, y, width, height, layer })
+);
+
+/* ---------- новые примитивы ---------- */
+
+primitiveFactory.register(
+  'capsule',
+  (gl, { radius = 0.5, height = 2, segments = 16, position, rotation, scale, color, texture }) => {
+    const pos = position ?? defaultPosition();
+    return new GameObject3D(gl, {
+      mesh: createCapsuleGeometry(radius, height, segments),
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture
+    });
+  }
+);
+
+primitiveFactory.register(
+  'cone',
+  (gl, { radius = 1, height = 2, segments = 32, position, rotation, scale, color, texture }) => {
+    const pos = position ?? defaultPosition();
+    return new GameObject3D(gl, {
+      mesh: createConeGeometry(radius, height, segments),
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture
+    });
+  }
+);
+
+primitiveFactory.register(
+  'torus',
+  (gl, { outerRadius = 1, innerRadius = 0.3, segmentsOuter = 32, segmentsInner = 16, position, rotation, scale, color, texture }) => {
+    const pos = position ?? defaultPosition();
+    return new GameObject3D(gl, {
+      mesh: createTorusGeometry(outerRadius, innerRadius, segmentsOuter, segmentsInner),
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture
+    });
+  }
+);
+
+primitiveFactory.register(
+  'icosahedron',
+  (gl, { radius = 1, position, rotation, scale, color, texture }) => {
+    const pos = position ?? defaultPosition();
+    return new GameObject3D(gl, {
+      mesh: createIcosahedronGeometry(radius),
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture
+    });
+  }
+);
+
+primitiveFactory.register(
+  'pyramid',
+  (gl, { baseSize = 1, height = 1, position, rotation, scale, color, texture }) => {
+    const pos = position ?? defaultPosition();
+    return new GameObject3D(gl, {
+      mesh: createPyramidGeometry(baseSize, height),
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture
+    });
+  }
+);
+
+primitiveFactory.register(
+  'prism',
+  (gl, { width = 1, height = 1, depth = 1, position, rotation, scale, color, texture }) => {
+    const pos = position ?? defaultPosition();
+    return new GameObject3D(gl, {
+      mesh: createPrismGeometry(width, height, depth),
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture
+    });
+  }
 );
