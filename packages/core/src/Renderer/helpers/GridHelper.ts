@@ -119,6 +119,7 @@ export class GridHelper {
     // Очистка состояния после отрисовки
     gl.disableVertexAttribArray(plain_aPos);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.useProgram(null);
   }
 
   public dispose() {

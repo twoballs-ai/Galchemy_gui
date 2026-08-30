@@ -62,6 +62,10 @@ export class EditorCharacterView extends GameObject3D {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.drawElements(gl.LINES, this.vertexCount, this.indexType, 0);
     
+    // Очистка состояния после отрисовки
+    gl.disableVertexAttribArray(posLoc);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 }

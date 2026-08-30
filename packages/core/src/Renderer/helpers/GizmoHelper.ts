@@ -58,6 +58,8 @@ export function drawGizmo(ctx: WebGLRenderer): void {
     gl.enableVertexAttribArray(aPos);
     gl.uniform4fv(uColor, color);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disableVertexAttribArray(aPos);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.deleteBuffer(b);
   };
   drawHead(  0, COORD.AXIS_X_COLOR);
@@ -65,4 +67,5 @@ export function drawGizmo(ctx: WebGLRenderer): void {
   drawHead( 18, COORD.AXIS_Z_COLOR);
 
   gl.depthFunc(gl.LESS);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }

@@ -55,4 +55,9 @@ export function drawMeshOutline({
   if (depthWasEnabled) {
     gl.enable(gl.DEPTH_TEST);
   }
+  
+  // Очистка состояния
+  gl.disableVertexAttribArray(aPos);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
