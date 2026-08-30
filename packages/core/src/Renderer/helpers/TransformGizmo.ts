@@ -63,6 +63,8 @@ private getAxisVector(axis: 'x' | 'y' | 'z'): vec3 {
   gl.lineWidth(2); // толщина линии
   gl.drawArrays(gl.LINES, 0, 2);
 
+  gl.disableVertexAttribArray(plain_aPos);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
   gl.deleteBuffer(buf);
 };
 
