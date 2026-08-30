@@ -3,7 +3,19 @@
   position: relative;
 }
 
-.layout { min-height: calc(100% - 52px); }
+.layout { 
+  min-height: calc(100% - 52px);
+  background: #111827;
+}
+
+.layout .panel {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.2s ease;
+}
+
+.layout .panel:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
 
 .scene-settings-editor {
   display: flex;
@@ -41,20 +53,49 @@
 .panel {
   background: linear-gradient(180deg, #0f172a, #131f34);
   border: 1px solid #334155;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: rgba(59, 130, 246, 0.3) !important;
+  border-radius: 8px;
+  border: 2px dashed #60a5fa;
+}
+
+.react-grid-item > .react-resizable-handle {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
 }
 
 .panel-header {
   background: #1e293b;
   color: #e2e8f0;
-  padding: 8px 10px;
+  padding: 10px 12px;
   font-weight: 600;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: move;
+  cursor: grab;
   border-bottom: 1px solid #334155;
+  user-select: none;
+}
+
+.panel-header:active {
+  cursor: grabbing;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .panel-body { padding: 10px; color: #e5e7eb; }

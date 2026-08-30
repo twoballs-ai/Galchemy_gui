@@ -4,12 +4,12 @@
 .properties-panel {
   display: flex;
   flex-direction: column;
-  background-color: #505050;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 5px;
-  height: 100vh;
-  max-height: 100vh;
+  background: linear-gradient(180deg, #0f172a, #1e293b);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
 
   /* ---------- header ---------- */
@@ -20,8 +20,10 @@
 
     h3 {
       margin: 0;
-      font-size: 18px;
-      color: #fff;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #e2e8f0;
     }
     button {
       background: #e74c3c;
@@ -29,8 +31,9 @@
       border: none;
       border-radius: 3px;
       cursor: pointer;
-      padding: 2px 6px;
+      padding: 4px 8px;
       font-size: 16px;
+      line-height: 1;
 
       &:hover { background: #c0392b; }
     }
@@ -44,33 +47,39 @@
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    max-height: calc(100vh - 100px);
-
-    /* кастом-скролл */
     scrollbar-width: thin;
-    scrollbar-color: #0b3d91 #2e2e2e;
+    scrollbar-color: #1d4ed8 #0f172a;
+
     &::-webkit-scrollbar { width: 8px; }
-    &::-webkit-scrollbar-thumb { background: #0b3d91; border-radius: 4px; }
-    &::-webkit-scrollbar-track { background: #2e2e2e; border-radius: 4px; }
+    &::-webkit-scrollbar-thumb { background: #1d4ed8; border-radius: 4px; }
+    &::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
 
     /* общее для одиночных label-ов */
     label {
       display: flex;
       flex-direction: column;
-      margin-bottom: 10px;
-      color: #fff;
+      margin-bottom: 12px;
+      color: #e2e8f0;
+      font-size: 13px;
 
       input,
       select {
         margin-top: 5px;
-        padding: 5px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        background: #fff;
-        color: #000;
+        padding: 6px 8px;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        background: #1e293b;
+        color: #e2e8f0;
+        font-size: 13px;
+
+        &:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
       }
     }
-    p { color: #fff; }
+    p { color: #e2e8f0; }
   }
 }
 
@@ -78,11 +87,11 @@
  *  Т Р О Й Н Ы Е   Б Л О К И  (pos/rot/scale)
  * ───────────────────────────────────────── */
 .triple,
-.position-label {          /* оба варианта используют одинаковый стиль */
+.position-label {
   display: flex;
   flex-direction: column;
   margin-bottom: 12px;
-  color: #fff;
+  color: #e2e8f0;
 
   .triple-row,
   .position-row {
@@ -91,12 +100,20 @@
     margin-top: 5px;
 
     input {
-      width: 60px;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      background: #fff;
-      color: #000;
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 13px;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      }
     }
   }
 }
@@ -105,18 +122,21 @@
  *  К Н О П К А   «В Ы Б Р А Т Ь  М О Д Е Л Ь»
  * ───────────────────────────────────────── */
 .properties-panel .panel-body button {
-  padding: 6px 12px;
-  background: #eee;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 8px 12px;
+  background: #3b82f6;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  color: #fff;
   cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
 
-  &:hover { background: #d7d7d7; }
+  &:hover { background: #2563eb; }
 }
 
 /*  подпись с ID выбранного ассета */
 .asset-id {
   margin-left: 8px;
-  color: #84c0ff;
+  color: #60a5fa;
   font-size: 12px;
 }
