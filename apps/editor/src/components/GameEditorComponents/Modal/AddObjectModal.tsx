@@ -13,6 +13,9 @@ import TerrainIcon from "../../../icons/rectangle.png";
 import CharacterIcon from "../../../icons/character.png";
 import "./AddObjectModal.scss";
 
+// ─── Дефолтная текстура для спрайта ───
+const DEFAULT_SPRITE_TEXTURE = "/assets/textures/default_sprite.png";
+
 export interface AddObjectPayload {
   id: string;
   type: ObjectType;
@@ -35,9 +38,8 @@ export interface AddObjectPayload {
   scaleY?: number;
   scaleZ?: number;
   scale?: [number, number, number];
-    // Новые поля для спрайта
-  plane?: 'xy' | 'xz' | 'yz';  // плоскость ориентации
-  imageSrc?: string;            // путь к текстуре
+  plane?: 'xy' | 'xz' | 'yz';
+  imageSrc?: string;
 }
 
 interface AddObjectModalProps {
@@ -154,13 +156,13 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     else if (item.type === "terrain") onAdd({ ...base, width: 12, depth: 12 });
     else if (item.type === "plane") onAdd({ ...base, width: 10, depth: 10 });
     else if (item.type === "water") onAdd({ ...base, width: 16, depth: 16 });
-    else if (item.type === "sprite") onAdd({ 
-  ...base, 
-  width: 1,           // ширина в мировых единицах (не пиксели!)
-  height: 1,          // высота в мировых единицах
-  plane: 'xy',        // плоскость по умолчанию
-  imageSrc: '/textures/default_sprite.png' // картинка-заглушка
-});
+    else if (item.type === "sprite") onAdd({
+      ...base,
+      width: 1,
+      height: 1,
+      plane: 'xy',
+      imageSrc: DEFAULT_SPRITE_TEXTURE
+    });
     else onAdd(base);
 
     onClose();

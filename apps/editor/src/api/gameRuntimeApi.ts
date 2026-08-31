@@ -68,15 +68,24 @@ export const createRuntime = async (opts: RuntimeOptions) => {
       GameAlchemy.primitiveFactory.create('character', gl, { ...o, texture: await resolveTexture(o) }),
     spawnPoint: (o: Record<string, unknown> = {}) =>
       GameAlchemy.primitiveFactory.create('spawnPoint', gl, o),
-    sprite: async (o: Record<string, unknown> = {}) =>
-      GameAlchemy.primitiveFactory.create('sprite', gl, {
+
+    // ─── СПРАЙТ (ИСПРАВЛЕНО) ───────────────────────────────────────
+    sprite: async (o: Record<string, unknown> = {}) => {
+      // imageSrc из payload → texture для фабрики
+      const textureUrl = (typeof o.imageSrc === 'string' && o.imageSrc)
+        ? o.imageSrc
+        : await resolveTexture(o);
+
+      return GameAlchemy.primitiveFactory.create('sprite', gl, {
         ...o,
-        imageSrc: await resolveTexture(o),
-        x: Number(o.x ?? 0),
-        y: Number(o.y ?? 0),
-        width: Number(o.width ?? 128),
-        height: Number(o.height ?? 128),
-      }),
+        texture: textureUrl,              // ← texture, НЕ imageSrc
+        width: Number(o.width ?? 1),      // ← мировые единицы, НЕ пиксели
+        height: Number(o.height ?? 1),
+        plane: o.plane ?? 'xy',
+      });
+    },
+    // ────────────────────────────────────────────────────────────────
+
     camera: (o: Record<string, unknown> = {}) =>
       GameAlchemy.primitiveFactory.create('camera', gl, o),
     light: (o: Record<string, unknown> = {}) =>

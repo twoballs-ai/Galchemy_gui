@@ -108,8 +108,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
         GameAlchemy.primitiveFactory.create("spawnPoint", gl, opts),
 
       // ─── СПРАЙТ ───────────────────────────────────────────────────────
-      // imageSrc из AddObjectPayload передаём как texture для фабрики.
-      // Размеры в мировых единицах (не пиксели).
+      // Просто передаём imageSrc как texture. Никаких проверок через fetch.
+      // GameObject3D._loadTexture сам обработает ошибки через onerror.
       sprite: async (opts: Record<string, unknown> = {}) => {
         const textureUrl = (typeof opts.imageSrc === 'string' && opts.imageSrc)
           ? opts.imageSrc
@@ -142,6 +142,8 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
       },
     };
   }, []);
+
+
 
   const queuePatch = useCallback((objectId: string, patch: Record<string, unknown>) => {
     pendingPatchRef.current[objectId] = {

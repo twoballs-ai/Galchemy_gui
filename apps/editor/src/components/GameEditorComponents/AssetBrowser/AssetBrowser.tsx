@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getAssets, addAsset, removeAsset, getOrCreateScriptsFolder } from "../../../utils/assetStorage";
 import { AssetItem } from "../../../types/assetTypes";
 import { Button, Upload } from "antd";
@@ -13,6 +13,35 @@ import { RootState } from "../../../store/store";
 
 const ROOT_ID: string | undefined = undefined;
 const ROOT_NODE_ID = "__root__";
+
+/**
+ * Хук для создания blob URL из fileData (ArrayBuffer).
+ * URL автоматически освобождается при unmount компонента или смене fileData.
+ */
+function useBlobUrl(fileData: unknown, mimeType = "application/octet-stream"): string | undefined {
+  return useMemo(() => {
+    if (!fileData) return undefined;
+    try {
+      // fileData может быть ArrayBuffer (из FileReader.readAsArrayBuffer)
+      // или уже Uint8Array / Blob
+      let data: ArrayBuffer | Uint8Array | Blob;
+      if (fileData instanceof ArrayBuffer) {
+        data = fileData;
+      } else if (fileData instanceof Uint8Array) {
+        data = fileData;
+      } else if (fileData instanceof Blob) {
+        return URL.createObjectURL(fileData);
+      } else {
+        return undefined;
+      }
+      const blob = new Blob([data], { type: mimeType });
+      return URL.createObjectURL(blob);
+    } catch {
+      return undefined;
+    }
+  }, [fileData, mimeType]);
+}
+
 const AssetBrowser: React.FC = () => {
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(ROOT_ID);
@@ -52,7 +81,9 @@ const AssetBrowser: React.FC = () => {
         name: file.name,
         type,
         parentId: currentFolderId,
-        url: type === "image" ? URL.createObjectURL(file) : undefined,
+        // ─── ИСПРАВЛЕНО: НЕ сохраняем blob URL в БД ───
+        // url: type === "image" ? URL.createObjectURL(file) : undefined,  ← УДАЛЕНО
+        url: undefined,
         fileData: reader.result ?? undefined,
       };
       await addAsset(asset);
@@ -159,32 +190,12 @@ const AssetBrowser: React.FC = () => {
           {content
             .filter((i) => i.type !== "folder" && i.type !== "material")
             .map((asset) => (
-              <div
-                className="asset"
+              <AssetTile
                 key={asset.id}
+                asset={asset}
                 onDoubleClick={() => asset.type === "script" && openScriptEditor(asset)}
-              >
-                {asset.type === "image" ? (
-                  <img
-                    src={asset.url}
-                    alt={asset.displayName || asset.name}
-                    style={{ width: 32, height: 32 }}
-                  />
-                ) : (
-                  <FileOutlined style={{ fontSize: 32 }} />
-                )}
-                <span style={{ marginLeft: 8 }}>{asset.displayName || asset.name}</span>
-                {asset.type === "script" && <span style={{ marginLeft: 8, opacity: 0.7 }}>(dblclick)</span>}
-                {!asset.system && !asset.protected && (
-                  <Button
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    onClick={() => handleDelete(asset.id)}
-                    style={{ marginLeft: 8 }}
-                  />
-                )}
-              </div>
+                onDelete={() => handleDelete(asset.id)}
+              />
             ))}
         </div>
       </div>
@@ -201,6 +212,59 @@ const AssetBrowser: React.FC = () => {
 };
 
 export default AssetBrowser;
+
+/**
+ * Компонент для рендеринга одного ассета.
+ * Использует useBlobUrl для динамического создания blob URL из fileData.
+ */
+const AssetTile: React.FC<{
+  asset: AssetItem;
+  onDoubleClick: () => void;
+  onDelete: () => void;
+}> = ({ asset, onDoubleClick, onDelete }) => {
+  // Создаём blob URL динамически из fileData.
+  // URL пересоздаётся только при смене fileData.
+  // Освобождается автоматически при unmount компонента.
+  const dynamicUrl = useBlobUrl(
+    asset.fileData,
+    asset.type === "image" ? "image/png" : "application/octet-stream"
+  );
+
+  // Освобождаем blob URL при unmount
+  useEffect(() => {
+    return () => {
+      if (dynamicUrl) URL.revokeObjectURL(dynamicUrl);
+    };
+  }, [dynamicUrl]);
+
+  // Используем dynamicUrl если есть fileData, иначе asset.url (для обратной совместимости)
+  const imgSrc = dynamicUrl || asset.url;
+
+  return (
+    <div className="asset" onDoubleClick={onDoubleClick}>
+      {asset.type === "image" && imgSrc ? (
+        <img
+          src={imgSrc}
+          alt={asset.displayName || asset.name}
+          style={{ width: 32, height: 32 }}
+        />
+      ) : (
+        <FileOutlined style={{ fontSize: 32 }} />
+      )}
+      <span style={{ marginLeft: 8 }}>{asset.displayName || asset.name}</span>
+      {asset.type === "script" && <span style={{ marginLeft: 8, opacity: 0.7 }}>(dblclick)</span>}
+      {!asset.system && !asset.protected && (
+        <Button
+          danger
+          size="small"
+          icon={<DeleteOutlined />}
+          onClick={onDelete}
+          style={{ marginLeft: 8 }}
+        />
+      )}
+    </div>
+  );
+};
 
 const FolderTree: React.FC<{
   folders: AssetItem[];

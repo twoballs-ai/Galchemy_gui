@@ -324,8 +324,11 @@ primitiveFactory.register(
       scale,
       color,
       textureSrc: texture,
+      // ─── Спрайты должны быть полностью матовыми, без металлических отражений ───
+      roughness: 1.0,
+      metalness: 0.0,
       isSprite: true,
-      disableCulling: true,   // видим с обеих сторон
+      disableCulling: true,
       spritePlane: (plane as 'xy' | 'xz' | 'yz') ?? 'xy',
     });
   }
