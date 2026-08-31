@@ -35,6 +35,9 @@ export interface AddObjectPayload {
   scaleY?: number;
   scaleZ?: number;
   scale?: [number, number, number];
+    // Новые поля для спрайта
+  plane?: 'xy' | 'xz' | 'yz';  // плоскость ориентации
+  imageSrc?: string;            // путь к текстуре
 }
 
 interface AddObjectModalProps {
@@ -151,7 +154,13 @@ const AddObjectModal: React.FC<AddObjectModalProps> = ({ open, onAdd, onClose })
     else if (item.type === "terrain") onAdd({ ...base, width: 12, depth: 12 });
     else if (item.type === "plane") onAdd({ ...base, width: 10, depth: 10 });
     else if (item.type === "water") onAdd({ ...base, width: 16, depth: 16 });
-    else if (item.type === "sprite") onAdd({ ...base, width: 128, height: 128 });
+    else if (item.type === "sprite") onAdd({ 
+  ...base, 
+  width: 1,           // ширина в мировых единицах (не пиксели!)
+  height: 1,          // высота в мировых единицах
+  plane: 'xy',        // плоскость по умолчанию
+  imageSrc: '/textures/default_sprite.png' // картинка-заглушка
+});
     else onAdd(base);
 
     onClose();

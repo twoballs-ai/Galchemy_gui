@@ -1,5 +1,4 @@
 import { Renderer } from "./Renderer";
-import { SpriteRenderer } from "./SpriteRenderer";
 import { GridHelper } from "./helpers/GridHelper";
 import { drawGizmo } from "./helpers/GizmoHelper";
 import type { Scene } from "../core/Scene";
@@ -55,7 +54,6 @@ export class WebGLRenderer extends Renderer {
   private plain_uView!: WebGLUniformLocation;
   private plain_uProj!: WebGLUniformLocation;
   private plain_uColor!: WebGLUniformLocation;
-  private spriteRenderer: SpriteRenderer;
   public plain_aPos: number = -1; 
 
   public core: Core | null = null;
@@ -75,12 +73,6 @@ export class WebGLRenderer extends Renderer {
     initDepthProgram(this);
 
     this.gridHelper = new GridHelper(this.gl, this.gridStep);
-
-    this.spriteRenderer = new SpriteRenderer(
-      this.gl,
-      this.canvas.width,
-      this.canvas.height
-    );
   }
 
   setCore(core: Core) {
@@ -314,21 +306,12 @@ export class WebGLRenderer extends Renderer {
       }
     }
 
-    // --- 8) Спрайты ---
-    for (const o of scene.objects) {
-      if (typeof (o as any).renderWebGL2D === "function") {
-        (o as any).renderWebGL2D(this.spriteRenderer);
-      }
-    }
-
     // --- 9) Трансформ-гизмо ---
     this.transformGizmo.draw(this);
-    this.spriteRenderer.flush();
   }
 
   resize(w: number, h: number): void {
     this.gl.viewport(0, 0, w, h);
     this._setupProjection();
-    this.spriteRenderer.resize(w, h);
   }
 }

@@ -17,6 +17,10 @@ export interface GameObject3DOptions {
   textureSrc?: string;
   roughness?: number;
   metalness?: number;
+  // ─── Новые поля для спрайта ───
+  isSprite?: boolean;            // флаг "это спрайт"
+  disableCulling?: boolean;      // отключить backface culling
+  spritePlane?: "xy" | "xz" | "yz";
 }
 
 export class GameObject3D {
@@ -45,6 +49,11 @@ export class GameObject3D {
   mesh: Mesh | null;
   aPosLocMap: WeakMap<WebGLProgram, number>;
 
+  // ─── Поля для спрайта ───
+  isSprite: boolean = false;
+  disableCulling: boolean = false;
+  spritePlane: "xy" | "xz" | "yz" = "xy";
+
   constructor(
     gl: WebGLRenderingContext | WebGL2RenderingContext,
     {
@@ -55,7 +64,10 @@ export class GameObject3D {
       color = '#ffffff',
       textureSrc = null,
       roughness = 0.8,
-      metalness = 0.0
+      metalness = 0.0,
+      isSprite = false,
+      disableCulling = false,
+      spritePlane = "xy",
     }: GameObject3DOptions = {}
   ) {
     this.gl = gl;
@@ -65,6 +77,11 @@ export class GameObject3D {
     this.scale = [...scale];
     this.roughness = roughness;
     this.metalness = metalness;
+
+    this.isSprite = isSprite;
+    this.disableCulling = disableCulling;
+    this.spritePlane = spritePlane;
+
     this.color = Array.isArray(color)
       ? (color.length === 3 ? [...color, 1] : color.slice(0, 4))
       : hexToRGB(color);
@@ -200,6 +217,68 @@ export class GameObject3D {
     return tex;
   }
 
+  /**
+   * Загружает новую текстуру в объект (заменяет предыдущую).
+   */
+  setTexture(src: string): void {
+    this.texture = this._loadTexture(src);
+    this.textureLoaded = false; // _loadTexture выставит true в onload
+  }
+
+  /**
+   * Заменяет меш объекта. Используется, например, для смены плоскости или
+   * размера спрайта без пересоздания всего GameObject3D.
+   */
+  replaceMesh(newMesh: Mesh): void {
+    const gl = this.gl;
+
+    // Удаляем старые буферы
+    if (this.vertexBuffer)   { gl.deleteBuffer(this.vertexBuffer);   this.vertexBuffer   = null; }
+    if (this.indexBuffer)    { gl.deleteBuffer(this.indexBuffer);    this.indexBuffer    = null; }
+    if (this.texCoordBuffer) { gl.deleteBuffer(this.texCoordBuffer); this.texCoordBuffer = null; }
+    if (this.normalBuffer)   { gl.deleteBuffer(this.normalBuffer);   this.normalBuffer   = null; }
+
+    this.mesh = newMesh;
+
+    const hasValidMesh = newMesh && newMesh.positions && newMesh.indices;
+    if (!hasValidMesh) {
+      this.boundingRadius = 0;
+      this.vertexCount = 0;
+      return;
+    }
+
+    this.boundingRadius = this._computeBoundingRadius(newMesh.positions);
+
+    this.vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, newMesh.positions, gl.STATIC_DRAW);
+
+    this.indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, newMesh.indices, gl.STATIC_DRAW);
+
+    this.vertexCount = newMesh.indices.length;
+    this.indexType = newMesh.indices.BYTES_PER_ELEMENT === 2
+      ? gl.UNSIGNED_SHORT
+      : gl.UNSIGNED_INT;
+
+    if (newMesh.texCoords) {
+      this.texCoordBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, newMesh.texCoords, gl.STATIC_DRAW);
+    } else {
+      this.texCoordBuffer = null;
+    }
+
+    if (newMesh.normals) {
+      this.normalBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, newMesh.normals, gl.STATIC_DRAW);
+    } else {
+      this.normalBuffer = null;
+    }
+  }
+
   protected _getAttribLocation(shaderProgram: WebGLProgram): number {
     if (!this.aPosLocMap.has(shaderProgram)) {
       const loc = this.gl.getAttribLocation(shaderProgram, 'aVertexPosition');
@@ -217,6 +296,12 @@ export class GameObject3D {
     uNormalMatrix: WebGLUniformLocation | null,
     parentMatrix: mat4 = mat4.create()
   ): void {
+    // ─── Отключаем backface culling для спрайтов, чтобы они были видны с обеих сторон ───
+    const wasCullingEnabled = this.disableCulling ? gl.isEnabled(gl.CULL_FACE) : false;
+    if (this.disableCulling && wasCullingEnabled) {
+      gl.disable(gl.CULL_FACE);
+    }
+
     gl.useProgram(shaderProgram);
 
     if (this.vertexBuffer && this.indexBuffer && this.vertexCount > 0) {
@@ -279,6 +364,11 @@ export class GameObject3D {
         uNormalMatrix,
         this.worldMatrix
       );
+    }
+
+    // ─── Восстанавливаем состояние culling ───
+    if (this.disableCulling && wasCullingEnabled) {
+      gl.enable(gl.CULL_FACE);
     }
   }
 

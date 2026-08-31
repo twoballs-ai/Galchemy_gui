@@ -106,15 +106,25 @@ const SceneCanvas: React.FC<SceneCanvasProps> = ({ isPreviewing, orientation }) 
       character: withMat("character"),
       spawnPoint: (opts: Record<string, unknown> = {}) =>
         GameAlchemy.primitiveFactory.create("spawnPoint", gl, opts),
-      sprite: async (opts: Record<string, unknown> = {}) =>
-        GameAlchemy.primitiveFactory.create("sprite", gl, {
+
+      // ─── СПРАЙТ ───────────────────────────────────────────────────────
+      // imageSrc из AddObjectPayload передаём как texture для фабрики.
+      // Размеры в мировых единицах (не пиксели).
+      sprite: async (opts: Record<string, unknown> = {}) => {
+        const textureUrl = (typeof opts.imageSrc === 'string' && opts.imageSrc)
+          ? opts.imageSrc
+          : await resolveTexture(opts);
+
+        return GameAlchemy.primitiveFactory.create("sprite", gl, {
           ...opts,
-          imageSrc: await resolveTexture(opts),
-          x: Number(opts.x ?? 0),
-          y: Number(opts.y ?? 0),
-          width: Number(opts.width ?? 128),
-          height: Number(opts.height ?? 128),
-        }),
+          texture: textureUrl,
+          width: Number(opts.width ?? 1),
+          height: Number(opts.height ?? 1),
+          plane: opts.plane ?? 'xy',
+        });
+      },
+      // ─────────────────────────────────────────────────────────────────
+
       camera: (opts: Record<string, unknown> = {}) =>
         GameAlchemy.primitiveFactory.create("camera", gl, opts),
       light: (opts: Record<string, unknown> = {}) =>

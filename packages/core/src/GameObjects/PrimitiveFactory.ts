@@ -10,9 +10,9 @@ import { createTorusGeometry }     from './primitives/3dPrimitives/createTorusGe
 import { createIcosahedronGeometry } from './primitives/3dPrimitives/createIcosahedronGeometry';
 import { createPyramidGeometry }   from './primitives/3dPrimitives/createPyramidGeometry';
 import { createPrismGeometry }     from './primitives/3dPrimitives/createPrismGeometry';
+import { createSpriteGeometry }    from './primitives/3dPrimitives/createSpriteGeometry';
 import { GameObjectCamera }        from './GameObjectCamera';
 import { GameObjectLight }         from './GameObjectLight';
-// import defaultTextureSrc ... — УДАЛЕНО!
 import { GameObjectCharacter }     from './GameObjectCharacter';
 import { GameObjectSpawnPoint }    from './GameObjectSpawnPoint.js';
 import { COORD }                   from '../core/CoordinateSystem';
@@ -22,7 +22,6 @@ import { FirstPersonCamera } from '../core/cameras/FirstPersonCamera';
 import { ThirdPersonCamera } from '../core/cameras/ThirdPersonCamera';
 import { TopDownCamera }     from '../core/cameras/TopDownCamera';
 import { GameObjectModel } from './GameObjectModel';
-import { GameObject2D } from './primitives/GameObject2D';
 
 const DEFAULT_PRIMITIVE_COLOR = '#7f7f7f';
 const DEFAULT_DISTANCE = 5;
@@ -58,7 +57,6 @@ class PrimitiveFactory {
     }
     const merged = {
       color: DEFAULT_PRIMITIVE_COLOR,
-      // texture: defaultTextureSrc, // УДАЛЕНО! Теперь texture только через opts
       ...opts,
     };
     return builder(gl, merged);
@@ -205,18 +203,6 @@ primitiveFactory.register(
   (gl, opts = {}) => new GameObjectSpawnPoint(gl, opts)
 );
 
-primitiveFactory.register(
-  'sprite',
-  (gl, {
-    imageSrc,
-    texture,
-    x = 0,
-    y = 0,
-    width = 128,
-    height = 128,
-    layer = 0,
-  }) => new GameObject2D(gl, { imageSrc: imageSrc ?? texture, x, y, width, height, layer })
-);
 
 /* ---------- новые примитивы ---------- */
 
@@ -306,6 +292,41 @@ primitiveFactory.register(
       scale,
       color,
       textureSrc: texture
+    });
+  }
+);
+
+/* ---------- спрайт (полноценный 3D-примитив с плоской геометрией) ---------- */
+
+primitiveFactory.register(
+  'sprite',
+  (gl, {
+    width = 1,
+    height = 1,
+    plane = 'xy',
+    position,
+    rotation,
+    scale,
+    color,
+    texture,
+  }) => {
+    const pos = position ?? defaultPosition();
+    const mesh = createSpriteGeometry({
+      width: Number(width),
+      height: Number(height),
+      plane: (plane as 'xy' | 'xz' | 'yz') ?? 'xy',
+    });
+
+    return new GameObject3D(gl, {
+      mesh,
+      position: pos,
+      rotation,
+      scale,
+      color,
+      textureSrc: texture,
+      isSprite: true,
+      disableCulling: true,   // видим с обеих сторон
+      spritePlane: (plane as 'xy' | 'xz' | 'yz') ?? 'xy',
     });
   }
 );
